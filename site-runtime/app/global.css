@@ -1,0 +1,206 @@
+@import "fumadocs-ui/css/style.css";
+@import "fumadocs-ui/css/shadcn.css";
+@import "fumadocs-ui/css/vitepress.css";
+
+:root {
+  color-scheme: light;
+  --background: #ffffff;
+  --foreground: #171717;
+  --card: #ffffff;
+  --card-foreground: #171717;
+  --popover: #ffffff;
+  --popover-foreground: #171717;
+  --primary: #171717;
+  --primary-foreground: #ffffff;
+  --secondary: #fafafa;
+  --secondary-foreground: #171717;
+  --muted: #fafafa;
+  --muted-foreground: #666666;
+  --accent: #f3f7ff;
+  --accent-foreground: #171717;
+  --destructive: #b42318;
+  --border: rgba(0, 0, 0, 0.08);
+  --input: rgba(0, 0, 0, 0.08);
+  --ring: hsla(212, 100%, 48%, 1);
+  --sidebar: #fcfcfd;
+  --sidebar-foreground: #171717;
+  --sidebar-primary: #171717;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f1f4fb;
+  --sidebar-accent-foreground: #171717;
+  --sidebar-border: rgba(0, 0, 0, 0.06);
+  --sidebar-ring: hsla(212, 100%, 48%, 1);
+  --console-surface-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08), 0 2px 2px rgba(0, 0, 0, 0.04), inset 0 0 0 1px #fafafa;
+  --console-item-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-border: var(--border);
+  --color-ring: var(--ring);
+}
+
+.dark {
+  color-scheme: dark;
+  --background: #09090b;
+  --foreground: #ededed;
+  --card: #111214;
+  --card-foreground: #ededed;
+  --popover: #111214;
+  --popover-foreground: #ededed;
+  --primary: #ededed;
+  --primary-foreground: #09090b;
+  --secondary: #111214;
+  --secondary-foreground: #ededed;
+  --muted: #151618;
+  --muted-foreground: #a1a1aa;
+  --accent: #161c25;
+  --accent-foreground: #ededed;
+  --destructive: #ff8a80;
+  --border: rgba(255, 255, 255, 0.1);
+  --input: rgba(255, 255, 255, 0.1);
+  --ring: #5aa2ff;
+  --sidebar: #0f1115;
+  --sidebar-foreground: #ededed;
+  --sidebar-primary: #ededed;
+  --sidebar-primary-foreground: #09090b;
+  --sidebar-accent: #171b22;
+  --sidebar-accent-foreground: #ededed;
+  --sidebar-border: rgba(255, 255, 255, 0.08);
+  --sidebar-ring: #5aa2ff;
+  --console-surface-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 18px 40px rgba(0, 0, 0, 0.35), inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+  --console-item-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-border: var(--border);
+  --color-ring: var(--ring);
+}
+
+html {
+  background: var(--background);
+}
+
+body {
+  min-height: 100vh;
+  background: var(--background);
+  color: var(--foreground);
+  font-family:
+    "Geist Sans",
+    "Geist",
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  font-feature-settings: "liga" 1;
+}
+
+::selection {
+  background: rgba(0, 114, 245, 0.18);
+}
+
+a {
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.18em;
+}
+
+code,
+pre {
+  font-feature-settings: "liga" 0;
+  font-family:
+    "Geist Mono",
+    "SFMono-Regular",
+    "Cascadia Code",
+    monospace;
+}
+
+.console-surface {
+  background: var(--card);
+  box-shadow: var(--console-surface-shadow);
+}
+
+.console-item {
+  background: var(--muted);
+  box-shadow: var(--console-item-shadow);
+}
+
+.apcc-sidebar-label {
+  display: flex;
+  min-width: 0;
+  width: 100%;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.apcc-sidebar-title {
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.apcc-sidebar-dot {
+  flex: none;
+  margin-inline-start: auto;
+  height: 0.5rem;
+  width: 0.5rem;
+  border-radius: 999px;
+  background: #00a35c;
+  box-shadow: 0 0 0 3px rgba(0, 163, 92, 0.16);
+}
+
+.dark .prose,
+.dark .prose * {
+  border-color: var(--border);
+}
+
+@keyframes accordion-down {
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--radix-accordion-content-height);
+  }
+}
+
+@keyframes accordion-up {
+  from {
+    height: var(--radix-accordion-content-height);
+  }
+  to {
+    height: 0;
+  }
+}
+
+.animate-accordion-down {
+  animation: accordion-down 0.2s ease-out;
+}
+
+.animate-accordion-up {
+  animation: accordion-up 0.2s ease-out;
+}
+
+[data-radix-popper-content-wrapper] {
+  z-index: 60 !important;
+}

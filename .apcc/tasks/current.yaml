@@ -1,0 +1,372 @@
+items:
+  - id: task-reintegrate-workspace
+    name: Re-integrate the repository under a fresh APCC workspace
+    summary: Recreate the workspace and shared anchors from a clean starting point.
+    status: done
+    planRef: re-integrate-apcc-repository-1
+    parentTaskId: null
+    countedForProgress: false
+  - id: task-reintegrate-workspace-1
+    name: Initialize the fresh workspace and shared anchors
+    summary: Create the new .apcc workspace, shared overview, and shared goal from a clean baseline.
+    status: done
+    planRef: re-integrate-apcc-repository-1
+    parentTaskId: task-reintegrate-workspace
+    countedForProgress: true
+  - id: task-public-docs
+    name: Author a formal public docs package
+    summary: Replace scaffold placeholders with external-facing documentation for developers adopting APCC.
+    status: done
+    planRef: author-formal-public-docs-package-1
+    parentTaskId: null
+    countedForProgress: false
+  - id: task-public-docs-1
+    name: Write formal public usage documentation
+    summary: Publish concise quickstart, CLI, workspace, docs package, docs site, and decisions-versus-versions documentation for external developers.
+    status: done
+    planRef: author-formal-public-docs-package-1
+    parentTaskId: task-public-docs
+    countedForProgress: true
+  - id: task-maintainer-docs
+    name: Align maintainer docs and verification
+    summary: Add maintainer-only guidance and verify the repository against the new clean integration model.
+    status: done
+    planRef: align-maintainer-docs-and-verification-1
+    parentTaskId: null
+    countedForProgress: false
+  - id: task-maintainer-docs-1
+    name: Write internal maintainer docs and verify the docs site
+    summary: Keep internal repository notes separate from public docs and verify the site runtime against the new package.
+    status: done
+    planRef: align-maintainer-docs-and-verification-1
+    parentTaskId: task-maintainer-docs
+    countedForProgress: true
+  - id: task-public-positioning
+    name: Finalize APCC public positioning
+    summary: Rename the framework surfaces and align release-facing docs and records around the APCC name.
+    status: done
+    planRef: finalize-apcc-public-positioning-1
+    parentTaskId: null
+    countedForProgress: false
+  - id: task-public-positioning-1
+    name: Rename the CLI, workspace root, and docs-site surfaces
+    summary: Move the product from OpenDaaS/opendaas/.opendaas to APCC/apcc/.apcc across code, runtime, and generated artifacts.
+    status: done
+    planRef: finalize-apcc-public-positioning-1
+    parentTaskId: task-public-positioning
+    countedForProgress: true
+  - id: task-public-positioning-2
+    name: Align the framework positioning and public entrypoints
+    summary: Update README, workflow guidance, and public docs so APCC is described as a project context framework with a structured control-plane role.
+    status: done
+    planRef: finalize-apcc-public-positioning-1
+    parentTaskId: task-public-positioning
+    countedForProgress: true
+  - id: task-public-positioning-3
+    name: Record the first APCC baseline version
+    summary: Persist the first project-level version record that captures the APCC naming baseline and validation status.
+    status: done
+    planRef: finalize-apcc-public-positioning-1
+    parentTaskId: task-public-positioning
+    countedForProgress: true
+  - id: task-workspace-first-and-docs-language
+    name: Harden workspace-first execution and docs-language defaults
+    summary: Update the framework so agents refresh `.apcc` before action and so new workspaces persist one primary docs language without multilingual maintenance overhead.
+    status: done
+    planRef: harden-workspace-first-and-docs-language-1
+    parentTaskId: null
+    countedForProgress: false
+  - id: task-workspace-first-and-docs-language-1
+    name: Enforce workspace-first guidance
+    summary: Tighten the workflow guide and AGENTS guidance so agents update `.apcc` before implementation when a new task or plan shift is confirmed.
+    status: done
+    planRef: harden-workspace-first-and-docs-language-1
+    parentTaskId: task-workspace-first-and-docs-language
+    countedForProgress: true
+  - id: task-workspace-first-and-docs-language-2
+    name: Persist a primary docs language in new workspaces
+    summary: Add `docsLanguage` to init, workspace config, scaffold generation, and docs-site defaults without adding multilingual docs mapping complexity.
+    status: done
+    planRef: harden-workspace-first-and-docs-language-1
+    parentTaskId: task-workspace-first-and-docs-language
+    countedForProgress: true
+  - id: task-docs-site-lifecycle
+    name: Harden docs-site lifecycle management
+    summary: Fix local docs runtime lifecycle so repeated `site open` calls safely reuse healthy runtimes and `site stop` or `site clean` reliably terminate Windows wrapper processes.
+    status: done
+    planRef: harden-docs-site-lifecycle-1
+    parentTaskId: null
+    countedForProgress: false
+  - id: task-docs-site-lifecycle-1
+    name: Stop mutating healthy runtimes during reuse checks
+    summary: Ensure `site open` decides reuse before rewriting runtime artifacts or clearing `.next`.
+    status: done
+    planRef: harden-docs-site-lifecycle-1
+    parentTaskId: task-docs-site-lifecycle
+    countedForProgress: true
+  - id: task-docs-site-lifecycle-2
+    name: Make site stop and clean terminate Windows wrapper processes
+    summary: Ensure `site stop` and `site clean` actually kill the hidden PowerShell wrapper and any runtime processes so stale runtimes cannot be falsely reused.
+    status: done
+    planRef: harden-docs-site-lifecycle-1
+    parentTaskId: task-docs-site-lifecycle
+    countedForProgress: true
+  - id: task-docs-site-lifecycle-3
+    name: Verify stable reuse and restart semantics
+    summary: Confirm first open starts a runtime, repeated open reuses it without resetting metadata, stop or clean forces the next open to start fresh, and `site build` still passes.
+    status: done
+    planRef: harden-docs-site-lifecycle-1
+    parentTaskId: task-docs-site-lifecycle
+    countedForProgress: true
+  - id: task-docs-site-lifecycle-4
+    name: Keep site build compatible with the runtime template
+    summary: Fix runtime template typing gaps exposed by `site build` so lifecycle work does not regress the production build check.
+    status: done
+    planRef: harden-docs-site-lifecycle-1
+    parentTaskId: task-docs-site-lifecycle
+    countedForProgress: true
+  - id: task-cross-platform-verification
+    name: Broaden cross-platform verification coverage
+    summary: Add automated cross-platform checks for the CLI and docs-site lifecycle and document the package-manager decision for the embedded docs runtime.
+    status: done
+    planRef: broaden-cross-platform-verification-1
+    parentTaskId: null
+    countedForProgress: false
+  - id: task-cross-platform-verification-1
+    name: Add a cross-platform docs-site lifecycle smoke check
+    summary: Create a serial lifecycle verification script that starts, reuses, stops, restarts, and cleans a temporary docs runtime without depending on the repository workspace.
+    status: done
+    planRef: broaden-cross-platform-verification-1
+    parentTaskId: task-cross-platform-verification
+    countedForProgress: true
+  - id: task-cross-platform-verification-2
+    name: Add multi-OS CI coverage
+    summary: Run check, test, build, docs-site build, and the lifecycle smoke script on Windows, Linux, and macOS in CI.
+    status: done
+    planRef: broaden-cross-platform-verification-1
+    parentTaskId: task-cross-platform-verification
+    countedForProgress: true
+  - id: task-cross-platform-verification-3
+    name: Record the docs-site package-manager decision
+    summary: Document why the embedded docs runtime stays on npm for now instead of switching to bun or pnpm.
+    status: done
+    planRef: broaden-cross-platform-verification-1
+    parentTaskId: task-cross-platform-verification
+    countedForProgress: true
+  - id: task-prebuilt-docs-runtime
+    name: Migrate toward a prebuilt docs runtime
+    summary: Shift the docs site away from a per-project source-driven runtime by first defining and generating the runtime-data contract a prebuilt viewer shell will consume.
+    status: done
+    planRef: migrate-to-prebuilt-docs-runtime-1
+    parentTaskId: null
+    countedForProgress: false
+  - id: task-prebuilt-docs-runtime-1
+    name: Define the runtime-data contract for a prebuilt viewer shell
+    summary: Document what navigation, page content, headings, revisions, console state, and search data a prebuilt docs shell must consume from APCC-generated runtime artifacts.
+    status: done
+    planRef: migrate-to-prebuilt-docs-runtime-1
+    parentTaskId: task-prebuilt-docs-runtime
+    countedForProgress: true
+  - id: task-prebuilt-docs-runtime-2
+    name: Generate docs navigation and page payload artifacts
+    summary: Export docs tree and per-page authored payloads into runtime data so the current filesystem-driven shell can be replaced incrementally later.
+    status: done
+    planRef: migrate-to-prebuilt-docs-runtime-1
+    parentTaskId: task-prebuilt-docs-runtime
+    countedForProgress: true
+  - id: task-prebuilt-docs-runtime-3
+    name: Keep current docs-site behavior stable during the migration
+    summary: Add tests and documentation that let the new runtime-data layer land without changing the current docs-site UX yet.
+    status: done
+    planRef: migrate-to-prebuilt-docs-runtime-1
+    parentTaskId: task-prebuilt-docs-runtime
+    countedForProgress: true
+  - id: task-prebuilt-docs-runtime-4
+    name: Switch docs navigation and page rendering to runtime-data
+    summary: Replace Fumadocs source-driven navigation and page loading with the generated viewer-data contract while preserving the current docs-site UX.
+    status: done
+    planRef: migrate-to-prebuilt-docs-runtime-1
+    parentTaskId: task-prebuilt-docs-runtime
+    countedForProgress: true
+  - id: task-prebuilt-docs-runtime-5
+    name: Ship a true prebuilt viewer shell
+    summary: Package and start the docs site as a prebuilt shell that reads runtime data at runtime instead of building a project-specific source app.
+    status: done
+    planRef: migrate-to-prebuilt-docs-runtime-1
+    parentTaskId: task-prebuilt-docs-runtime
+    countedForProgress: true
+  - id: task-prebuilt-docs-live-refresh
+    name: Restore automatic docs-site refresh for the prebuilt runtime
+    summary: Fix the browser refresh path so authored doc edits appear automatically again without requiring a manual page reload.
+    status: done
+    planRef: restore-prebuilt-docs-live-refresh-1
+    parentTaskId: null
+    countedForProgress: false
+  - id: task-prebuilt-docs-live-refresh-1
+    name: Reconnect the viewer shell to runtime version polling
+    summary: Ensure the live refresh client is mounted in the prebuilt viewer shell and reacts to runtime version changes.
+    status: done
+    planRef: restore-prebuilt-docs-live-refresh-1
+    parentTaskId: task-prebuilt-docs-live-refresh
+    countedForProgress: true
+  - id: task-prebuilt-docs-live-refresh-2
+    name: Verify automatic browser refresh on authored doc edits
+    summary: Prove that editing a docs page updates the rendered browser page without manual reload under the shared prebuilt shell.
+    status: done
+    planRef: restore-prebuilt-docs-live-refresh-1
+    parentTaskId: task-prebuilt-docs-live-refresh
+    countedForProgress: true
+  - id: task-repeated-prebuilt-docs-live-refresh
+    name: Harden repeated automatic refresh for the prebuilt runtime
+    summary: Fix the post-first-change regression so the prebuilt viewer keeps reacting to every later doc edit without manual browser reloads.
+    status: done
+    planRef: harden-repeated-prebuilt-live-refresh-1
+    parentTaskId: null
+    countedForProgress: false
+  - id: task-repeated-prebuilt-docs-live-refresh-1
+    name: Keep runtime metadata in live mode during watcher restage
+    summary: Prevent watcher-driven restaging from downgrading runtime metadata back to `staged` after the first automatic reload.
+    status: done
+    planRef: harden-repeated-prebuilt-live-refresh-1
+    parentTaskId: task-repeated-prebuilt-docs-live-refresh
+    countedForProgress: true
+  - id: task-repeated-prebuilt-docs-live-refresh-2
+    name: Run the watcher from current source during CLI development
+    summary: Stop mixing a source-driven CLI entrypoint with a stale built watcher so the current live-refresh fixes are the ones actually running during local development.
+    status: done
+    planRef: harden-repeated-prebuilt-live-refresh-1
+    parentTaskId: task-repeated-prebuilt-docs-live-refresh
+    countedForProgress: true
+  - id: task-repeated-prebuilt-docs-live-refresh-3
+    name: Stabilize Windows watcher startup and repeated version bumps
+    summary: Start the Windows watcher without the flaky PowerShell wrapper and verify that repeated authored doc edits keep advancing runtime version data.
+    status: done
+    planRef: harden-repeated-prebuilt-live-refresh-1
+    parentTaskId: task-repeated-prebuilt-docs-live-refresh
+    countedForProgress: true
+  - id: task-stale-runtime-recovery
+    name: Verify stale runtime recovery
+    summary: Add explicit verification that `site open` can recover from stale runtime registry state after abnormal termination or host shutdown scenarios.
+    status: done
+    planRef: verify-stale-runtime-recovery-1
+    parentTaskId: null
+    countedForProgress: false
+  - id: task-stale-runtime-recovery-1
+    name: Simulate stale runtime registry state
+    summary: Extend lifecycle smoke to inject stale PID and watcher metadata into a stopped runtime and prove that the next `site open` starts a fresh healthy instance.
+    status: done
+    planRef: verify-stale-runtime-recovery-1
+    parentTaskId: task-stale-runtime-recovery
+    countedForProgress: true
+  - id: task-stale-runtime-recovery-2
+    name: Document abnormal shutdown recovery expectations
+    summary: Update maintainer or public docs so runtime recovery behavior after unclean exit is stated explicitly instead of being left as an implementation detail.
+    status: done
+    planRef: verify-stale-runtime-recovery-1
+    parentTaskId: task-stale-runtime-recovery
+    countedForProgress: true
+  - id: task-site-instance-visibility
+    name: Improve site instance visibility and bulk stop control
+    summary: Add CLI support to inspect running docs-site instances and stop them in bulk without requiring users to jump through each project manually.
+    status: done
+    planRef: improve-site-instance-visibility-and-bulk-stop-1
+    parentTaskId: null
+    countedForProgress: false
+  - id: task-site-instance-visibility-1
+    name: Add a site list command
+    summary: Surface currently running docs-site instances with project identity, docs root, URL, and runtime mode instead of forcing users to infer them from browsers or runtime folders.
+    status: done
+    planRef: improve-site-instance-visibility-and-bulk-stop-1
+    parentTaskId: task-site-instance-visibility
+    countedForProgress: true
+  - id: task-site-instance-visibility-2
+    name: Add a bulk site stop flow
+    summary: Allow a one-shot `site stop --all` command to terminate every active APCC docs runtime instead of requiring one command per project.
+    status: done
+    planRef: improve-site-instance-visibility-and-bulk-stop-1
+    parentTaskId: task-site-instance-visibility
+    countedForProgress: true
+  - id: task-site-instance-visibility-3
+    name: Document site instance targeting semantics
+    summary: Clarify that site commands already accept `--path` for specific projects and document the new list and bulk stop flows in the public docs.
+    status: done
+    planRef: improve-site-instance-visibility-and-bulk-stop-1
+    parentTaskId: task-site-instance-visibility
+    countedForProgress: true
+  - id: task-site-instance-visibility-4
+    name: Render site instance lists in default CLI output
+    summary: Fix the Markdown renderer so `site list` and `site stop --all` show their instance arrays without requiring `--json`.
+    status: done
+    planRef: improve-site-instance-visibility-and-bulk-stop-1
+    parentTaskId: task-site-instance-visibility
+    countedForProgress: true
+  - id: task-site-live-terminology
+    name: Normalize site runtime terminology around live mode
+    summary: Replace the remaining public-facing dev terminology in site runtime metadata, CLI output, and docs with live runtime language that matches the prebuilt viewer model.
+    status: done
+    planRef: normalize-site-live-terminology-1
+    parentTaskId: null
+    countedForProgress: false
+  - id: task-site-live-terminology-1
+    name: Rename the running site mode from dev to live
+    summary: Use a live runtime mode label in runtime metadata, site list output, and viewer gating instead of exposing the old dev-server wording.
+    status: done
+    planRef: normalize-site-live-terminology-1
+    parentTaskId: task-site-live-terminology
+    countedForProgress: true
+  - id: task-site-live-terminology-2
+    name: Remove dev-server wording from docs and CLI descriptions
+    summary: Update the public and internal docs plus site command descriptions so they describe the prebuilt live runtime accurately without hot-reload or dev-server language drift.
+    status: done
+    planRef: normalize-site-live-terminology-1
+    parentTaskId: task-site-live-terminology
+    countedForProgress: true
+  - id: fix-installed-cli-binary-and-package-contents-14
+    name: Fix installed CLI binary and package contents
+    summary: Ensure the installed apcc command runs through the package-manager generated binary shims and the npm package contains only the intended current runtime artifact.
+    status: done
+    planRef: harden-cli-package-release-readiness-14
+    parentTaskId: null
+    countedForProgress: true
+  - id: map-guide-topics-from-public-docs-files-15
+    name: Map guide topics from public docs files
+    summary: Load guide topics dynamically from packaged docs/public markdown files, reserve workflow for the Agent workflow guide, and verify installed CLI behavior.
+    status: done
+    planRef: make-guide-discover-public-docs-dynamically-15
+    parentTaskId: null
+    countedForProgress: true
+  - id: return-concise-mutation-deltas-16
+    name: Return concise mutation deltas
+    summary: Reduce plan/task and similar mutation command output to changed records only, document direct .apcc editing for bulk changes, and preserve explicit inspection commands for full context.
+    status: done
+    planRef: reduce-cli-mutation-output-noise-16
+    parentTaskId: null
+    countedForProgress: true
+  - id: implement-deployable-site-build
+    name: Implement deployable site build
+    summary: Make apcc site build output a deployable docs-site artifact while keeping shared viewer shell preparation as an internal prerequisite for site open.
+    status: done
+    planRef: site-build-deployable-docs-site
+    parentTaskId: null
+    countedForProgress: true
+  - id: implement-console-plan-tree
+    name: Implement console Plan tree
+    summary: Render plans as the top-level Console execution tree with derived status, per-plan progress, and scoped task trees.
+    status: done
+    planRef: console-plan-tree-view
+    parentTaskId: null
+    countedForProgress: true
+  - id: finalize-release-docs-and-assets
+    name: Finalize release docs and Agent assets
+    summary: Make agents-template.md, workflow-guide.md, and docs/public self-contained, current, and release-ready while removing stale or misleading docs content.
+    status: done
+    planRef: release-docs-final-cleanup
+    parentTaskId: null
+    countedForProgress: true
+  - id: publish-apcc-release-assets
+    name: Publish APCC release assets
+    summary: Initialize git, create the GitHub repository, publish npm packages under the available APCC names, and verify remote npm installation of the CLI binary.
+    status: in_progress
+    planRef: publish-apcc-public-release
+    parentTaskId: null
+    countedForProgress: true

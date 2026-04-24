@@ -1,0 +1,33 @@
+{
+  "name": "apcc-site-runtime",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "next dev --port 4310",
+    "build": "next build"
+  },
+  "dependencies": {
+    "@orama/tokenizers": "^3.1.18",
+    "@radix-ui/react-accordion": "^1.2.11",
+    "@radix-ui/react-progress": "^1.1.7",
+    "@radix-ui/react-tooltip": "^1.2.8",
+    "@tailwindcss/postcss": "^4.2.2",
+    "@types/node": "^25.6.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "fumadocs-core": "^16.7.16",
+    "fumadocs-ui": "^16.7.16",
+    "lucide-react": "^0.542.0",
+    "next": "^16.2.4",
+    "postcss": "^8.5.6",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
+    "sonner": "^2.0.7",
+    "tailwind-merge": "^3.3.1",
+    "tailwindcss": "^4.2.2",
+    "typescript": "^6.0.3"
+  }
+}

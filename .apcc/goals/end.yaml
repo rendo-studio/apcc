@@ -1,0 +1,13 @@
+goalId: end-goal-ship-apcc-as-a-stable-public-framework
+name: Ship APCC as a stable public framework
+summary: Make APCC production-grade for external projects with neutral workspace semantics, clear public documentation, reliable CLI and docs-site behavior, and a repeatable agent-first operating model.
+docPath: shared/goal.md
+successCriteria:
+  - APCC exposes a stable project overview, end goal, plans, tasks, decisions, and version records as structured control-plane data
+  - APCC keeps shared docs, control-plane state, and local docs-site views aligned for human developers and development agents
+  - APCC supports a repeatable loop from project understanding to planning, implementation, validation, and version recording
+nonGoals:
+  - public hosted docs platform
+  - full SaaS control plane
+  - multi-agent orchestration
+  - cloud sync

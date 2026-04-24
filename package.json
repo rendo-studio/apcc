@@ -1,0 +1,47 @@
+{
+  "name": "apcc",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "APCC is an agent-first project context framework for human developers and development agents.",
+  "license": "MIT",
+  "homepage": "https://github.com/rendo-studio/apcc#readme",
+  "bugs": {
+    "url": "https://github.com/rendo-studio/apcc/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rendo-studio/apcc.git"
+  },
+  "keywords": [
+    "apcc",
+    "cli",
+    "agents",
+    "project-context"
+  ],
+  "files": [
+    "dist",
+    "assets",
+    "docs/public"
+  ],
+  "bin": {
+    "apcc": "./dist/bin/apcc.js"
+  },
+  "scripts": {
+    "dev": "node --import tsx ./src/bin/apcc.ts",
+    "test": "vitest run",
+    "check": "tsc --noEmit",
+    "build": "node --import tsx ./scripts/clean-build-output.ts && tsc -p tsconfig.json && node --import tsx ./scripts/build-prebuilt-site-runtime.ts",
+    "verify:package-install": "node --import tsx ./scripts/verify-package-install.ts",
+    "verify:site-lifecycle": "node --import tsx ./scripts/verify-site-lifecycle.ts"
+  },
+  "dependencies": {
+    "@rendo-studio/aclip": "^0.3.0",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.3",
+    "yaml": "^2.8.3"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "vitest": "^4.1.4"
+  }
+}

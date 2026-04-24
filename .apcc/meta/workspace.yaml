@@ -1,0 +1,11 @@
+schemaVersion: 9
+workspaceName: apcc
+docsRoot: docs
+workspaceRoot: .apcc
+bootstrapMode: init
+templateVersion: 2026-04-23.docs-language-1
+projectKind: general
+docsMode: standard
+docsLanguage: en
+createdAt: 2026-04-22T18:47:35.212Z
+lastUpgradedAt: null

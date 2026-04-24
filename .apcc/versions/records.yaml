@@ -1,0 +1,24 @@
+items:
+  - id: 0-1-0-apcc-public-baseline
+    version: 0.1.0
+    title: APCC public baseline
+    summary: Establishes the first APCC public baseline with a clean workspace model, formal docs package, project-level governance records, and one primary docs language per workspace.
+    docPath: internal/versions/0-1-0-apcc-public-baseline.md
+    status: recorded
+    decisionRefs: []
+    highlights:
+      - Establishes APCC as a agent-first project context framework with a clean `.apcc` workspace root and public docs package.
+      - Clarifies that APCC is the framework while the structured project context control plane is the role it gives a repository.
+      - Persists one primary docs language per workspace and scaffolds the shared docs anchors in that language.
+      - Ships the local docs site as a shared prebuilt viewer shell backed by runtime data instead of a per-project source runtime.
+      - Verifies the npm package install path so the package-manager generated `apcc` binary can initialize and validate a workspace.
+      - Makes `apcc guide` a dynamic index over bundled `docs/public` topics while reserving `apcc guide workflow` for the Agent workflow guide.
+      - Reduces plan and task mutation output to concise deltas and allows explicit plan/task ids for stable follow-up references.
+    breakingChanges:
+      - None for public APCC users in this baseline.
+    migrationNotes:
+      - Choose one primary docs language per repository and keep authored docs in that language unless a human explicitly asks for something else.
+      - Update `.apcc` before implementation whenever a new task or plan shift is confirmed.
+    validationSummary: npm run check, npm run test, npm run build, npm run verify:package-install, npm run dev -- guide, npm run dev -- guide workflow, npm run dev -- validate, npm run dev -- status show, npm run dev -- site build, npm run verify:site-lifecycle
+    createdAt: 2026-04-23T00:00:00.000Z
+    recordedAt: 2026-04-23T00:00:00.000Z

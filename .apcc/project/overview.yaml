@@ -1,0 +1,3 @@
+name: APCC
+summary: Agent-first project context framework that gives repositories a structured project context control plane while keeping authored docs and structured workspace state aligned for human developers and development agents.
+docPath: shared/overview.md

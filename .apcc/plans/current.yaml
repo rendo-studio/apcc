@@ -1,0 +1,82 @@
+endGoalRef: end-goal-ship-apcc-as-a-stable-public-framework
+items:
+  - id: re-integrate-apcc-repository-1
+    name: Re-integrate the repository under a fresh APCC workspace
+    summary: Re-establish the repository as a clean APCC workspace without relying on archived control-plane or docs material.
+    parentPlanId: null
+  - id: author-formal-public-docs-package-1
+    name: Author a formal public docs package
+    summary: Replace scaffold docs with concise external documentation that explains how to use APCC without exposing repository-specific maintainer detail.
+    parentPlanId: null
+  - id: align-maintainer-docs-and-verification-1
+    name: Align maintainer docs and verification
+    summary: Keep internal maintainer guidance, validation rules, and docs-site checks aligned with the new clean integration.
+    parentPlanId: null
+  - id: finalize-apcc-public-positioning-1
+    name: Finalize APCC public positioning
+    summary: Rename the framework surfaces to APCC and align release-facing guidance, docs, and version records with the new public positioning.
+    parentPlanId: null
+  - id: harden-workspace-first-and-docs-language-1
+    name: Harden workspace-first execution and docs-language defaults
+    summary: Make workspace-first updates explicit in agent guidance and persist the primary docs language without introducing multilingual content maintenance overhead.
+    parentPlanId: null
+  - id: harden-docs-site-lifecycle-1
+    name: Harden docs-site lifecycle management
+    summary: Make site open, stop, and clean reuse or terminate the local docs runtime predictably without mutating healthy runtimes or leaving stale Windows wrapper processes behind.
+    parentPlanId: null
+  - id: broaden-cross-platform-verification-1
+    name: Broaden cross-platform verification coverage
+    summary: Add automated multi-OS verification for the CLI and docs-site lifecycle so APCC has explicit evidence for Linux, macOS, and Windows behavior.
+    parentPlanId: null
+  - id: migrate-to-prebuilt-docs-runtime-1
+    name: Migrate toward a prebuilt docs runtime
+    summary: Replace the per-project source-driven docs runtime with a prebuilt viewer shell backed by APCC-generated runtime data, without regressing the current docs-site experience.
+    parentPlanId: null
+  - id: restore-prebuilt-docs-live-refresh-1
+    name: Restore automatic docs-site refresh under the prebuilt runtime
+    summary: Make authored doc edits refresh the browser experience automatically again so the prebuilt shell matches the previous dev-time feedback loop without manual reloads.
+    parentPlanId: null
+  - id: harden-repeated-prebuilt-live-refresh-1
+    name: Harden repeated automatic refresh under the prebuilt runtime
+    summary: Ensure the prebuilt docs viewer keeps auto-refreshing after every subsequent doc edit instead of only responding to the first change after `site open`.
+    parentPlanId: null
+  - id: verify-stale-runtime-recovery-1
+    name: Verify stale runtime recovery
+    summary: Prove that `site open` recovers from stale runtime metadata and abandoned runtime roots without requiring a clean shutdown first.
+    parentPlanId: null
+  - id: improve-site-instance-visibility-and-bulk-stop-1
+    name: Improve site instance visibility and bulk stop control
+    summary: Expose running docs-site instances through the CLI and support a one-shot bulk stop flow so users do not need to manually re-enter each project just to inspect or stop runtimes.
+    parentPlanId: null
+  - id: normalize-site-live-terminology-1
+    name: Normalize site runtime terminology around live mode
+    summary: Remove the remaining public-facing dev-server wording from the prebuilt docs runtime model by renaming the running mode and associated CLI/docs language to live runtime terminology.
+    parentPlanId: null
+  - id: harden-cli-package-release-readiness-14
+    name: Harden CLI package release readiness
+    summary: Close the remaining packaging and installed-binary gaps so APCC can be released as a agent-first framework.
+    parentPlanId: null
+  - id: make-guide-discover-public-docs-dynamically-15
+    name: Make guide discover public docs dynamically
+    summary: Turn the guide command into a thin progressive-disclosure entry over package public docs while keeping workflow as the Agent skill guide.
+    parentPlanId: null
+  - id: reduce-cli-mutation-output-noise-16
+    name: Reduce CLI mutation output noise
+    summary: Make APCC mutation commands return concise deltas for development agents while keeping full context in explicit inspection commands.
+    parentPlanId: null
+  - id: site-build-deployable-docs-site
+    name: Make site build produce a deployable docs site
+    summary: Change site build from an internal runtime staging check into the public command that builds a deployable read-only APCC docs site artifact.
+    parentPlanId: null
+  - id: console-plan-tree-view
+    name: Make console plan-first
+    summary: Change the docs-site Console from a task-first tree into a plan-first execution view that shows plan status and scoped task trees.
+    parentPlanId: null
+  - id: release-docs-final-cleanup
+    name: Final release docs cleanup
+    summary: Clean up release-facing APCC documentation, Agent onboarding assets, stale docs-site wording, and public docs structure before publication.
+    parentPlanId: null
+  - id: publish-apcc-public-release
+    name: Publish APCC public release
+    summary: Initialize the GitHub repository, publish the APCC CLI package to npmjs under the available package names, and verify remote installation works as the delivery bar.
+    parentPlanId: null
