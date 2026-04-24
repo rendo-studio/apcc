@@ -1,6 +1,6 @@
 {
   "name": "apcc",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "description": "APCC is an agent-first project context framework for human developers and development agents.",
   "license": "MIT",
