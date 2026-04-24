@@ -366,7 +366,7 @@ items:
   - id: publish-apcc-release-assets
     name: Publish APCC release assets
     summary: Initialize git, create the GitHub repository, publish npm packages under the available APCC names, and verify remote npm installation of the CLI binary.
-    status: in_progress
+    status: done
     planRef: publish-apcc-public-release
     parentTaskId: null
     countedForProgress: true
