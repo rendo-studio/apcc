@@ -18,6 +18,7 @@ It is not part of the public usage model.
 - keep repository-specific development details in `docs/internal/`
 - update `.apcc/` before implementation drifts too far from the control plane
 - keep generated local artifacts and private publishing credentials out of the release tree
+- keep `README.md` developer-facing for GitHub and stage `assets/npm-readme.md` into published npm packages
 
 ## Change Workflow
 
@@ -46,6 +47,22 @@ npm run verify:site-lifecycle
 `npm run dev -- site build` verifies the public user-facing build command by producing a deployable read-only docs-site artifact. It must not be used as the internal shell prebuild step, and it must not stop a healthy live runtime.
 
 Add targeted runtime smoke checks when the change affects the site runtime, docs rendering, or CLI command behavior.
+
+## README Surfaces
+
+APCC intentionally keeps two different package-introduction surfaces:
+
+- `README.md`: repository-facing and maintainer-facing context for GitHub
+- `assets/npm-readme.md`: consumer-facing package README for npmjs
+
+Prepare a publishable package directory with:
+
+```bash
+npm run prepare:publish-package -- --out .tmp/apcc-publish
+npm run prepare:publish-package -- --out .tmp/apcc-scoped-publish --name @rendo-studio/apcc
+```
+
+Publish from the staged directory instead of the repository root when the npm README needs to differ from the GitHub README.
 
 ## Prebuilt Docs Shell Build Chain
 

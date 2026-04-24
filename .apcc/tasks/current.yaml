@@ -377,3 +377,10 @@ items:
     planRef: publish-apcc-public-release
     parentTaskId: null
     countedForProgress: true
+  - id: split-github-and-npm-readmes
+    name: Split GitHub and npm readmes
+    summary: Keep the repository README developer-facing while publishing a separate consumer-facing README to npm packages so the two distribution surfaces serve different audiences cleanly.
+    status: done
+    planRef: publish-apcc-public-release
+    parentTaskId: null
+    countedForProgress: true

@@ -31,6 +31,7 @@
     "test": "vitest run",
     "check": "tsc --noEmit",
     "build": "node --import tsx ./scripts/clean-build-output.ts && tsc -p tsconfig.json && node --import tsx ./scripts/build-prebuilt-site-runtime.ts",
+    "prepare:publish-package": "node --import tsx ./scripts/prepare-publish-package.ts",
     "verify:package-install": "node --import tsx ./scripts/verify-package-install.ts",
     "verify:site-lifecycle": "node --import tsx ./scripts/verify-site-lifecycle.ts"
   },
