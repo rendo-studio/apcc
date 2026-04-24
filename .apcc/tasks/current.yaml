@@ -370,3 +370,10 @@ items:
     planRef: publish-apcc-public-release
     parentTaskId: null
     countedForProgress: true
+  - id: polish-npm-package-readme
+    name: Polish npm package README
+    summary: Make the published package README consumer-first so npmjs shows what APCC is and how to start using it without repository maintainer instructions.
+    status: done
+    planRef: publish-apcc-public-release
+    parentTaskId: null
+    countedForProgress: true
