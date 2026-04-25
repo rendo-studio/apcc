@@ -415,14 +415,14 @@ items:
   - id: publish-docs-site-ergonomics-patch-release-27
     name: Publish docs-site ergonomics patch release
     summary: Publish the localized docs-site fixes, console landing change, explicit site-open port support, and tightened agent workflow guidance as the next patch release.
-    status: in_progress
+    status: done
     planRef: publish-apcc-public-release
     parentTaskId: null
     countedForProgress: true
   - id: record-docs-site-ergonomics-patch-version-28
     name: Record docs-site ergonomics patch version
     summary: Record the patch release boundary for the docs-site ergonomics fixes and publish artifacts after verification passes.
-    status: pending
+    status: done
     planRef: publish-apcc-public-release
     parentTaskId: null
     countedForProgress: true

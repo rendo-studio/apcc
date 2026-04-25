@@ -27,7 +27,7 @@ items:
     title: Docs-site ergonomics patch
     summary: Patch release that fixes localized docs-site routing, makes the Console the default landing surface, adds explicit site-open port selection, and tightens agent workflow guidance around site lifecycle.
     docPath: null
-    status: draft
+    status: recorded
     decisionRefs: []
     highlights:
       - Fixes localized docs-site routing for non-ASCII authored filenames
@@ -40,4 +40,4 @@ items:
       - Existing docs-site consumers should treat /console/plans as the canonical execution view
     validationSummary: npm run check, npm run test, npm run build, npm run verify:site-lifecycle, npm run verify:package-install, npm pack --dry-run, node dist/bin/apcc.js site open --help
     createdAt: 2026-04-25T01:17:45.162Z
-    recordedAt: null
+    recordedAt: 2026-04-25T01:26:16.372Z
