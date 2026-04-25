@@ -194,6 +194,10 @@ function renderSite(payload: Record<string, unknown>): string {
     lines.push(`- URL: ${payload.url}`);
   }
 
+  if (typeof payload.port === "number") {
+    lines.push(`- Port: ${inlineCode(String(payload.port))}`);
+  }
+
   if (typeof payload.sourcePath === "string") {
     lines.push(`- Source path: ${inlineCode(payload.sourcePath)}`);
   }

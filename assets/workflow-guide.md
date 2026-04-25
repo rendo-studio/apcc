@@ -95,18 +95,20 @@ apcc site open
 apcc status show
 ```
 
+If this is the first open for a workspace and the human is likely to revisit the docs site, prefer a stable unique port:
+
+```bash
+apcc site open --port 4317
+```
+
 Then apply this rule:
 
 - if `status show` already gives you the project identity, goal, phase, next actions, and blockers, start work
 - inspect more files only if something is still unclear
 - if the project identity or long-lived goal is still unclear, clarify them before implementation
 - if a human may have changed files, inspect the touched workspace surface directly before continuing
-
-If a human does not currently need the docs site, stop it explicitly:
-
-```bash
-apcc site stop
-```
+- after `site open`, tell the human the returned docs-site URL explicitly
+- keep the docs site running unless the human explicitly asks you to stop or clean it
 
 ## Warm Continuation
 
@@ -135,6 +137,7 @@ Run `apcc site open` when:
 
 - you or the human need the docs-site or Console view
 - you want to verify the projected docs/runtime state visually
+- you want to give the human a stable local docs-site URL; on first open prefer `--port <unique-port>` or a workspace `docsSite.preferredPort`
 
 Inspect touched files directly when:
 
@@ -456,6 +459,7 @@ Rules:
 
 - `sourcePath` is workspace-relative
 - `preferredPort` is the preferred local port for `apcc site open`
+- `apcc site open --port <port>` overrides the current open without rewriting the workspace config
 - when `site open` runs without `--path`, it uses this persisted configuration
 
 ## First-Hour Loop
@@ -510,6 +514,12 @@ apcc site clean
 ```
 
 `site open` is the default live-refreshing local collaboration surface. It uses the APCC-packaged prebuilt viewer shell automatically. `site stop` stops the local runtime without purging it. `site build` creates a deployable read-only docs-site artifact and must not stop a healthy live runtime. `site clean` removes the staged runtime and is the heavy reset path.
+
+Important operating rule for development agents:
+
+- after `site open`, report the returned URL to the human
+- keep the site alive across normal task completion
+- use `site stop` or `site clean` only when the human explicitly asks for it or when you are intentionally resetting a runtime you own
 
 `validate --repair` is a repair command, not a mandatory every-round command. Use it when the workspace or managed files need recovery.
 

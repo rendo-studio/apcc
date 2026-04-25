@@ -1,4 +1,4 @@
-import { AclipApp, booleanArgument, stringArgument } from "@rendo-studio/aclip";
+import { AclipApp, booleanArgument, integerArgument, stringArgument } from "@rendo-studio/aclip";
 import {
   buildSiteRuntime,
   cleanSiteRuntime,
@@ -26,15 +26,24 @@ export function registerSiteGroup(app: AclipApp) {
         stringArgument("path", {
           required: false,
           description: "Optional project root or docs-pack path. Defaults to the configured docs-site source path."
+        }),
+        integerArgument("port", {
+          required: false,
+          description: "Optional explicit local port for this site open. Reuses the runtime only when the running port already matches.",
+          flag: "--port"
         })
       ],
       examples: [
         "apcc site open",
+        "apcc site open --port 4317",
         "apcc site open --path D:/project/example",
-        "apcc site open --path D:/project/example/docs"
+        "apcc site open --path D:/project/example/docs",
+        "apcc site open --path D:/project/example --port 4317"
       ],
-      handler: async ({ path }) => {
-        const runtime = await openSiteRuntime(path ? String(path) : undefined);
+      handler: async ({ path, port }) => {
+        const runtime = await openSiteRuntime(path ? String(path) : undefined, {
+          port: typeof port === "number" ? port : undefined
+        });
         return {
           site: {
             sourcePath: path ? String(path) : runtime.sourceDocsRoot,
@@ -44,6 +53,7 @@ export function registerSiteGroup(app: AclipApp) {
             stagedSourcePath: runtime.sourceDocsRoot,
             stagedDocsRoot: runtime.stagedDocsRoot,
             stagedFileCount: runtime.fileCount,
+            port: runtime.port,
             url: runtime.url,
             alreadyRunning: runtime.alreadyRunning,
             pid: runtime.pid,

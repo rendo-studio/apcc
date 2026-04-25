@@ -7,6 +7,7 @@ import type {
   RuntimeDocsViewerTreeNode
 } from "./runtime-data";
 import type { SiteLocale } from "./i18n";
+import { docsPathToSlug, docsSlugToUrl } from "./docs-path";
 
 export interface DocsViewerPage {
   path: string;
@@ -29,24 +30,6 @@ export interface DocsViewerSource {
   getPages(): DocsViewerPage[];
   getPage(slug: string[]): DocsViewerPage | undefined;
   generateParams(): Array<{ slug: string[] }>;
-}
-
-function docsPathToSlug(relativePath: string): string[] {
-  const normalized = relativePath.replace(/\\/g, "/");
-  const parts = normalized.split("/");
-  const fileName = parts.at(-1) ?? "";
-  const extensionIndex = fileName.lastIndexOf(".");
-  const baseName = extensionIndex === -1 ? fileName : fileName.slice(0, extensionIndex);
-
-  if (baseName === "index") {
-    return parts.slice(0, -1);
-  }
-
-  return [...parts.slice(0, -1), baseName];
-}
-
-function docsSlugToUrl(locale: SiteLocale, slug: string[]): string {
-  return slug.length === 0 ? `/${locale}/docs` : `/${locale}/docs/${slug.join("/")}`;
 }
 
 function headingsToToc(headings: RuntimeDocsViewerPage["headings"]): TOCItemType[] {

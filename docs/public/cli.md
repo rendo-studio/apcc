@@ -154,15 +154,20 @@ Use `version` for low-frequency project-level maturity records. A version record
 
 ```bash
 apcc site open
+apcc site open --port 4317
 apcc site list
 apcc site stop
 apcc site clean
 apcc site build
 ```
 
-`site open` starts or reuses the local live docs site. It uses the APCC-packaged prebuilt viewer shell automatically and keeps runtime data refreshed from the configured docs root plus `.apcc`.
+`site open` starts or reuses the local live docs site. It uses the APCC-packaged prebuilt viewer shell automatically, keeps runtime data refreshed from the configured docs root plus `.apcc`, and lands the root docs URL on the localized Console plan view.
+
+Use `--port` when you want a stable local address for the current open without editing workspace config. Use `.apcc/config/workspace.yaml` `docsSite.preferredPort` when the workspace should keep a stable default port.
 
 `site build` creates a deployable read-only docs-site artifact. It does not prepare `site open`, does not replace the live watcher, and must not stop a healthy live runtime.
+
+`site stop` is an explicit runtime control command. It should not be treated as a routine end-of-task step by development agents.
 
 ## Output Contract
 

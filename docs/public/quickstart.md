@@ -93,6 +93,14 @@ apcc status show
 
 `site open` uses the prebuilt viewer shell packaged with APCC. It does not require a user-run build step and keeps authored docs plus `.apcc` state live-refreshing for local collaboration.
 
+For a stable local address on the first open, use:
+
+```bash
+apcc site open --port 4317
+```
+
+The root docs URL lands on the localized Console plan view. If you are opening the site on behalf of a human, tell them the returned URL and leave it running until they explicitly ask to stop it.
+
 Use `site build` only when you want a deployable read-only docs-site artifact:
 
 ```bash

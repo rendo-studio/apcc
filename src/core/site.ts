@@ -76,10 +76,19 @@ interface StageResult {
   runtimeFile: string;
   logFile: string;
   preferredPort: number | null;
+  portSource: "workspace" | "explicit" | null;
 }
 
 interface StageDocsOptions {
   syncDocs?: boolean;
+}
+
+interface OpenSiteRuntimeOptions {
+  port?: number;
+}
+
+interface StageSiteRuntimeOptions extends StageDocsOptions {
+  preferredPort?: number;
 }
 
 interface StageSiteDataOptions extends StageDocsOptions {
@@ -315,7 +324,7 @@ async function injectRuntimeConsoleDocs(stagedDocsRoot: string): Promise<void> {
     `${JSON.stringify(
       {
         title: "Console",
-        pages: ["index", "plans"]
+        pages: ["plans", "index"]
       },
       null,
       2
@@ -782,6 +791,18 @@ async function findAvailablePort(startPort = 4310): Promise<number> {
   throw new Error("Unable to find an available port for the APCC site runtime.");
 }
 
+function normalizeSitePort(port?: number | null): number | null {
+  if (port === undefined || port === null) {
+    return null;
+  }
+
+  if (!Number.isInteger(port) || port < 1 || port > 65_535) {
+    throw new Error("docs-site port must be an integer between 1 and 65535.");
+  }
+
+  return port;
+}
+
 async function terminateProcessTree(pid: number): Promise<void> {
   if (process.platform === "win32") {
     const result = spawnSync("taskkill", ["/PID", String(pid), "/T", "/F"], {
@@ -960,7 +981,7 @@ async function stageSiteData(
   context: SiteSourceContext,
   runtimeRoot: string,
   options: StageSiteDataOptions
-): Promise<Omit<StageResult, "runtimeBase" | "preferredPort">> {
+): Promise<Omit<StageResult, "runtimeBase" | "preferredPort" | "portSource">> {
   const { sourceDocsRoot, sourceWorkspaceRoot, docsLanguage, siteId } = context;
   const stagedDocsRoot = path.join(runtimeRoot, "content", "docs");
   const nextDocsRoot = path.join(runtimeRoot, "content", ".next-docs");
@@ -1045,11 +1066,15 @@ async function stageSiteData(
   };
 }
 
-export async function stageDocsForSiteRuntime(inputPath?: string, options: StageDocsOptions = {}): Promise<StageResult> {
+export async function stageDocsForSiteRuntime(
+  inputPath?: string,
+  options: StageSiteRuntimeOptions = {}
+): Promise<StageResult> {
   const context = await resolveSiteSourceContext(inputPath);
   const runtimeBase = getRuntimeBase();
   const runtimeRoot = getRuntimeRoot(context.siteId, runtimeBase);
   const existingRegistry = await readRegistry(runtimeRoot);
+  const explicitPort = "preferredPort" in options ? normalizeSitePort(options.preferredPort) : null;
   const activeRegistry =
     existingRegistry &&
     existingRegistry.pid !== null &&
@@ -1069,7 +1094,8 @@ export async function stageDocsForSiteRuntime(inputPath?: string, options: Stage
   return {
     ...staged,
     runtimeBase,
-    preferredPort: context.workspaceConfig?.docsSite.preferredPort ?? null
+    preferredPort: explicitPort ?? context.workspaceConfig?.docsSite.preferredPort ?? null,
+    portSource: explicitPort === null ? "workspace" : "explicit"
   };
 }
 
@@ -1437,10 +1463,19 @@ async function waitForWatcherReady(runtimeDataRoot: string, timeoutMs = 10000): 
 async function ensureSiteRuntimeServer(stage: StageResult, mode: "live") {
   const existing = await readRegistry(stage.runtimeRoot);
   const configuredPort = stage.preferredPort;
-  const preferredPort = existing && existing.port > 0 ? existing.port : configuredPort ?? 4310;
-  const reuseExisting = Boolean(
+  const portLabel = stage.portSource === "explicit" ? "Requested" : "Configured";
+  const existingIsHealthy = Boolean(
     existing && processExists(existing.pid) && (await waitForPort(existing.port, 500))
   );
+
+  if (existingIsHealthy && configuredPort !== null && existing!.port !== configuredPort) {
+    throw new Error(
+      `${portLabel} docs-site port ${configuredPort} does not match the running runtime at ${existing!.url}. Stop it first before reopening on a different port.`
+    );
+  }
+
+  const preferredPort = existing && existing.port > 0 ? existing.port : configuredPort ?? 4310;
+  const reuseExisting = existingIsHealthy;
   let port = reuseExisting ? existing!.port : preferredPort;
   let pid = reuseExisting ? existing!.pid : null;
   let watcherPid = existing?.watcherPid ?? null;
@@ -1453,7 +1488,7 @@ async function ensureSiteRuntimeServer(stage: StageResult, mode: "live") {
       const configuredPortInUse = await waitForPort(configuredPort, 250);
       if (configuredPortInUse) {
         throw new Error(
-          `Configured docs-site port ${configuredPort} is already in use. Update .apcc/config/workspace.yaml or free the port.`
+          `${portLabel} docs-site port ${configuredPort} is already in use. Pick a different port, update .apcc/config/workspace.yaml, or free the port first.`
         );
       }
       port = configuredPort;
@@ -1628,13 +1663,15 @@ export async function buildSiteRuntime(inputPath?: string, options: SiteBuildOpt
   }
 }
 
-export async function openSiteRuntime(inputPath?: string) {
-  const stage = await stageDocsForSiteRuntime(inputPath);
+export async function openSiteRuntime(inputPath?: string, options: OpenSiteRuntimeOptions = {}) {
+  const stage = await stageDocsForSiteRuntime(inputPath, {
+    preferredPort: options.port
+  });
   return ensureSiteRuntimeServer(stage, "live");
 }
 
-export async function devSiteRuntime(inputPath?: string) {
-  return openSiteRuntime(inputPath);
+export async function devSiteRuntime(inputPath?: string, options: OpenSiteRuntimeOptions = {}) {
+  return openSiteRuntime(inputPath, options);
 }
 
 async function stopSiteRuntimeAtLocation(target: ResolvedSiteRuntimeLocation) {

@@ -384,3 +384,45 @@ items:
     planRef: publish-apcc-public-release
     parentTaskId: null
     countedForProgress: true
+  - id: fix-non-english-docs-site-startup-failure-23
+    name: Fix non-English docs-site startup failure
+    summary: Find and fix the docs-site failure path when the primary docs language uses non-ASCII filenames so localized workspaces can open successfully.
+    status: done
+    planRef: harden-post-release-docs-site-ergonomics-21
+    parentTaskId: null
+    countedForProgress: true
+  - id: add-explicit-port-selection-to-site-open-24
+    name: Add explicit port selection to site open
+    summary: Allow site open to take a specific port directly so agents and developers can reserve a stable docs-site address without extra workspace edits.
+    status: done
+    planRef: harden-post-release-docs-site-ergonomics-21
+    parentTaskId: null
+    countedForProgress: true
+  - id: harden-workflow-guidance-for-site-lifecycle-25
+    name: Harden workflow guidance for site lifecycle
+    summary: Update the workflow guide and related docs so agents announce docs-site URLs, prefer stable unique ports, and do not stop the site unless a human explicitly asks for it.
+    status: done
+    planRef: harden-post-release-docs-site-ergonomics-21
+    parentTaskId: null
+    countedForProgress: true
+  - id: make-console-the-docs-site-landing-page-26
+    name: Make console the docs-site landing page
+    summary: Change the docs-site default landing flow so the root docs URL opens the localized Console plan view instead of a shared overview document.
+    status: done
+    planRef: harden-post-release-docs-site-ergonomics-21
+    parentTaskId: null
+    countedForProgress: true
+  - id: publish-docs-site-ergonomics-patch-release-27
+    name: Publish docs-site ergonomics patch release
+    summary: Publish the localized docs-site fixes, console landing change, explicit site-open port support, and tightened agent workflow guidance as the next patch release.
+    status: in_progress
+    planRef: publish-apcc-public-release
+    parentTaskId: null
+    countedForProgress: true
+  - id: record-docs-site-ergonomics-patch-version-28
+    name: Record docs-site ergonomics patch version
+    summary: Record the patch release boundary for the docs-site ergonomics fixes and publish artifacts after verification passes.
+    status: pending
+    planRef: publish-apcc-public-release
+    parentTaskId: null
+    countedForProgress: true

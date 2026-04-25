@@ -19,12 +19,20 @@ The Console is plan-first: it shows the current plan tree with derived plan stat
 
 The canonical Console execution view is `/console/plans`. Older `/console/tasks` links redirect there for compatibility.
 
+The docs-site root should land on the localized Console plan view, not a shared overview doc.
+
 ## Runtime Commands
 
 Open the local site:
 
 ```bash
 apcc site open
+```
+
+Open the local site on an explicit stable port:
+
+```bash
+apcc site open --port 4317
 ```
 
 Open a different project's docs runtime without changing directories:
@@ -89,6 +97,8 @@ Expected behavior:
 
 - `apcc site open` starts the live runtime if it is not running yet
 - a second `apcc site open` reuses the healthy runtime instead of restarting it
+- the root docs URL should land on `/<docsLanguage>/docs/console/plans`
+- `apcc site open --port <port>` should honor that port or fail clearly if another healthy runtime is already using a different port for the same workspace
 - `apcc site list` shows the healthy runtimes APCC currently sees as active
 - `apcc site build` creates a deployable read-only site artifact and does not stop a healthy live runtime
 - `apcc site stop` stops the local runtime but preserves the staged runtime for a faster next start
@@ -97,6 +107,8 @@ Expected behavior:
 - if a previous runtime died uncleanly or the machine shut down, the next `apcc site open` should recover by starting a fresh healthy runtime instead of requiring a manual cleanup first
 
 The lifecycle commands should not mutate a healthy running runtime just to decide whether it can be reused.
+
+When a development agent opens the site for a human, it should explicitly tell the human the returned URL and leave the runtime running unless the human asks to stop it.
 
 APCC does not currently expose `site clean --all`.
 
@@ -159,6 +171,8 @@ Relevant fields:
 - `docsLanguage`
 - `docsSite.sourcePath`
 - `docsSite.preferredPort`
+
+`docsSite.preferredPort` is the stable workspace default. `apcc site open --port <port>` is a per-open override.
 
 Within the docs package itself, `meta.json` can be used to make navigation order explicit. The default scaffold includes one at the package root to demonstrate a minimal top-level navigation configuration.
 

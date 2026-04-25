@@ -1,4 +1,5 @@
 import type { SiteLocale } from "./i18n";
+import { docsPathToHref } from "./docs-path";
 
 interface SiteCopy {
   locale: string;
@@ -259,11 +260,4 @@ export function formatSiteDate(
   return new Intl.DateTimeFormat(copy[locale].locale, options).format(new Date(value));
 }
 
-export function docsHref(locale: SiteLocale, docPath: string): string {
-  const normalized = docPath.replace(/\\/g, "/").replace(/\.(md|mdx)$/i, "");
-  if (normalized.endsWith("/index")) {
-    return `/${locale}/docs/${normalized.slice(0, -"/index".length)}`;
-  }
-
-  return `/${locale}/docs/${normalized}`;
-}
+export const docsHref = docsPathToHref;

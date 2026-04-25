@@ -22,3 +22,22 @@ items:
     validationSummary: npm run check, npm run test, npm run build, npm run verify:package-install, npm run dev -- guide, npm run dev -- guide workflow, npm run dev -- validate, npm run dev -- status show, npm run dev -- site build, npm run verify:site-lifecycle
     createdAt: 2026-04-23T00:00:00.000Z
     recordedAt: 2026-04-23T00:00:00.000Z
+  - id: 0-1-2-docs-site-ergonomics-patch
+    version: 0.1.2
+    title: Docs-site ergonomics patch
+    summary: Patch release that fixes localized docs-site routing, makes the Console the default landing surface, adds explicit site-open port selection, and tightens agent workflow guidance around site lifecycle.
+    docPath: null
+    status: draft
+    decisionRefs: []
+    highlights:
+      - Fixes localized docs-site routing for non-ASCII authored filenames
+      - Makes the localized Console plan view the default docs-site landing surface
+      - Adds apcc site open --port for stable per-open docs-site addresses
+      - Tightens agent workflow guidance to report docs-site URLs and avoid unprompted site stop
+    breakingChanges: []
+    migrationNotes:
+      - Agents should prefer a stable unique docs-site port on first open and tell humans the returned URL
+      - Existing docs-site consumers should treat /console/plans as the canonical execution view
+    validationSummary: npm run check, npm run test, npm run build, npm run verify:site-lifecycle, npm run verify:package-install, npm pack --dry-run, node dist/bin/apcc.js site open --help
+    createdAt: 2026-04-25T01:17:45.162Z
+    recordedAt: null

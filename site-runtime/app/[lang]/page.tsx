@@ -12,5 +12,5 @@ export default async function LocaleHomePage({
     notFound();
   }
 
-  redirect(`/${lang}/docs`);
+  redirect(`/${lang}/docs/console/plans`);
 }

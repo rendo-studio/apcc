@@ -96,7 +96,7 @@ describe("site runtime staging", () => {
     });
     expect(JSON.parse(stagedConsoleMeta)).toEqual({
       title: "Console",
-      pages: ["index", "plans"]
+      pages: ["plans", "index"]
     });
     expect(stagedConsoleIndex).toContain("name: Overview");
     expect(stagedAsset).toBe("site-asset\n");

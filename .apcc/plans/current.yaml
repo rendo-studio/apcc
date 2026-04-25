@@ -80,3 +80,7 @@ items:
     name: Publish APCC public release
     summary: Initialize the GitHub repository, publish the APCC CLI package to npmjs under the available package names, and verify remote installation works as the delivery bar.
     parentPlanId: null
+  - id: harden-post-release-docs-site-ergonomics-21
+    name: Harden post-release docs-site ergonomics
+    summary: Fix non-English docs-site failures, make the console the default landing surface, improve site open port control, and tighten the agent workflow guidance so human developers can reliably access and keep the docs site running.
+    parentPlanId: null

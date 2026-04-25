@@ -7,10 +7,10 @@ import type { ComponentProps } from "react";
 
 import { ConsoleOverviewView } from "../../../../components/site/console-overview-view";
 import { ConsoleTasksView } from "../../../../components/site/console-tasks-view";
-import { docsPathToHref } from "../../../../components/site/docs-rail-shared";
 import { DocumentCompareView, DocumentRevisionPreview } from "../../../../components/site/document-compare-view";
 import { DocumentRevisionSidebar } from "../../../../components/site/document-revision-bar";
 import { createDocsViewerSource, resolveDocsHref } from "../../../../lib/docs-viewer";
+import { decodeRouteSlug, docsSlugToUrl } from "../../../../lib/docs-path";
 import { i18n, isSiteLocale, type SiteLocale } from "../../../../lib/i18n";
 import { loadControlPlaneSnapshot, loadDocsRevisionState, loadDocsViewerData } from "../../../../lib/runtime-data";
 
@@ -65,8 +65,8 @@ export default async function Page(props: {
     notFound();
   }
 
-  const key = (params.slug ?? []).join("/");
-  const resolvedSlug = params.slug ?? [];
+  const resolvedSlug = decodeRouteSlug(params.slug);
+  const key = resolvedSlug.join("/");
   const useOverviewConsole = key === "console";
   const usePlansConsole = key === "console/plans";
   const useConsoleView = useOverviewConsole || usePlansConsole;
@@ -93,7 +93,7 @@ export default async function Page(props: {
     selectedRevision && selectedRevision.id !== latestRevision?.id ? selectedRevision : null;
   const effectiveComparedRevision =
     comparedRevision && comparedRevision.id !== latestRevision?.id ? comparedRevision : null;
-  const pathname = `/${lang}/docs/${key}`.replace(/\/+$/, "") || `/${lang}/docs`;
+  const pathname = docsSlugToUrl(lang, resolvedSlug);
 
   if (key === "console/overview") {
     redirect(`/${lang}/docs/console`);
@@ -103,8 +103,8 @@ export default async function Page(props: {
     redirect(`/${lang}/docs/console/plans`);
   }
 
-  if (!useConsoleView && key === "" && !page && snapshot.project?.docPath) {
-    redirect(docsPathToHref(lang, snapshot.project.docPath));
+  if (!useConsoleView && key === "") {
+    redirect(`/${lang}/docs/console/plans`);
   }
 
   if (!useConsoleView && !page) {
