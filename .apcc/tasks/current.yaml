@@ -555,7 +555,7 @@ items:
   - id: task-assess-and-publish-next-release
     name: Assess release readiness and publish the next APCC release
     summary: Review the current repository against release quality bars, resolve any remaining code or packaging issues, and publish the next package release instead of stopping at GitHub push.
-    status: in_progress
+    status: done
     planRef: assess-and-publish-next-release-27
     parentTaskId: null
     countedForProgress: false
@@ -576,7 +576,7 @@ items:
   - id: task-assess-and-publish-next-release-3
     name: Publish the next APCC package release
     summary: Bump the package version, prepare the publishable artifact, publish the package, and verify remote installation of the released version.
-    status: pending
+    status: done
     planRef: assess-and-publish-next-release-27
     parentTaskId: task-assess-and-publish-next-release
     countedForProgress: true

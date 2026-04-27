@@ -19,9 +19,9 @@ items:
       - Update any automation or documentation that still shells out to `apcc validate` so it calls the doctor surface instead.
       - Update any scripts or habits using `apcc site open` to `apcc site start`.
       - If you consume the workflow skill package as a source artifact, use `assets/skills/apcc-workflow/SKILL.md` as the canonical source path.
-    validationSummary: npm run check, npm run test, npm run build, npm run verify:package-install, npm run verify:site-lifecycle, npm run prepare:publish-package -- --out .tmp/publish-stage, npm pack --dry-run
+    validationSummary: npm run check, npm run test, npm run build, npm run verify:package-install, npm run verify:site-lifecycle, npm run prepare:publish-package -- --out .tmp/apcc-publish, npm run prepare:publish-package -- --out .tmp/apcc-scoped-publish --name @rendo-studio/apcc, npm pack --dry-run, GitHub release v0.2.0, npm publish apcc@0.2.0, npm publish @rendo-studio/apcc@0.2.0
     createdAt: 2026-04-28T00:00:00.000Z
-    recordedAt: 2026-04-28T00:00:00.000Z
+    recordedAt: 2026-04-27T23:01:58.4663767Z
   - id: 0-1-0-apcc-public-baseline
     version: 0.1.0
     title: APCC public baseline
