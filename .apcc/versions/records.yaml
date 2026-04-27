@@ -1,4 +1,27 @@
 items:
+  - id: 0-2-0-doctor-and-workflow-skill-standardization
+    version: 0.2.0
+    title: Doctor and workflow skill standardization
+    summary: First minor release after 0.1.2 that standardizes workspace diagnostics on ACLIP doctor surfaces, aligns the APCC workflow guide with canonical skill-package export hooks, and finalizes the current docs-site and scaffold ergonomics changes.
+    docPath: internal/versions/0-2-0-doctor-and-workflow-skill-standardization.md
+    status: recorded
+    decisionRefs: []
+    highlights:
+      - Replaces the legacy `apcc validate` command with the ACLIP-standard `apcc doctor check` and `apcc doctor fix` surfaces, with slimmer Markdown output and cleaner JSON payloads.
+      - Standardizes the workflow guide as a canonical skill package at `assets/skills/apcc-workflow/SKILL.md`, registers it through ACLIP CLI skill hooks, and keeps `init` plus `guide workflow` aligned to that source.
+      - Keeps docs-site runtime wording on the `site start` and `site status` surface, makes the root locale routing respect the workspace docs language, and preserves live runtime collaboration ergonomics.
+      - Uses `meta.json` rather than `.gitkeep` for scaffolded docs package placeholders and reading-order metadata across the repository docs directories.
+      - Verifies the installed-package binary, deployable docs-site build, and lifecycle flows against the current command surface before release.
+    breakingChanges:
+      - `apcc validate` has been removed; use `apcc doctor check` and `apcc doctor fix`.
+      - `apcc site open` has been removed; use `apcc site start`.
+    migrationNotes:
+      - Update any automation or documentation that still shells out to `apcc validate` so it calls the doctor surface instead.
+      - Update any scripts or habits using `apcc site open` to `apcc site start`.
+      - If you consume the workflow skill package as a source artifact, use `assets/skills/apcc-workflow/SKILL.md` as the canonical source path.
+    validationSummary: npm run check, npm run test, npm run build, npm run verify:package-install, npm run verify:site-lifecycle, npm run prepare:publish-package -- --out .tmp/publish-stage, npm pack --dry-run
+    createdAt: 2026-04-28T00:00:00.000Z
+    recordedAt: 2026-04-28T00:00:00.000Z
   - id: 0-1-0-apcc-public-baseline
     version: 0.1.0
     title: APCC public baseline

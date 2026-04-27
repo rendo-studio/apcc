@@ -158,8 +158,8 @@ export async function createWorkspaceFixture(input: WorkspaceFixtureInput = {}) 
 `
     )
   );
-  await writeText(path.join(root, "docs", "public", ".gitkeep"), "");
-  await writeText(path.join(root, "docs", "internal", ".gitkeep"), "");
+  await writeText(path.join(root, "docs", "public", "meta.json"), "{}\n");
+  await writeText(path.join(root, "docs", "internal", "meta.json"), "{}\n");
   await writeText(
     path.join(root, "docs", "project", "overview.md"),
     doc(

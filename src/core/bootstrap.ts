@@ -5,7 +5,7 @@ import { parse, stringify } from "yaml";
 
 import { inspectGuidanceArtifacts, syncGuidanceArtifacts } from "./guidance.js";
 import { writeText, writeYamlFile } from "./storage.js";
-import { normalizeDocsLanguage, normalizeWorkspaceConfig } from "./workspace-config.js";
+import { loadWorkspaceConfig, normalizeDocsLanguage, normalizeWorkspaceConfig } from "./workspace-config.js";
 import type {
   DocsLanguage,
   GoalState,
@@ -172,6 +172,13 @@ async function resolveInitStrategy(root: string): Promise<"new" | "existing"> {
   }
 
   return "existing";
+}
+
+function hasExistingWorkspaceConfig(root: string): boolean {
+  return (
+    existsSync(path.join(root, ".apcc", "config", "workspace.yaml")) ||
+    existsSync(path.join(root, ".apcc", "meta", "workspace.yaml"))
+  );
 }
 
 function buildEndGoal(
@@ -516,7 +523,8 @@ function buildDocsFiles(
   ];
 }
 
-function buildDocsTextFiles(): ManagedTextFile[] {
+function buildDocsTextFiles(docsLanguage: DocsLanguage): ManagedTextFile[] {
+  const sharedPages = docsLanguage === "zh-CN" ? ["概览", "目标"] : ["overview", "goal"];
   return [
     {
       relativePath: "docs/meta.json",
@@ -529,12 +537,22 @@ function buildDocsTextFiles(): ManagedTextFile[] {
       )}\n`
     },
     {
-      relativePath: "docs/public/.gitkeep",
-      content: ""
+      relativePath: "docs/shared/meta.json",
+      content: `${JSON.stringify(
+        {
+          pages: sharedPages
+        },
+        null,
+        2
+      )}\n`
     },
     {
-      relativePath: "docs/internal/.gitkeep",
-      content: ""
+      relativePath: "docs/public/meta.json",
+      content: "{}\n"
+    },
+    {
+      relativePath: "docs/internal/meta.json",
+      content: "{}\n"
     }
   ];
 }
@@ -673,9 +691,15 @@ async function bootstrapWorkspace(input: BootstrapInput): Promise<BootstrapResul
   const activeChangeId = `bootstrap-${slugify(projectName) || "project"}`;
   const force = Boolean(input.force);
   const preserveExistingDocs = Boolean(input.preserveExistingDocs);
-  const projectKind = input.projectKind ?? "general";
-  const docsMode = input.docsMode ?? "standard";
-  const docsLanguage = normalizeDocsLanguage(input.docsLanguage);
+  const existingWorkspaceConfig = hasExistingWorkspaceConfig(root)
+    ? await loadWorkspaceConfig(root).catch(() => null)
+    : null;
+  const projectKind = input.projectKind ?? existingWorkspaceConfig?.projectKind ?? "general";
+  const docsMode = input.docsMode ?? existingWorkspaceConfig?.docsMode ?? "standard";
+  const docsLanguage =
+    input.docsLanguage !== undefined
+      ? normalizeDocsLanguage(input.docsLanguage)
+      : existingWorkspaceConfig?.docsLanguage ?? "en";
   const hasExplicitProjectSummary = Boolean(input.projectSummary?.trim());
   const hasExplicitEndGoal = Boolean(input.endGoalName?.trim() && input.endGoalSummary?.trim());
   const endGoal = buildEndGoal(
@@ -728,7 +752,7 @@ async function bootstrapWorkspace(input: BootstrapInput): Promise<BootstrapResul
     await upsertManagedDoc(root, doc, force, allowMergeExistingDocs, result);
   }
 
-  for (const file of buildDocsTextFiles()) {
+  for (const file of buildDocsTextFiles(docsLanguage)) {
     await writeManagedTextFile(root, file, force, initStrategy === "new", result);
   }
 

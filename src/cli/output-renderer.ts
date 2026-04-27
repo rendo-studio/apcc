@@ -1,3 +1,5 @@
+import type { DoctorCheckStatus } from "@rendo-studio/aclip";
+
 function ensureTrailingNewline(value: string): string {
   return value.endsWith("\n") ? value : `${value}\n`;
 }
@@ -194,6 +196,10 @@ function renderSite(payload: Record<string, unknown>): string {
     lines.push(`- URL: ${payload.url}`);
   }
 
+  if (typeof payload.state === "string") {
+    lines.push(`- State: ${inlineCode(payload.state)}`);
+  }
+
   if (typeof payload.port === "number") {
     lines.push(`- Port: ${inlineCode(String(payload.port))}`);
   }
@@ -204,6 +210,10 @@ function renderSite(payload: Record<string, unknown>): string {
 
   if (typeof payload.runtimeMode === "string") {
     lines.push(`- Runtime mode: ${inlineCode(payload.runtimeMode)}`);
+  }
+
+  if (typeof payload.docsLanguage === "string") {
+    lines.push(`- Docs language: ${inlineCode(payload.docsLanguage)}`);
   }
 
   if (typeof payload.preferredPort === "number") {
@@ -250,8 +260,24 @@ function renderSite(payload: Record<string, unknown>): string {
     lines.push(`- Reused existing runtime: ${payload.alreadyRunning ? "yes" : "no"}`);
   }
 
+  if (typeof payload.healthy === "boolean") {
+    lines.push(`- Healthy: ${payload.healthy ? "yes" : "no"}`);
+  }
+
+  if (typeof payload.runtimePresent === "boolean") {
+    lines.push(`- Runtime present: ${payload.runtimePresent ? "yes" : "no"}`);
+  }
+
   if (typeof payload.pid === "number") {
     lines.push(`- PID: ${inlineCode(String(payload.pid))}`);
+  }
+
+  if (typeof payload.watcherPid === "number") {
+    lines.push(`- Watcher PID: ${inlineCode(String(payload.watcherPid))}`);
+  }
+
+  if (typeof payload.startedAt === "string" && payload.startedAt.length > 0) {
+    lines.push(`- Started at: ${payload.startedAt}`);
   }
 
   if (typeof payload.logFile === "string") {
@@ -501,61 +527,104 @@ function renderVersionPayload(payload: Record<string, unknown>): string {
   return renderVersionRecord(isRecord(payload.version) ? payload.version : payload);
 }
 
-function renderValidationSnapshot(payload: Record<string, unknown>): string {
-  const missingFiles = asStringArray(payload.missingFiles);
-  const schemaIssues = asStringArray(payload.schemaIssues);
-  const warnings = asStringArray(payload.warnings);
-  const repairableIssues = asStringArray(payload.repairableIssues);
+function getDoctorStatus(checks: Array<Record<string, unknown>>): string | null {
+  const PASS_STATUS: DoctorCheckStatus = "pass";
+  const WARN_STATUS: DoctorCheckStatus = "warn";
+  const FAIL_STATUS: DoctorCheckStatus = "fail";
+  let highestRank = -1;
+  let selectedStatus: string | null = null;
 
-  const lines = [
-    "# Validation",
-    "",
-    `- OK: ${payload.ok === true ? "yes" : "no"}`,
-    `- Repair needed: ${payload.repairNeeded === true ? "yes" : "no"}`,
-    `- End goal name: ${typeof payload.endGoalName === "string" ? payload.endGoalName : "Unknown"}`,
-    `- Task count: ${typeof payload.taskCount === "number" ? inlineCode(String(payload.taskCount)) : "Unknown"}`
-  ];
+  for (const check of checks) {
+    if (typeof check.status !== "string") {
+      continue;
+    }
 
-  lines.push(
-    "",
-    renderSection("Missing Files", renderList(missingFiles)),
-    "",
-    renderSection("Schema Issues", renderList(schemaIssues)),
-    "",
-    renderSection("Warnings", renderList(warnings)),
-    "",
-    renderSection("Repairable Issues", renderList(repairableIssues))
-  );
+    const rank =
+      check.status === FAIL_STATUS ? 2 :
+      check.status === WARN_STATUS ? 1 :
+      check.status === PASS_STATUS ? 0 :
+      -1;
 
-  return ensureTrailingNewline(lines.join("\n"));
+    if (rank > highestRank) {
+      highestRank = rank;
+      selectedStatus = check.status;
+    }
+  }
+
+  return selectedStatus;
 }
 
-function renderValidationPayload(payload: Record<string, unknown>): string {
-  const validation = isRecord(payload.validation) ? payload.validation : payload;
-  if (validation.repaired === true) {
-    const workspace = isRecord(validation.workspace) ? validation.workspace : {};
-    const nested = isRecord(validation.validation) ? validation.validation : {};
-    return ensureTrailingNewline(
-      [
-        "# Validation Repair",
-        "",
-        `- Repaired: yes`,
-        `- Mode: ${typeof workspace.mode === "string" ? inlineCode(workspace.mode) : "Unknown"}`,
-        `- Root: ${typeof workspace.root === "string" ? inlineCode(workspace.root) : "Unknown"}`,
-        `- Active change: ${typeof workspace.activeChangeId === "string" ? inlineCode(workspace.activeChangeId) : "Unknown"}`,
-        "",
-        renderSection("Created Files", renderList(asStringArray(workspace.createdFiles))),
-        "",
-        renderSection("Updated Files", renderList(asStringArray(workspace.updatedFiles))),
-        "",
-        renderSection("Skipped Files", renderList(asStringArray(workspace.skippedFiles))),
-        "",
-        renderValidationSnapshot(nested).trim()
-      ].join("\n")
+function renderDoctorChecks(checks: Array<Record<string, unknown>>): string {
+  if (checks.length === 0) {
+    return "- No checks reported.";
+  }
+
+  return checks
+    .map((check) => {
+      const tags = [
+        typeof check.status === "string" ? inlineCode(check.status) : null,
+        typeof check.severity === "string" ? inlineCode(check.severity) : null,
+        typeof check.category === "string" ? inlineCode(check.category) : null
+      ].filter((item): item is string => Boolean(item));
+      const header = `- ${typeof check.id === "string" ? inlineCode(check.id) : inlineCode("check")} | ${tags.join(" | ")}: ${typeof check.summary === "string" ? check.summary : "Unknown check summary"}`;
+      const detailLines: string[] = [];
+
+      if (typeof check.hint === "string" && check.hint.trim().length > 0) {
+        detailLines.push(`  Hint: ${check.hint}`);
+      }
+
+      for (const remediation of asRecordArray(check.remediation)) {
+        const parts = [typeof remediation.summary === "string" ? remediation.summary : "Unnamed remediation"];
+        if (typeof remediation.command === "string" && remediation.command.trim().length > 0) {
+          parts.push(inlineCode(remediation.command));
+        }
+        if (remediation.automatable === true) {
+          parts.push("automatable");
+        }
+        detailLines.push(`  Remediation: ${parts.join(" | ")}`);
+      }
+
+      return [header, ...detailLines].join("\n");
+    })
+    .join("\n");
+}
+
+function renderDoctorPayload(payload: Record<string, unknown>): string {
+  const doctor = isRecord(payload.doctor) ? payload.doctor : payload;
+  const workspace = isRecord(doctor.workspace) ? doctor.workspace : {};
+  const checks = asRecordArray(doctor.checks);
+  const lines = [doctor.repaired === true ? "# Doctor Fix" : "# Doctor", ""];
+  const status = getDoctorStatus(checks);
+
+  if (status) {
+    lines.push(`- Status: ${inlineCode(status)}`);
+  }
+  if (doctor.repaired === true) {
+    lines.push(`- Repaired: yes`);
+  }
+
+  if (typeof doctor.guidance_md === "string" && doctor.guidance_md.trim().length > 0) {
+    lines.push("", renderSection("Guidance", doctor.guidance_md));
+  }
+
+  lines.push("", renderSection("Checks", renderDoctorChecks(checks)));
+
+  if (doctor.repaired === true) {
+    lines.push(
+      "",
+      `- Mode: ${typeof workspace.mode === "string" ? inlineCode(workspace.mode) : "Unknown"}`,
+      `- Root: ${typeof workspace.root === "string" ? inlineCode(workspace.root) : "Unknown"}`,
+      `- Active change: ${typeof workspace.activeChangeId === "string" ? inlineCode(workspace.activeChangeId) : "Unknown"}`,
+      "",
+      renderSection("Created Files", renderList(asStringArray(workspace.createdFiles))),
+      "",
+      renderSection("Updated Files", renderList(asStringArray(workspace.updatedFiles))),
+      "",
+      renderSection("Skipped Files", renderList(asStringArray(workspace.skippedFiles)))
     );
   }
 
-  return renderValidationSnapshot(validation);
+  return ensureTrailingNewline(lines.join("\n"));
 }
 
 function renderBootstrapPayload(kind: "init", payload: Record<string, unknown>): string {
@@ -641,8 +710,8 @@ function renderSuccessPayload(payload: unknown): string {
     return renderVersionPayload(payload);
   }
 
-  if ("validation" in payload) {
-    return renderValidationPayload(payload);
+  if ("doctor" in payload || "checks" in payload) {
+    return renderDoctorPayload(payload);
   }
 
   if ("init" in payload) {

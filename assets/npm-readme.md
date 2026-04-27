@@ -34,8 +34,8 @@ Use the same flow for a new directory or an existing repository:
 ```bash
 apcc guide
 apcc init
-apcc site open
-apcc status show
+apcc site start
+apcc status
 ```
 
 If the repository's primary authored docs language should not be English:
@@ -54,7 +54,7 @@ apcc site build
 
 - `docs/` for authored context
 - `.apcc/` for structured project state
-- a CLI for initialization, validation, mutation, and runtime control
+- a CLI for initialization, doctor diagnostics and repair, mutation, and runtime control
 - a local docs site for human-readable inspection
 - an agent workflow guide for consistent development behavior
 

@@ -85,7 +85,7 @@ export function registerInitCommand(app: AclipApp) {
       }),
       stringArgument("docsLanguage", {
         required: false,
-        description: "Optional primary docs language: en or zh-CN. Defaults to en.",
+        description: "Optional primary docs language: en or zh-CN. Defaults to en for new workspaces and to the persisted docs language for existing APCC workspaces.",
         flag: "--docs-language"
       }),
       booleanArgument("force", {

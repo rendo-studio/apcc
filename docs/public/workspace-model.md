@@ -86,7 +86,7 @@ Persisted explicitly:
 - doc references
 - decision and version records
 
-This keeps direct workspace edits safe. After editing `.apcc/`, run `apcc validate` and inspect the derived view with `apcc status show`.
+This keeps direct workspace edits safe. After editing `.apcc/`, run `apcc doctor check` and inspect the derived view with `apcc status`.
 
 ## `docPath` Rule
 
@@ -105,4 +105,4 @@ This keeps APCC neutral. The runtime should not infer business meaning from fixe
 
 Runtime artifacts do not belong in authored docs or structured control-plane files.
 
-`apcc site open` stages runtime data for the live local docs site. `apcc site build` creates a deployable read-only artifact. Both are generated outputs, not source-of-truth project context.
+`apcc site start` stages runtime data for the live local docs site. `apcc site build` creates a deployable read-only artifact. Both are generated outputs, not source-of-truth project context.

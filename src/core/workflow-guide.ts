@@ -16,8 +16,12 @@ function packageRoot(): string {
   return path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 }
 
+export function getWorkflowSkillPackageDir(): string {
+  return path.join(packageRoot(), "assets", "skills", "apcc-workflow");
+}
+
 export function getWorkflowGuideAssetPath(): string {
-  return path.join(packageRoot(), "assets", "workflow-guide.md");
+  return path.join(getWorkflowSkillPackageDir(), "SKILL.md");
 }
 
 export function getPublicGuideDocsPath(): string {
@@ -108,7 +112,7 @@ export async function listGuideTopics(): Promise<GuideTopic[]> {
     {
       topic: "workflow",
       title: "APCC Workflow Guide",
-      description: "Agent-first workflow guidance generated into .agents/skills/apcc-workflow/SKILL.md.",
+      description: "Agent-first workflow guidance sourced from the canonical APCC workflow skill package.",
       source: "workflow",
       path: getWorkflowGuideAssetPath()
     },

@@ -34,19 +34,19 @@ npm run verify:site-lifecycle
 
 `site build` is the public deployable docs-site build. It should produce a runnable artifact, not rebuild the internal shared shell in place.
 
-Add `site open` smoke checks when the runtime lifecycle, docs rendering, or console views changed.
+Add `site start` smoke checks when the runtime lifecycle, docs rendering, or console views changed.
 
 For lifecycle changes, verify the commands serially:
 
 1. `npm run dev -- site stop`
-2. `npm run dev -- site open`
-3. `npm run dev -- site open`
+2. `npm run dev -- site start`
+3. `npm run dev -- site start`
 4. `npm run dev -- site clean`
 
 Expected result:
 
-- the first open starts a runtime
-- the second open reuses the same runtime
+- the first start creates a runtime
+- the second start reuses the same runtime
 - stop preserves the runtime directory
 - clean removes the runtime directory
 - the runtime root does not install its own `node_modules`
@@ -55,7 +55,7 @@ Expected result:
 - the deployable build artifact contains `server.js`, `start.mjs`, and `runtime-data/docs-viewer.json`
 - editing an authored doc updates the rendered page without restarting the shell
 - repeated authored doc edits continue to advance runtime version data instead of only reacting to the first change
-- stale runtime registry metadata does not force a manual clean; the next `site open` still starts a fresh healthy runtime
+- stale runtime registry metadata does not force a manual clean; the next `site start` still starts a fresh healthy runtime
 
 CI should also run the same verification on Windows, Linux, and macOS.
 
@@ -73,7 +73,7 @@ npm run build
 npm run verify:package-install
 ```
 
-The package install smoke check must pack the current repository, install the tarball into a temporary project, execute the package-manager generated `apcc` binary, initialize a temporary workspace, validate that workspace, and build a deployable docs-site artifact from the installed package.
+The package install smoke check must pack the current repository, install the tarball into a temporary project, execute the package-manager generated `apcc` binary, initialize a temporary workspace, run `apcc doctor check` and `apcc doctor fix` on that workspace, and build a deployable docs-site artifact from the installed package.
 
 ## Control-Plane Changes
 

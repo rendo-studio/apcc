@@ -1,9 +1,10 @@
+import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { existsSync } from "node:fs";
 
 import { readText, writeText } from "./storage.js";
-import { loadWorkflowGuide } from "./workflow-guide.js";
+import { getWorkflowSkillPackageDir } from "./workflow-guide.js";
 
 const APCC_AGENTS_BEGIN = "<!-- APCC:BEGIN -->";
 const APCC_AGENTS_END = "<!-- APCC:END -->";
@@ -14,6 +15,10 @@ function packageRoot(): string {
 
 function workflowSkillPath(root = process.cwd()): string {
   return path.join(root, ".agents", "skills", "apcc-workflow", "SKILL.md");
+}
+
+function workflowSkillDir(root = process.cwd()): string {
+  return path.dirname(workflowSkillPath(root));
 }
 
 function agentsMdPath(root = process.cwd()): string {
@@ -91,17 +96,19 @@ export async function inspectGuidanceArtifacts(root = process.cwd()) {
 }
 
 export async function syncGuidanceArtifacts(root = process.cwd()) {
-  const guide = await loadWorkflowGuide();
-  const workflowSkillContent = guide.markdown;
   const agentsTemplate = await loadAgentsTemplate();
 
+  const sourceSkillDir = getWorkflowSkillPackageDir();
   const workflowPath = workflowSkillPath(root);
+  const workflowDir = workflowSkillDir(root);
   const agentsPath = agentsMdPath(root);
   const agentsContent = existsSync(agentsPath)
     ? mergeAgentsMd(await readText(agentsPath), agentsTemplate)
     : renderStandaloneAgentsMd(agentsTemplate);
 
-  await writeText(workflowPath, workflowSkillContent);
+  await fs.rm(workflowDir, { recursive: true, force: true });
+  await fs.mkdir(path.dirname(workflowDir), { recursive: true });
+  await fs.cp(sourceSkillDir, workflowDir, { recursive: true });
   await writeText(agentsPath, agentsContent);
 
   return {

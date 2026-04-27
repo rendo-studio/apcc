@@ -5,6 +5,7 @@ import path from "node:path";
 import {
   getPublicGuideDocsPath,
   getWorkflowGuideAssetPath,
+  getWorkflowSkillPackageDir,
   listPublicGuideTopics,
   loadGuide,
   loadWorkflowGuide
@@ -15,6 +16,7 @@ describe("workflow guide", () => {
     const guide = await loadWorkflowGuide();
 
     expect(getWorkflowGuideAssetPath()).toContain("assets");
+    expect(getWorkflowGuideAssetPath()).toBe(path.join(getWorkflowSkillPackageDir(), "SKILL.md"));
     expect(guide.title).toBe("APCC Workflow Guide");
     expect(guide.markdown).toContain("# APCC Workflow Guide");
     expect(guide.markdown).toContain("apcc guide workflow");
@@ -25,8 +27,8 @@ describe("workflow guide", () => {
     expect(guide.markdown).toContain("## Goal-Driven Development");
     expect(guide.markdown).toContain("do not silently substitute a one-line feature request for a project definition");
     expect(guide.markdown).toContain("## Cold Round Start");
-    expect(guide.markdown).toContain("apcc site open");
-    expect(guide.markdown).toContain("do not rerun `site open` or `status show` by default");
+    expect(guide.markdown).toContain("apcc site start");
+    expect(guide.markdown).toContain("do not rerun `site start` or `status` by default");
     expect(guide.markdown).toContain("## Inspect Only If Needed");
     expect(guide.markdown).toContain("## Refresh The Workspace First");
     expect(guide.markdown).toContain("apcc init");

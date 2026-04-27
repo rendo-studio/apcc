@@ -1,0 +1,9 @@
+{
+  "pages": [
+    "maintainer-workflow",
+    "verification",
+    "architecture",
+    "prebuilt-docs-runtime",
+    "versions"
+  ]
+}

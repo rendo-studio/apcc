@@ -6,7 +6,13 @@ import os from "node:os";
 import path from "node:path";
 
 import { initWorkspace } from "../src/core/bootstrap.js";
-import { buildSiteRuntime, cleanSiteRuntime, openSiteRuntime, stopSiteRuntime } from "../src/core/site.js";
+import {
+  buildSiteRuntime,
+  cleanSiteRuntime,
+  getSiteRuntimeStatus,
+  startSiteRuntime,
+  stopSiteRuntime
+} from "../src/core/site.js";
 
 interface RegistrySnapshot {
   siteId?: string;
@@ -125,22 +131,31 @@ async function main() {
       docsLanguage: "zh-CN"
     });
 
-    const first = await openSiteRuntime(workspaceRoot, { port: requestedPort });
+    const statusBeforeStart = await getSiteRuntimeStatus(workspaceRoot);
+    assert.equal(statusBeforeStart.state, "absent", "site status should report absent before the first start");
+
+    const first = await startSiteRuntime(workspaceRoot, { port: requestedPort });
     const firstRegistry = await readRegistry(first.runtimeRoot);
     const siteOrigin = new URL(first.url).origin;
+    const bareRootResponse = await fetch(siteOrigin, { redirect: "manual" });
     const firstHomeResponse = await fetch(first.url);
     const overviewUrl = `${siteOrigin}/zh-CN/docs/shared/${encodeURIComponent("概览")}`;
     const firstResponse = await fetch(overviewUrl);
 
-    assert.equal(first.alreadyRunning, false, "first site open should start a fresh runtime");
-    assert.equal(first.port, requestedPort, "site open should honor an explicit requested port");
+    assert.equal(first.alreadyRunning, false, "first site start should start a fresh runtime");
+    assert.equal(first.port, requestedPort, "site start should honor an explicit requested port");
     assert.equal(firstRegistry.pid, first.pid, "registry pid should match the started runtime pid");
     assert.equal(firstRegistry.port, first.port, "registry port should match the started runtime port");
     assert.equal(firstRegistry.url, first.url, "registry url should match the started runtime url");
     assert.equal(
+      bareRootResponse.headers.get("location"),
+      "/zh-CN/docs/console",
+      "the bare site root should respect the workspace docs language"
+    );
+    assert.equal(
       new URL(firstHomeResponse.url).pathname,
-      "/zh-CN/docs/console/plans",
-      "the docs-site root should land on the localized console plan view"
+      "/zh-CN/docs/console",
+      "the docs-site root should land on the localized console overview"
     );
     assert.equal(firstResponse.status, 200, "prebuilt runtime should serve the localized overview page");
     assert.equal(nodeFs.existsSync(path.join(first.runtimeRoot, "server.js")), false, "runtime root should not carry a copied shell server");
@@ -162,10 +177,15 @@ async function main() {
     assert.equal(registryAfterBuild.mode, "live", "site build should not downgrade live runtime metadata");
     assert.equal(responseAfterBuild.status, 200, "live runtime should remain reachable after site build");
 
-    const second = await openSiteRuntime(workspaceRoot, { port: requestedPort });
+    const statusAfterStart = await getSiteRuntimeStatus(workspaceRoot);
+    assert.equal(statusAfterStart.state, "live", "site status should report live after start");
+    assert.equal(statusAfterStart.port, requestedPort, "site status should expose the live port");
+    assert.equal(statusAfterStart.url, first.url, "site status should expose the live url");
+
+    const second = await startSiteRuntime(workspaceRoot, { port: requestedPort });
     const secondRegistry = await readRegistry(second.runtimeRoot);
 
-    assert.equal(second.alreadyRunning, true, "second site open should reuse the healthy runtime");
+    assert.equal(second.alreadyRunning, true, "second site start should reuse the healthy runtime");
     assert.equal(second.runtimeRoot, first.runtimeRoot, "reused runtime root should stay stable");
     assert.equal(second.port, requestedPort, "reused runtime should preserve the explicit port");
     assert.equal(secondRegistry.pid, firstRegistry.pid, "reused runtime pid should stay stable");
@@ -242,10 +262,12 @@ async function main() {
 
     const stopped = await stopSiteRuntime(workspaceRoot);
     const stoppedRegistry = await readRegistry(first.runtimeRoot);
+    const statusAfterStop = await getSiteRuntimeStatus(workspaceRoot);
 
     assert.equal(stopped.preservedRuntime, true, "site stop should preserve the staged runtime");
     assert.equal(stoppedRegistry.pid, null, "site stop should clear the runtime pid");
     assert.equal(stoppedRegistry.watcherPid, null, "site stop should clear the watcher pid");
+    assert.equal(statusAfterStop.state, "staged", "site status should report staged after stop");
 
     const stalePid = 999_991;
     const staleWatcherPid = 999_992;
@@ -257,10 +279,10 @@ async function main() {
       mode: "live"
     });
 
-    const restarted = await openSiteRuntime(workspaceRoot);
+    const restarted = await startSiteRuntime(workspaceRoot);
     const restartedRegistry = await readRegistry(restarted.runtimeRoot);
 
-    assert.equal(restarted.alreadyRunning, false, "site open after stop should start a fresh runtime");
+    assert.equal(restarted.alreadyRunning, false, "site start after stop should start a fresh runtime");
     assert.notEqual(
       restartedRegistry.startedAt,
       firstRegistry.startedAt,
@@ -269,17 +291,19 @@ async function main() {
     assert.notEqual(
       restartedRegistry.pid,
       stalePid,
-      "site open should ignore a stale runtime pid and start a fresh runtime"
+      "site start should ignore a stale runtime pid and start a fresh runtime"
     );
     assert.notEqual(
       restartedRegistry.watcherPid,
       staleWatcherPid,
-      "site open should ignore a stale watcher pid and start a fresh watcher"
+      "site start should ignore a stale watcher pid and start a fresh watcher"
     );
 
     const cleaned = await cleanSiteRuntime(workspaceRoot);
+    const statusAfterClean = await getSiteRuntimeStatus(workspaceRoot);
 
     assert.equal(cleaned.cleaned, true, "site clean should remove the runtime root");
+    assert.equal(statusAfterClean.state, "absent", "site status should return to absent after clean");
     await assert.rejects(
       fs.stat(restarted.runtimeRoot),
       "site clean should remove the runtime root from disk"

@@ -104,7 +104,7 @@ export default async function Page(props: {
   }
 
   if (!useConsoleView && key === "") {
-    redirect(`/${lang}/docs/console/plans`);
+    redirect(`/${lang}/docs/console`);
   }
 
   if (!useConsoleView && !page) {

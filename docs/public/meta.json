@@ -1,0 +1,10 @@
+{
+  "pages": [
+    "quickstart",
+    "cli",
+    "workspace-model",
+    "docs-package",
+    "docs-site",
+    "decisions-and-versions"
+  ]
+}

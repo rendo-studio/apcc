@@ -1,5 +1,5 @@
 ---
-name: APCC Workflow Guide
+name: apcc-workflow
 description: Canonical Agent-first workflow guidance for operating an APCC workspace.
 ---
 
@@ -91,23 +91,23 @@ Only cold rounds require the full round-start sequence.
 Run, in order:
 
 ```bash
-apcc site open
-apcc status show
+apcc site start
+apcc status
 ```
 
-If this is the first open for a workspace and the human is likely to revisit the docs site, prefer a stable unique port:
+If this is the first start for a workspace and the human is likely to revisit the docs site, prefer a stable unique port:
 
 ```bash
-apcc site open --port 4317
+apcc site start --port 4317
 ```
 
 Then apply this rule:
 
-- if `status show` already gives you the project identity, goal, phase, next actions, and blockers, start work
+- if `status` already gives you the project identity, goal, phase, next actions, and blockers, start work
 - inspect more files only if something is still unclear
 - if the project identity or long-lived goal is still unclear, clarify them before implementation
 - if a human may have changed files, inspect the touched workspace surface directly before continuing
-- after `site open`, tell the human the returned docs-site URL explicitly
+- after `site start`, tell the human the returned docs-site URL explicitly
 - keep the docs site running unless the human explicitly asks you to stop or clean it
 
 ## Warm Continuation
@@ -115,7 +115,7 @@ Then apply this rule:
 In a warm continuation:
 
 - continue directly on the current task
-- do not rerun `site open` or `status show` by default
+- do not rerun `site start` or `status` by default
 - do not re-read `.apcc` or `docs` just to satisfy ritual
 - only re-sync when a real trigger appears
 
@@ -125,7 +125,7 @@ This is the main token-saving rule. APCC should reduce uncertainty, not create m
 
 Use the smallest re-sync that closes the uncertainty.
 
-Run `apcc status show` when:
+Run `apcc status` when:
 
 - the current goal is unclear
 - the current phase is unclear
@@ -133,11 +133,17 @@ Run `apcc status show` when:
 - blockers may have changed
 - you need to refresh your control-plane picture before editing `.apcc`
 
-Run `apcc site open` when:
+Run `apcc site start` when:
 
 - you or the human need the docs-site or Console view
 - you want to verify the projected docs/runtime state visually
-- you want to give the human a stable local docs-site URL; on first open prefer `--port <unique-port>` or a workspace `docsSite.preferredPort`
+- you want to give the human a stable local docs-site URL; on first start prefer `--port <unique-port>` or a workspace `docsSite.preferredPort`
+
+Run `apcc site status` when:
+
+- you need to know whether a previously started docs runtime is still live
+- you want to decide whether a new `site start` is necessary without touching the runtime
+- you need the current runtime URL only if a healthy live instance still exists
 
 Inspect touched files directly when:
 
@@ -149,7 +155,7 @@ Do not promote these actions into mandatory every-turn overhead.
 
 ## Inspect Only If Needed
 
-After `status show`, inspect the smallest surface that answers the remaining question.
+After `status`, inspect the smallest surface that answers the remaining question.
 
 Read `.apcc/project/overview.yaml` only if:
 
@@ -213,10 +219,13 @@ APCC recommends a minimal authored docs profile for general projects:
 docs/
   meta.json
   shared/
+    meta.json
     overview.md
     goal.md
   public/
+    meta.json
   internal/
+    meta.json
 ```
 
 The tree above is the default English scaffold. Repositories using another primary docs language may use localized anchor filenames instead.
@@ -226,6 +235,8 @@ Treat it as a best-practice reference, not a mandatory directory contract.
 Use:
 
 - `docs/meta.json` to define the intended top-level docs-site order when the default scaffold is enough
+- `docs/shared/meta.json` to define the intended order of the shared anchor pages
+- `docs/public/meta.json` and `docs/internal/meta.json` as the preferred empty-directory placeholders and later navigation-order files
 - `docs/shared/overview.md` for what the project is
 - `docs/shared/goal.md` for where the project is trying to go
 - `docs/public/` for external-facing authored docs
@@ -290,19 +301,19 @@ Use direct `.apcc/` edits as the best practice when:
 Use CLI as the best practice when:
 
 - initializing a workspace in a new or existing repository
-- validating and repairing the workspace
+- running workspace diagnostics and repair
 - starting, building, or cleaning the docs site
 - making small targeted control-plane mutations
 - discovering command arguments and examples through help
 
-CLI mutation commands should return concise deltas. They are not a replacement for direct structured edits when many plans or tasks need to move together. After direct `.apcc/` edits, run `apcc validate` and an explicit inspection command such as `apcc status show`, `apcc plan show`, or `apcc task list`.
+CLI mutation commands should return concise deltas. They are not a replacement for direct structured edits when many plans or tasks need to move together. After direct `.apcc/` edits, run `apcc doctor check` and an explicit inspection command such as `apcc status`, `apcc plan show`, or `apcc task list`.
 
 Important rules:
 
 - `.apcc` should persist explicit facts, not derived execution caches
 - progress and plan execution status are derived at read time from the current plan and task trees
 - CLI mutations do not require a manual sync step to make derived views correct
-- direct edits to `.apcc/` are reflected automatically in `apcc status show`, `apcc plan show`, and the docs-site snapshot
+- direct edits to `.apcc/` are reflected automatically in `apcc status`, `apcc plan show`, and the docs-site snapshot
 - there is no manual sync ritual in the normal operating loop
 - do not treat CLI as the only valid way to edit the control plane
 
@@ -365,11 +376,11 @@ apcc init --project-name Existing --project-summary "Existing repository brought
 Immediately after `init`, run:
 
 ```bash
-apcc site open
-apcc status show
+apcc site start
+apcc status
 ```
 
-Use `apcc validate --repair` only when:
+Use `apcc doctor fix` only when:
 
 - the workspace looks incomplete or damaged
 - managed files are missing
@@ -458,18 +469,18 @@ docsSite:
 Rules:
 
 - `sourcePath` is workspace-relative
-- `preferredPort` is the preferred local port for `apcc site open`
-- `apcc site open --port <port>` overrides the current open without rewriting the workspace config
-- when `site open` runs without `--path`, it uses this persisted configuration
+- `preferredPort` is the preferred local port for `apcc site start`
+- `apcc site start --port <port>` overrides the current start without rewriting the workspace config
+- when `site start` runs without `--path`, it uses this persisted configuration
 
 ## First-Hour Loop
 
 The first-hour loop is a cold-start loop. It is not the right default for warm continuation.
 
 1. Initialize the workspace.
-2. Start the docs site with `apcc site open`.
-3. Run `apcc validate`.
-4. If validation exposes repairable issues, run `apcc validate --repair`.
+2. Start the docs site with `apcc site start`.
+3. Run `apcc doctor check`.
+4. If `apcc doctor check` reports repairable issues, run `apcc doctor fix`.
 5. Read the current anchors with:
 
 ```bash
@@ -477,14 +488,14 @@ apcc project show
 apcc goal show
 apcc plan show
 apcc task list
-apcc status show
+apcc status
 ```
 
 6. Make the current work explicit in `.apcc` before touching code.
 7. Complete one small loop, then re-check the derived view:
 
 ```bash
-apcc status show
+apcc status
 ```
 
 If you cannot explain the project overview, end goal, current plans, current tasks, and current docs-site URL, you are not ready to implement.
@@ -502,26 +513,27 @@ Record a formal decision when one of these changes:
 
 Do not force a decision record for ordinary in-scope implementation, low-risk refactors, or routine fixes.
 
-## Validation And Runtime
+## Doctor And Runtime
 
 Use these guardrails regularly:
 
 ```bash
-apcc site open
+apcc site status
+apcc site start
 apcc site stop
 apcc site build
 apcc site clean
 ```
 
-`site open` is the default live-refreshing local collaboration surface. It uses the APCC-packaged prebuilt viewer shell automatically. `site stop` stops the local runtime without purging it. `site build` creates a deployable read-only docs-site artifact and must not stop a healthy live runtime. `site clean` removes the staged runtime and is the heavy reset path.
+`site status` is the low-cost runtime probe. `site start` is the default live-refreshing local collaboration surface. It uses the APCC-packaged prebuilt viewer shell automatically. `site stop` stops the local runtime without purging it. `site build` creates a deployable read-only docs-site artifact and must not stop a healthy live runtime. `site clean` removes the staged runtime and is the heavy reset path.
 
 Important operating rule for development agents:
 
-- after `site open`, report the returned URL to the human
+- after `site start`, report the returned URL to the human
 - keep the site alive across normal task completion
 - use `site stop` or `site clean` only when the human explicitly asks for it or when you are intentionally resetting a runtime you own
 
-`validate --repair` is a repair command, not a mandatory every-round command. Use it when the workspace or managed files need recovery.
+`doctor fix` is a repair command, not a mandatory every-round command. Use it when the workspace or managed files need recovery.
 
 ## Success Criteria For A Correct Agent Loop
 
@@ -534,4 +546,4 @@ A correct Agent loop means all of the following are true:
 5. The long-lived end goal is explicit.
 6. The current plans and tasks are explicit when needed.
 7. One small task can move without losing context.
-8. The workspace can be validated and handed back without undocumented assumptions.
+8. The workspace can pass APCC doctor checks and be handed back without undocumented assumptions.

@@ -13,10 +13,13 @@ APCC recommends this minimal authored docs package:
 docs/
   meta.json
   shared/
+    meta.json
     overview.md
     goal.md
   public/
+    meta.json
   internal/
+    meta.json
 ```
 
 This is a recommendation and the default scaffold profile, not a runtime requirement.
@@ -31,12 +34,14 @@ If the repository's primary docs language is not English, the shared anchor file
 - what the project is
 - where the project is going
 - content referenced by `.apcc/project/overview.yaml` and `.apcc/goals/end.yaml`
+- `shared/meta.json` can make the shared-anchor reading order explicit, usually `overview` before `goal`
 
 `public/`
 
 - external-facing usage docs
 - material another developer needs to adopt and operate the project or framework
 - source material for public `apcc guide` topics when bundled with APCC itself
+- `public/meta.json` can stay empty at first and later become the navigation-order file for public docs
 
 `internal/`
 
@@ -44,11 +49,22 @@ If the repository's primary docs language is not English, the shared anchor file
 - repository-specific verification rules
 - implementation notes
 - release and packaging details
+- `internal/meta.json` can stay empty at first and later become the navigation-order file for internal docs
 
-`meta.json`
+`docs/meta.json`
 
 - top-level docs-site navigation order
 - a reading-experience hint, not a business-meaning contract
+
+`docs/shared/meta.json`
+
+- shared-section navigation order
+- a reading-experience hint, not a business-meaning contract
+
+`docs/public/meta.json` and `docs/internal/meta.json`
+
+- directory-presence placeholders that are also future navigation-order files
+- preferred over `.gitkeep` in the scaffold because they already match the docs-site metadata model
 
 ## `docs/public` And `apcc guide`
 
@@ -61,7 +77,7 @@ docs/public/quickstart.md -> apcc guide quickstart
 docs/public/docs-site.md  -> apcc guide docs-site
 ```
 
-Only `workflow` is special. It is reserved for the Agent workflow guide stored in `assets/workflow-guide.md` and generated into `.agents/skills/apcc-workflow/SKILL.md`.
+Only `workflow` is special. It is reserved for the Agent workflow guide stored in the canonical skill package at `assets/skills/apcc-workflow/SKILL.md` and generated into `.agents/skills/apcc-workflow/SKILL.md`.
 
 This keeps public docs extensible: adding, removing, or renaming a public Markdown file changes the guide topic list without requiring command-code changes.
 

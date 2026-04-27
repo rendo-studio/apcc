@@ -13,7 +13,7 @@ Each repository still has its own staged runtime data, but it no longer installs
 
 ## Runtime Model
 
-`apcc site open` now does four things:
+`apcc site start` now does four things:
 
 1. stage the docs package into the runtime root
 2. generate runtime data from staged docs and `.apcc`
@@ -72,7 +72,7 @@ The docs runtime no longer depends on:
 - per-project runtime `npm ci`
 - per-project `next build`
 
-The shared shell build is a maintainer/release concern. It runs through `npm run build` and is packaged under `dist/site-runtime-prebuilt/` before APCC is published. End users should not need to run a shell build before `apcc site open`.
+The shared shell build is a maintainer/release concern. It runs through `npm run build` and is packaged under `dist/site-runtime-prebuilt/` before APCC is published. End users should not need to run a shell build before `apcc site start`.
 
 `apcc site build` is not the shell build command. It copies the packaged shell and embeds a project snapshot into a deployable docs-site output directory.
 
@@ -84,7 +84,7 @@ The docs site should keep the same editing feedback loop as before:
 - revision state updates alongside authored docs changes
 - `version.json` changes so the browser refresh layer can detect the update
 - later authored docs edits must keep advancing `version.json`; the loop cannot break after the first automatic refresh
-- repeated `apcc site open` calls reuse a healthy shell instead of restarting it
+- repeated `apcc site start` calls reuse a healthy shell instead of restarting it
 
 The watcher currently achieves this by polling the staged docs roots and restaging runtime data when the source workspace changes.
 

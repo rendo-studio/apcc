@@ -9,7 +9,7 @@ description: The public command surface and the intended role of each command gr
 
 The CLI is the public command surface for APCC. It is not the only valid way to edit an APCC workspace.
 
-Use the CLI where safety, discovery, validation, and runtime control matter. Use direct `.apcc/` edits when bulk structured changes are clearer and cheaper.
+Use the CLI where safety, discovery, workspace diagnostics, and runtime control matter. Use direct `.apcc/` edits when bulk structured changes are clearer and cheaper.
 
 ## Install
 
@@ -34,7 +34,7 @@ Current public command groups:
 
 - `guide`
 - `init`
-- `validate`
+- `doctor`
 - `project`
 - `goal`
 - `plan`
@@ -74,14 +74,16 @@ It creates or repairs the framework-owned surfaces:
 - `AGENTS.md` APCC instructions
 - `.agents/skills/apcc-workflow/SKILL.md`
 
-`validate` checks the workspace:
+`doctor` checks and repairs the workspace:
 
 ```bash
-apcc validate
-apcc validate --repair
+apcc doctor check
+apcc doctor fix
 ```
 
-Use `--repair` when managed APCC files are missing or stale. It is a repair command, not a required every-round ritual.
+`doctor check` is the no-mutation workspace diagnostic pass. `doctor fix` restores missing managed files and stale workspace metadata when repair is safe and intentional. It is a repair command, not a required every-round ritual.
+
+Default CLI output renders a concise Markdown doctor summary for agents. Add `--json` when you need the raw ACLIP doctor payload. `doctor fix --json` adds the APCC workspace delta describing which managed files were created, updated, or skipped.
 
 ## Project And Goal
 
@@ -123,15 +125,15 @@ Important behavior:
 
 - `plan add` and `task add` accept optional explicit `--id` values
 - single-node mutations return concise deltas, not the full tree
-- full context is available through `plan show`, `task list`, and `status show`
+- full context is available through `plan show`, `task list`, and `status`
 - plan status and progress are derived from tasks at read time
 - the id `root` is reserved as the CLI parent marker
 
 For bulk plan or task restructuring, edit `.apcc/plans/current.yaml` and `.apcc/tasks/current.yaml` directly, then run:
 
 ```bash
-apcc validate
-apcc status show
+apcc doctor check
+apcc status
 ```
 
 APCC intentionally does not duplicate direct workspace editing with batch CLI import flags.
@@ -141,7 +143,7 @@ APCC intentionally does not duplicate direct workspace editing with batch CLI im
 `status` renders the derived project status snapshot:
 
 ```bash
-apcc status show
+apcc status
 ```
 
 Use `decision` for high-value direction changes such as architecture, scope, goal, or breaking-change policy.
@@ -153,19 +155,22 @@ Use `version` for low-frequency project-level maturity records. A version record
 `site` controls the docs-site lifecycle:
 
 ```bash
-apcc site open
-apcc site open --port 4317
+apcc site start
+apcc site start --port 4317
+apcc site status
 apcc site list
 apcc site stop
 apcc site clean
 apcc site build
 ```
 
-`site open` starts or reuses the local live docs site. It uses the APCC-packaged prebuilt viewer shell automatically, keeps runtime data refreshed from the configured docs root plus `.apcc`, and lands the root docs URL on the localized Console plan view.
+`site start` starts or reuses the local live docs site. It uses the APCC-packaged prebuilt viewer shell automatically, keeps runtime data refreshed from the configured docs root plus `.apcc`, and lands the root docs URL on the localized Console Overview page.
 
-Use `--port` when you want a stable local address for the current open without editing workspace config. Use `.apcc/config/workspace.yaml` `docsSite.preferredPort` when the workspace should keep a stable default port.
+`site status` is the low-cost probe for agents and humans. It tells you whether the targeted runtime is `absent`, `staged`, or `live`, and only reports a URL when a healthy live instance exists.
 
-`site build` creates a deployable read-only docs-site artifact. It does not prepare `site open`, does not replace the live watcher, and must not stop a healthy live runtime.
+Use `--port` when you want a stable local address for the current start without editing workspace config. Use `.apcc/config/workspace.yaml` `docsSite.preferredPort` when the workspace should keep a stable default port.
+
+`site build` creates a deployable read-only docs-site artifact. It does not prepare `site start`, does not replace the live watcher, and must not stop a healthy live runtime.
 
 `site stop` is an explicit runtime control command. It should not be treated as a routine end-of-task step by development agents.
 

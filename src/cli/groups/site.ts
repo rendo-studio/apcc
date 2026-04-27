@@ -2,8 +2,9 @@ import { AclipApp, booleanArgument, integerArgument, stringArgument } from "@ren
 import {
   buildSiteRuntime,
   cleanSiteRuntime,
+  getSiteRuntimeStatus,
   listSiteRuntimes,
-  openSiteRuntime,
+  startSiteRuntime,
   stopAllSiteRuntimes,
   stopSiteRuntime
 } from "../../core/site.js";
@@ -14,10 +15,10 @@ export function registerSiteGroup(app: AclipApp) {
     .group("site", {
       summary: "Run the docs site view.",
       description: withGuideHint(
-        "Open a local live docs-site view or build a deployable read-only docs-site artifact from a project root or docs-pack path."
+        "Start a local live docs-site view or build a deployable read-only docs-site artifact from a project root or docs-pack path."
       )
     })
-    .command("open", {
+    .command("start", {
       summary: "Start or reuse the local docs site runtime.",
       description: withGuideHint(
         "Resolve the configured or explicit docs pack path, stage runtime data, start or reuse the shared prebuilt viewer shell, and return the live access URL."
@@ -29,24 +30,24 @@ export function registerSiteGroup(app: AclipApp) {
         }),
         integerArgument("port", {
           required: false,
-          description: "Optional explicit local port for this site open. Reuses the runtime only when the running port already matches.",
+          description: "Optional explicit local port for this site start. Reuses the runtime only when the running port already matches.",
           flag: "--port"
         })
       ],
       examples: [
-        "apcc site open",
-        "apcc site open --port 4317",
-        "apcc site open --path D:/project/example",
-        "apcc site open --path D:/project/example/docs",
-        "apcc site open --path D:/project/example --port 4317"
+        "apcc site start",
+        "apcc site start --port 4317",
+        "apcc site start --path D:/project/example",
+        "apcc site start --path D:/project/example/docs",
+        "apcc site start --path D:/project/example --port 4317"
       ],
       handler: async ({ path, port }) => {
-        const runtime = await openSiteRuntime(path ? String(path) : undefined, {
+        const runtime = await startSiteRuntime(path ? String(path) : undefined, {
           port: typeof port === "number" ? port : undefined
         });
         return {
           site: {
-            sourcePath: path ? String(path) : runtime.sourceDocsRoot,
+            sourcePath: runtime.sourceDocsRoot,
             runtimeMode: "live",
             framework: "fumadocs",
             runtimeRoot: runtime.runtimeRoot,
@@ -57,6 +58,43 @@ export function registerSiteGroup(app: AclipApp) {
             url: runtime.url,
             alreadyRunning: runtime.alreadyRunning,
             pid: runtime.pid,
+            logFile: runtime.logFile
+          }
+        };
+      }
+    })
+    .command("status", {
+      summary: "Inspect the local docs site runtime for one workspace.",
+      description: withGuideHint(
+        "Read whether the targeted docs-site runtime is absent, staged, or live, and report the current URL and port only when a healthy live instance exists."
+      ),
+      arguments: [
+        stringArgument("path", {
+          required: false,
+          description: "Optional project root or docs-pack path. Defaults to the configured docs-site source path."
+        })
+      ],
+      examples: ["apcc site status", "apcc site status --path D:/project/example"],
+      handler: async ({ path }) => {
+        const runtime = await getSiteRuntimeStatus(path ? String(path) : undefined);
+        return {
+          site: {
+            sourcePath: runtime.sourceDocsRoot,
+            state: runtime.state,
+            runtimeMode: runtime.state,
+            framework: "fumadocs",
+            runtimeRoot: runtime.runtimeRoot,
+            runtimeDataRoot: runtime.runtimeDataRoot,
+            stagedDocsRoot: runtime.stagedDocsRoot,
+            preferredPort: runtime.preferredPort,
+            docsLanguage: runtime.docsLanguage,
+            port: runtime.port,
+            url: runtime.url,
+            healthy: runtime.healthy,
+            runtimePresent: runtime.runtimePresent,
+            startedAt: runtime.startedAt,
+            pid: runtime.pid,
+            watcherPid: runtime.watcherPid,
             logFile: runtime.logFile
           }
         };
@@ -104,7 +142,7 @@ export function registerSiteGroup(app: AclipApp) {
     .command("stop", {
       summary: "Stop the local docs runtime but keep the staged runtime.",
       description: withGuideHint(
-        "Terminate the managed local docs server and watcher while preserving the staged runtime so the next open can restart faster. Use --all to stop every active APCC docs runtime."
+        "Terminate the managed local docs server and watcher while preserving the staged runtime so the next start can restart faster. Use --all to stop every active APCC docs runtime."
       ),
       arguments: [
         booleanArgument("all", {
@@ -135,7 +173,7 @@ export function registerSiteGroup(app: AclipApp) {
     .command("clean", {
       summary: "Stop and clean the local docs runtime.",
       description: withGuideHint(
-        "Terminate the managed local docs server if it is running and remove the staged runtime so the next open starts from a cold state."
+        "Terminate the managed local docs server if it is running and remove the staged runtime so the next start begins from a cold state."
       ),
       arguments: [
         stringArgument("path", {

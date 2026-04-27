@@ -4,8 +4,8 @@ import { renderCapturedOutput, stripGlobalJsonFlag } from "../src/cli/output-ren
 
 describe("output renderer", () => {
   it("strips the global --json flag before passing argv to the CLI", () => {
-    expect(stripGlobalJsonFlag(["status", "show", "--json"])).toEqual({
-      argv: ["status", "show"],
+    expect(stripGlobalJsonFlag(["status", "--json"])).toEqual({
+      argv: ["status"],
       json: true
     });
   });
@@ -14,14 +14,14 @@ describe("output renderer", () => {
     const rendered = renderCapturedOutput(
       JSON.stringify({
         guide: {
-          markdown: "# APCC Workflow Guide\n\nRun `apcc site open` first.\n"
+          markdown: "# APCC Workflow Guide\n\nRun `apcc site start` first.\n"
         }
       }),
       "stdout"
     );
 
     expect(rendered).toContain("# APCC Workflow Guide");
-    expect(rendered).toContain("apcc site open");
+    expect(rendered).toContain("apcc site start");
     expect(rendered).not.toContain('"guide"');
   });
 
@@ -141,6 +141,105 @@ describe("output renderer", () => {
     expect(rendered).toContain("## Instances");
     expect(rendered).toContain("APCC | `live` | http://127.0.0.1:4316/docs");
     expect(rendered).toContain("`D:/project/VibeCoding`");
+  });
+
+  it("renders site status payloads with lifecycle details", () => {
+    const rendered = renderCapturedOutput(
+      JSON.stringify({
+        site: {
+          state: "staged",
+          runtimeMode: "staged",
+          sourcePath: "D:/project/VibeCoding/docs",
+          runtimeRoot: "C:/Users/yueyo/AppData/Local/APCC/runtime/sites/efab4b08e11c2c32",
+          runtimeDataRoot: "C:/Users/yueyo/AppData/Local/APCC/runtime/sites/efab4b08e11c2c32/runtime-data",
+          preferredPort: 4316,
+          docsLanguage: "zh-CN",
+          healthy: false,
+          runtimePresent: true
+        }
+      }),
+      "stdout"
+    );
+
+    expect(rendered).toContain("# Site");
+    expect(rendered).toContain("- State: `staged`");
+    expect(rendered).toContain("- Docs language: `zh-CN`");
+    expect(rendered).toContain("- Preferred port: `4316`");
+    expect(rendered).toContain("- Healthy: no");
+    expect(rendered).toContain("- Runtime present: yes");
+  });
+
+  it("renders doctor check payloads with guidance, checks, and validation details", () => {
+    const rendered = renderCapturedOutput(
+      JSON.stringify({
+        doctor: {
+          checks: [
+            {
+              id: "workspace-schema",
+              status: "fail",
+              severity: "high",
+              category: "schema",
+              summary: "2 workspace schema issue(s) detected.",
+              hint: "The workspace metadata or config is stale or incomplete.",
+              remediation: [
+                {
+                  summary: "Backfill workspace metadata and config.",
+                  command: "apcc doctor fix",
+                  automatable: true
+                }
+              ]
+            }
+          ],
+          guidance_md: "Run `apcc doctor fix` to restore the workspace, then rerun `apcc doctor check`."
+        }
+      }),
+      "stdout"
+    );
+
+    expect(rendered).toContain("# Doctor");
+    expect(rendered).toContain("- Status: `fail`");
+    expect(rendered).toContain("## Guidance");
+    expect(rendered).toContain("## Checks");
+    expect(rendered).toContain("`workspace-schema` | `fail` | `high` | `schema`");
+    expect(rendered).toContain("`apcc doctor fix`");
+    expect(rendered).not.toContain("## Validation");
+    expect(rendered).not.toContain("Repair needed");
+  });
+
+  it("renders doctor fix payloads with repair details", () => {
+    const rendered = renderCapturedOutput(
+      JSON.stringify({
+        doctor: {
+          repaired: true,
+          checks: [
+            {
+              id: "workspace-health",
+              status: "pass",
+              severity: "low",
+              category: "workspace",
+              summary: "Workspace passed all APCC doctor checks."
+            }
+          ],
+          guidance_md: "Workspace repair completed successfully.",
+          workspace: {
+            mode: "init",
+            root: "D:/project/VibeCoding",
+            activeChangeId: "bootstrap-apcc",
+            createdFiles: ["AGENTS.md"],
+            updatedFiles: [".apcc/config/workspace.yaml"],
+            skippedFiles: ["docs/shared/overview.md"]
+          }
+        }
+      }),
+      "stdout"
+    );
+
+    expect(rendered).toContain("# Doctor Fix");
+    expect(rendered).toContain("- Status: `pass`");
+    expect(rendered).toContain("- Repaired: yes");
+    expect(rendered).toContain("## Created Files");
+    expect(rendered).toContain("AGENTS.md");
+    expect(rendered).not.toContain("## Validation");
   });
 
   it("renders bulk site stop results without requiring --json", () => {

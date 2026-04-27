@@ -33,9 +33,10 @@ describe("init", () => {
     expect(first.createdFiles).toContain(".apcc/goals/end.yaml");
     expect(first.createdFiles).toContain("docs/shared/overview.md");
     expect(first.createdFiles).toContain("docs/shared/goal.md");
+    expect(first.createdFiles).toContain("docs/shared/meta.json");
     expect(first.createdFiles).toContain("docs/meta.json");
-    expect(first.createdFiles).toContain("docs/public/.gitkeep");
-    expect(first.createdFiles).toContain("docs/internal/.gitkeep");
+    expect(first.createdFiles).toContain("docs/public/meta.json");
+    expect(first.createdFiles).toContain("docs/internal/meta.json");
     expect(first.createdFiles).toContain("AGENTS.md");
     expect(first.createdFiles).toContain(".agents/skills/apcc-workflow/SKILL.md");
 
@@ -68,15 +69,62 @@ describe("init", () => {
 
     const config = await fs.readFile(path.join(root, ".apcc", "config", "workspace.yaml"), "utf8");
     const meta = await fs.readFile(path.join(root, ".apcc", "meta", "workspace.yaml"), "utf8");
+    const sharedMeta = await fs.readFile(path.join(root, "docs", "shared", "meta.json"), "utf8");
     const overviewDoc = await fs.readFile(path.join(root, "docs", "shared", "概览.md"), "utf8");
     const goalDoc = await fs.readFile(path.join(root, "docs", "shared", "目标.md"), "utf8");
 
     expect(result.createdFiles).toContain("docs/shared/概览.md");
     expect(result.createdFiles).toContain("docs/shared/目标.md");
+    expect(result.createdFiles).toContain("docs/shared/meta.json");
     expect(config).toContain("docsLanguage: zh-CN");
     expect(meta).toContain("docsLanguage: zh-CN");
+    expect(JSON.parse(sharedMeta)).toEqual({
+      pages: ["概览", "目标"]
+    });
     expect(overviewDoc).toContain("# 项目概览");
     expect(goalDoc).toContain("# 项目目标");
+  });
+
+  it("preserves the persisted docs language when init runs again on an existing APCC workspace", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "apcc-init-reinit-zh-docs-"));
+    cleanups.push(root);
+
+    await initWorkspace({
+      targetPath: root,
+      projectName: "示例项目",
+      docsLanguage: "zh-CN"
+    });
+
+    const second = await initWorkspace({
+      targetPath: root,
+      projectName: "示例项目"
+    });
+
+    const englishOverviewExists = await fs
+      .stat(path.join(root, "docs", "shared", "overview.md"))
+      .then(() => true)
+      .catch(() => false);
+    const englishGoalExists = await fs
+      .stat(path.join(root, "docs", "shared", "goal.md"))
+      .then(() => true)
+      .catch(() => false);
+    const localizedOverviewExists = await fs
+      .stat(path.join(root, "docs", "shared", "概览.md"))
+      .then(() => true)
+      .catch(() => false);
+    const localizedGoalExists = await fs
+      .stat(path.join(root, "docs", "shared", "目标.md"))
+      .then(() => true)
+      .catch(() => false);
+    const config = await fs.readFile(path.join(root, ".apcc", "config", "workspace.yaml"), "utf8");
+
+    expect(second.createdFiles).not.toContain("docs/shared/overview.md");
+    expect(second.createdFiles).not.toContain("docs/shared/goal.md");
+    expect(englishOverviewExists).toBe(false);
+    expect(englishGoalExists).toBe(false);
+    expect(localizedOverviewExists).toBe(true);
+    expect(localizedGoalExists).toBe(true);
+    expect(config).toContain("docsLanguage: zh-CN");
   });
 
   it("can initialize the current directory with provisional overview and end-goal anchors", async () => {
@@ -108,11 +156,15 @@ describe("init", () => {
     });
 
     const docsMeta = await fs.readFile(path.join(root, "docs", "meta.json"), "utf8");
+    const sharedMeta = await fs.readFile(path.join(root, "docs", "shared", "meta.json"), "utf8");
     const overviewDoc = await fs.readFile(path.join(root, "docs", "shared", "overview.md"), "utf8");
     const goalDoc = await fs.readFile(path.join(root, "docs", "shared", "goal.md"), "utf8");
 
     expect(JSON.parse(docsMeta)).toEqual({
       pages: ["shared", "public", "internal"]
+    });
+    expect(JSON.parse(sharedMeta)).toEqual({
+      pages: ["overview", "goal"]
     });
     expect(overviewDoc).not.toContain(".apcc/project/overview.yaml");
     expect(overviewDoc).not.toContain("共享层只保留最稳定、最通用的项目上下文");
@@ -172,6 +224,29 @@ describe("init", () => {
     expect(indexContent).toBe("# Existing Docs\n\nThis line must survive init.\n");
     expect(sharedOverviewExists).toBe(true);
     expect(sharedGoalExists).toBe(true);
+  });
+
+  it("creates empty directory meta files inside existing public and internal docs directories", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "apcc-init-existing-docs-placeholders-"));
+    cleanups.push(root);
+
+    await fs.mkdir(path.join(root, "docs", "public"), { recursive: true });
+    await fs.mkdir(path.join(root, "docs", "internal"), { recursive: true });
+    await fs.writeFile(path.join(root, "docs", "public", "quickstart.md"), "# Quickstart\n", "utf8");
+    await fs.writeFile(path.join(root, "docs", "internal", "notes.md"), "# Notes\n", "utf8");
+
+    const result = await initWorkspace({
+      targetPath: root,
+      projectName: "Existing Project"
+    });
+
+    const publicMeta = await fs.readFile(path.join(root, "docs", "public", "meta.json"), "utf8");
+    const internalMeta = await fs.readFile(path.join(root, "docs", "internal", "meta.json"), "utf8");
+
+    expect(result.createdFiles).toContain("docs/public/meta.json");
+    expect(result.createdFiles).toContain("docs/internal/meta.json");
+    expect(JSON.parse(publicMeta)).toEqual({});
+    expect(JSON.parse(internalMeta)).toEqual({});
   });
 
   it("can initialize the current directory when it is already an existing project", async () => {

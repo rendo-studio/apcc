@@ -9,7 +9,7 @@ description: The shortest correct path to initialize and operate an APCC workspa
 
 This page is for developers and development agents adopting APCC in a repository for the first time.
 
-APCC's final user-facing form is the installed CLI. The local workspace remains editable, but the CLI is the supported entrypoint for initialization, validation, command discovery, and docs-site lifecycle commands.
+APCC's final user-facing form is the installed CLI. The local workspace remains editable, but the CLI is the supported entrypoint for initialization, workspace diagnostics and repair, command discovery, and docs-site lifecycle commands.
 
 ## Install And Discover
 
@@ -87,19 +87,25 @@ Plan status and progress are derived from the task tree at read time. Do not sto
 Start the local docs site:
 
 ```bash
-apcc site open
-apcc status show
+apcc site start
+apcc status
 ```
 
-`site open` uses the prebuilt viewer shell packaged with APCC. It does not require a user-run build step and keeps authored docs plus `.apcc` state live-refreshing for local collaboration.
+`site start` uses the prebuilt viewer shell packaged with APCC. It does not require a user-run build step and keeps authored docs plus `.apcc` state live-refreshing for local collaboration.
 
-For a stable local address on the first open, use:
+For a stable local address on the first start, use:
 
 ```bash
-apcc site open --port 4317
+apcc site start --port 4317
 ```
 
-The root docs URL lands on the localized Console plan view. If you are opening the site on behalf of a human, tell them the returned URL and leave it running until they explicitly ask to stop it.
+If you only need to know whether a runtime is already available, run:
+
+```bash
+apcc site status
+```
+
+The root docs URL lands on the localized Console Overview page. If you are opening the site on behalf of a human, tell them the returned URL and leave it running until they explicitly ask to stop it.
 
 Use `site build` only when you want a deployable read-only docs-site artifact:
 
@@ -107,14 +113,14 @@ Use `site build` only when you want a deployable read-only docs-site artifact:
 apcc site build
 ```
 
-The build output is a snapshot. It does not run the live watcher and does not replace `site open`.
+The build output is a snapshot. It does not run the live watcher and does not replace `site start`.
 
 ## Agent Operating Loop
 
 For development agents, the safe loop is:
 
 1. Decide whether the context is cold, warm, or possibly desynced.
-2. On cold or desynced rounds, run `apcc site open`, then `apcc status show`.
+2. On cold or desynced rounds, run `apcc site start`, then `apcc status`.
 3. If context is warm and trusted, keep working without rerunning the full start sequence.
 4. Before a new task, plan change, decision boundary, or version boundary, update `.apcc` first.
 5. Implement the smallest clear slice.
@@ -129,15 +135,15 @@ Use CLI commands for:
 
 - initialization
 - help discovery
-- validation and repair
+- doctor diagnostics and repair
 - docs-site runtime actions
 - small targeted control-plane mutations
 
 Use direct `.apcc/` edits for bulk plan or task restructuring once you understand the schema, then run:
 
 ```bash
-apcc validate
-apcc status show
+apcc doctor check
+apcc status
 ```
 
 APCC intentionally does not add batch import flags that duplicate direct workspace editing.
@@ -149,6 +155,6 @@ Do not:
 - treat `docs/` as the structured truth source
 - persist computed execution state by hand
 - assume the recommended docs package is a runtime requirement
-- expect `site open` to require `site build`
+- expect `site start` to require `site build`
 - use `site build` as the local live collaboration command
 - continue implementation after a confirmed plan change without updating `.apcc` first

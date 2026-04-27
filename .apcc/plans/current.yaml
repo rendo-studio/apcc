@@ -84,3 +84,27 @@ items:
     name: Harden post-release docs-site ergonomics
     summary: Fix non-English docs-site failures, make the console the default landing surface, improve site open port control, and tighten the agent workflow guidance so human developers can reliably access and keep the docs site running.
     parentPlanId: null
+  - id: harden-apcc-reinit-language-preservation-22
+    name: Harden APCC reinit language preservation
+    summary: Make repeated init on an existing APCC workspace preserve the persisted docs language and avoid backfilling default-language scaffold files that do not match the current workspace language.
+    parentPlanId: null
+  - id: refine-cli-status-and-site-lifecycle-23
+    name: Refine CLI status and site lifecycle ergonomics
+    summary: Flatten single-purpose status inspection, add site runtime status inspection, rename site open to site start, and make scaffold navigation order align with human reading expectations.
+    parentPlanId: null
+  - id: fix-docs-site-root-locale-selection-24
+    name: Fix docs-site root locale selection
+    summary: Make the bare docs-site root respect the workspace docsLanguage instead of serving a build-time English redirect.
+    parentPlanId: null
+  - id: standardize-doctor-control-plane-25
+    name: Standardize the doctor control plane
+    summary: Replace the legacy validate command surface with the ACLIP-standard doctor check and fix hooks while preserving APCC workspace diagnostics and repair behavior.
+    parentPlanId: null
+  - id: standardize-workflow-skill-source-26
+    name: Standardize the workflow skill source and ACLIP hook registration
+    summary: Move the APCC workflow guidance to a canonical skill package source, register it through ACLIP CLI-level skill hooks, and keep init materialization aligned without routing through export-time packaging.
+    parentPlanId: null
+  - id: assess-and-publish-next-release-27
+    name: Assess release readiness and publish the next APCC release
+    summary: Run a final release-quality review over code, docs, packaging, and publication prerequisites, close any remaining blockers, and publish the next real package release.
+    parentPlanId: null

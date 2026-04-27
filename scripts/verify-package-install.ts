@@ -101,9 +101,9 @@ try {
     "--project-summary",
     "PackageInstallSmoke",
     "--end-goal-name",
-    "ValidateInstalledCli",
+    "VerifyInstalledCli",
     "--end-goal-summary",
-    "ValidateInstalledCli"
+    "VerifyInstalledCli"
   ]);
 
   const planAddOutput = runInstalledBin(
@@ -148,9 +148,43 @@ try {
     throw new Error("installed apcc task add did not render a concise changed-task delta.");
   }
 
-  const validationOutput = runInstalledBin(binPath, ["validate"], { cwd: workspaceRoot });
-  if (!validationOutput.includes("OK: yes")) {
-    throw new Error("installed apcc validate did not report OK: yes.");
+  const doctorCheckOutput = runInstalledBin(binPath, ["doctor", "check"], { cwd: workspaceRoot });
+  if (!doctorCheckOutput.includes("# Doctor") || !doctorCheckOutput.includes("- Status: `pass`")) {
+    throw new Error("installed apcc doctor check did not report a healthy workspace.");
+  }
+  const doctorCheckJson = JSON.parse(runInstalledBin(binPath, ["doctor", "check", "--json"], { cwd: workspaceRoot })) as {
+    doctor?: { checks?: unknown[]; guidance_md?: string; validation?: unknown };
+  };
+  if (!Array.isArray(doctorCheckJson.doctor?.checks) || "validation" in (doctorCheckJson.doctor ?? {})) {
+    throw new Error("installed apcc doctor check --json did not expose the expected ACLIP doctor payload shape.");
+  }
+
+  await fs.rm(path.join(workspaceRoot, ".apcc", "config", "workspace.yaml"), { force: true });
+  const doctorFixOutput = runInstalledBin(binPath, ["doctor", "fix"], { cwd: workspaceRoot });
+  if (!doctorFixOutput.includes("# Doctor Fix") || !doctorFixOutput.includes("- Repaired: yes")) {
+    throw new Error("installed apcc doctor fix did not repair the damaged workspace.");
+  }
+  const doctorFixJson = JSON.parse(runInstalledBin(binPath, ["doctor", "fix", "--json"], { cwd: workspaceRoot })) as {
+    doctor?: { workspace?: unknown; validation?: unknown };
+  };
+  if (!doctorFixJson.doctor?.workspace || "validation" in (doctorFixJson.doctor ?? {})) {
+    throw new Error("installed apcc doctor fix --json did not expose the expected repair payload shape.");
+  }
+
+  const doctorCheckAfterFix = runInstalledBin(binPath, ["doctor", "check"], { cwd: workspaceRoot });
+  if (!doctorCheckAfterFix.includes("- Status: `pass`")) {
+    throw new Error("installed apcc doctor check did not pass after doctor fix repaired the workspace.");
+  }
+
+  let legacyValidateStillWorks = false;
+  try {
+    runInstalledBin(binPath, ["validate"], { cwd: workspaceRoot });
+    legacyValidateStillWorks = true;
+  } catch {
+    legacyValidateStillWorks = false;
+  }
+  if (legacyValidateStillWorks) {
+    throw new Error("installed apcc validate still resolved after the doctor migration removed the legacy command.");
   }
 
   const siteBuildOutput = runInstalledBin(binPath, ["site", "build"], { cwd: workspaceRoot });

@@ -56,6 +56,38 @@ export interface SiteRuntimeListEntry {
   mode: "live" | "build";
 }
 
+interface SiteRuntimeMetadata {
+  siteId: string;
+  sourceDocsRoot: string;
+  sourceWorkspaceRoot: string | null;
+  runtimeRoot: string;
+  templateRoot: string;
+  mode: "staged" | "live" | "build";
+  port: number | null;
+  url: string | null;
+  updatedAt: string;
+}
+
+export interface SiteRuntimeStatusEntry {
+  siteId: string;
+  sourceDocsRoot: string;
+  sourceWorkspaceRoot: string | null;
+  runtimeRoot: string;
+  runtimeDataRoot: string;
+  docsLanguage: "en" | "zh-CN";
+  preferredPort: number | null;
+  state: "absent" | "staged" | "live";
+  runtimePresent: boolean;
+  healthy: boolean;
+  stagedDocsRoot: string | null;
+  port: number | null;
+  url: string | null;
+  startedAt: string | null;
+  pid: number | null;
+  watcherPid: number | null;
+  logFile: string | null;
+}
+
 interface StageResult {
   siteId: string;
   sourceDocsRoot: string;
@@ -83,7 +115,7 @@ interface StageDocsOptions {
   syncDocs?: boolean;
 }
 
-interface OpenSiteRuntimeOptions {
+interface StartSiteRuntimeOptions {
   port?: number;
 }
 
@@ -324,7 +356,7 @@ async function injectRuntimeConsoleDocs(stagedDocsRoot: string): Promise<void> {
     `${JSON.stringify(
       {
         title: "Console",
-        pages: ["plans", "index"]
+        pages: ["index", "plans"]
       },
       null,
       2
@@ -414,6 +446,14 @@ async function readRegistry(runtimeRoot: string): Promise<SiteRuntimeRegistry | 
   }
 }
 
+async function readRuntimeMetadata(runtimeDataRoot: string): Promise<SiteRuntimeMetadata | null> {
+  try {
+    return JSON.parse(await readText(path.join(runtimeDataRoot, "runtime.json"))) as SiteRuntimeMetadata;
+  } catch {
+    return null;
+  }
+}
+
 async function writeRegistry(registry: SiteRuntimeRegistry): Promise<void> {
   await writeText(getRegistryFile(registry.runtimeRoot), `${JSON.stringify(registry, null, 2)}\n`);
 }
@@ -452,17 +492,21 @@ async function readProjectNameForSiteEntry(sourceWorkspaceRoot: string | null): 
   return path.basename(sourceWorkspaceRoot);
 }
 
+async function isSiteRuntimeRegistryHealthy(registry: SiteRuntimeRegistry): Promise<boolean> {
+  if (await waitForPort(registry.port, 500)) {
+    return true;
+  }
+
+  return Boolean(registry.pid && processExists(registry.pid));
+}
+
 async function isSiteRegistryEntryHealthy(entry: GlobalSiteRegistryEntry): Promise<boolean> {
   const registry = await readRegistry(entry.runtimeRoot);
   if (!registry) {
     return false;
   }
 
-  if (await waitForPort(registry.port, 500)) {
-    return true;
-  }
-
-  return Boolean(registry.pid && processExists(registry.pid));
+  return isSiteRuntimeRegistryHealthy(registry);
 }
 
 function runtimeBaseFromRoot(runtimeRoot: string): string {
@@ -1470,7 +1514,7 @@ async function ensureSiteRuntimeServer(stage: StageResult, mode: "live") {
 
   if (existingIsHealthy && configuredPort !== null && existing!.port !== configuredPort) {
     throw new Error(
-      `${portLabel} docs-site port ${configuredPort} does not match the running runtime at ${existing!.url}. Stop it first before reopening on a different port.`
+      `${portLabel} docs-site port ${configuredPort} does not match the running runtime at ${existing!.url}. Stop it first before starting on a different port.`
     );
   }
 
@@ -1663,15 +1707,92 @@ export async function buildSiteRuntime(inputPath?: string, options: SiteBuildOpt
   }
 }
 
-export async function openSiteRuntime(inputPath?: string, options: OpenSiteRuntimeOptions = {}) {
+export async function getSiteRuntimeStatus(inputPath?: string): Promise<SiteRuntimeStatusEntry> {
+  const context = await resolveSiteSourceContext(inputPath);
+  const runtimeBase = getRuntimeBase();
+  const runtimeRoot = getRuntimeRoot(context.siteId, runtimeBase);
+  const runtimeDataRoot = path.join(runtimeRoot, "runtime-data");
+  const [registry, metadata] = await Promise.all([
+    readRegistry(runtimeRoot),
+    readRuntimeMetadata(runtimeDataRoot)
+  ]);
+  const runtimePresent = nodeFs.existsSync(runtimeRoot);
+  const healthy = registry ? await isSiteRuntimeRegistryHealthy(registry) : false;
+
+  if (healthy && registry) {
+    return {
+      siteId: context.siteId,
+      sourceDocsRoot: context.sourceDocsRoot,
+      sourceWorkspaceRoot: context.sourceWorkspaceRoot,
+      runtimeRoot,
+      runtimeDataRoot,
+      docsLanguage: context.docsLanguage,
+      preferredPort: context.workspaceConfig?.docsSite.preferredPort ?? null,
+      state: "live",
+      runtimePresent,
+      healthy: true,
+      stagedDocsRoot: registry.stagedDocsRoot,
+      port: registry.port,
+      url: registry.url,
+      startedAt: registry.startedAt,
+      pid: registry.pid,
+      watcherPid: registry.watcherPid,
+      logFile: registry.logFile
+    };
+  }
+
+  if (runtimePresent || registry || metadata) {
+    return {
+      siteId: context.siteId,
+      sourceDocsRoot: context.sourceDocsRoot,
+      sourceWorkspaceRoot: context.sourceWorkspaceRoot,
+      runtimeRoot,
+      runtimeDataRoot,
+      docsLanguage: context.docsLanguage,
+      preferredPort: context.workspaceConfig?.docsSite.preferredPort ?? null,
+      state: "staged",
+      runtimePresent,
+      healthy: false,
+      stagedDocsRoot: registry?.stagedDocsRoot ?? path.join(runtimeRoot, "content", "docs"),
+      port: null,
+      url: null,
+      startedAt: registry?.startedAt ?? metadata?.updatedAt ?? null,
+      pid: null,
+      watcherPid: null,
+      logFile: registry?.logFile ?? path.join(runtimeDataRoot, "site.log")
+    };
+  }
+
+  return {
+    siteId: context.siteId,
+    sourceDocsRoot: context.sourceDocsRoot,
+    sourceWorkspaceRoot: context.sourceWorkspaceRoot,
+    runtimeRoot,
+    runtimeDataRoot,
+    docsLanguage: context.docsLanguage,
+    preferredPort: context.workspaceConfig?.docsSite.preferredPort ?? null,
+    state: "absent",
+    runtimePresent: false,
+    healthy: false,
+    stagedDocsRoot: null,
+    port: null,
+    url: null,
+    startedAt: null,
+    pid: null,
+    watcherPid: null,
+    logFile: null
+  };
+}
+
+export async function startSiteRuntime(inputPath?: string, options: StartSiteRuntimeOptions = {}) {
   const stage = await stageDocsForSiteRuntime(inputPath, {
     preferredPort: options.port
   });
   return ensureSiteRuntimeServer(stage, "live");
 }
 
-export async function devSiteRuntime(inputPath?: string, options: OpenSiteRuntimeOptions = {}) {
-  return openSiteRuntime(inputPath, options);
+export async function devSiteRuntime(inputPath?: string, options: StartSiteRuntimeOptions = {}) {
+  return startSiteRuntime(inputPath, options);
 }
 
 async function stopSiteRuntimeAtLocation(target: ResolvedSiteRuntimeLocation) {

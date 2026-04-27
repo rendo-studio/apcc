@@ -426,3 +426,157 @@ items:
     planRef: publish-apcc-public-release
     parentTaskId: null
     countedForProgress: true
+  - id: fix-reinit-docs-language-drift-29
+    name: Fix reinit docs-language drift
+    summary: When init runs on an existing APCC workspace, detect and reuse the persisted docs language unless the user explicitly overrides it, so reinit does not scaffold English anchors into a zh-CN workspace.
+    status: done
+    planRef: harden-apcc-reinit-language-preservation-22
+    parentTaskId: null
+    countedForProgress: true
+  - id: flatten-status-command-surface-30
+    name: Flatten the status command surface
+    summary: Make `apcc status` the canonical direct status command instead of requiring a redundant `show` subcommand, and update docs and tests accordingly.
+    status: done
+    planRef: refine-cli-status-and-site-lifecycle-23
+    parentTaskId: null
+    countedForProgress: true
+  - id: add-site-runtime-status-inspection-31
+    name: Add site runtime status inspection
+    summary: Add `apcc site status` so agents and humans can inspect whether the current workspace runtime is absent, staged, or live before deciding whether to start or stop it.
+    status: done
+    planRef: refine-cli-status-and-site-lifecycle-23
+    parentTaskId: null
+    countedForProgress: true
+  - id: rename-site-open-to-site-start-32
+    name: Rename site open to site start
+    summary: Replace the misleading `site open` command with `site start` as the only lifecycle start verb, and update all bundled docs, guidance, and tests to the new command shape.
+    status: done
+    planRef: refine-cli-status-and-site-lifecycle-23
+    parentTaskId: null
+    countedForProgress: true
+  - id: order-scaffold-navigation-for-human-reading-33
+    name: Order scaffold navigation for human reading
+    summary: Use scaffold and runtime meta ordering so Console lands on Overview by default and shared docs navigation reads Overview before Goal.
+    status: done
+    planRef: refine-cli-status-and-site-lifecycle-23
+    parentTaskId: null
+    countedForProgress: true
+  - id: task-docs-site-root-locale-selection
+    name: Fix docs-site root locale selection
+    summary: Reproduce the root redirect bug and ensure the bare site root respects the persisted workspace docsLanguage instead of freezing to English at build time.
+    status: done
+    planRef: fix-docs-site-root-locale-selection-24
+    parentTaskId: null
+    countedForProgress: false
+  - id: task-docs-site-root-locale-selection-1
+    name: Make the site root locale redirect runtime-aware
+    summary: Remove the build-time English root redirect behavior and verify both `/` and `/docs` route to the workspace language in a zh-CN workspace.
+    status: done
+    planRef: fix-docs-site-root-locale-selection-24
+    parentTaskId: task-docs-site-root-locale-selection
+    countedForProgress: true
+  - id: task-standardize-doctor-control-plane
+    name: Standardize the doctor control plane
+    summary: Move APCC workspace diagnostics and repair to the ACLIP-standard doctor surface and remove the legacy validate command entrypoint.
+    status: done
+    planRef: standardize-doctor-control-plane-25
+    parentTaskId: null
+    countedForProgress: false
+  - id: task-standardize-doctor-control-plane-1
+    name: Replace the validate CLI surface with doctor check and fix
+    summary: Wire APCC workspace diagnostics and repair through ACLIP doctor hooks while preserving the existing validation and repair semantics.
+    status: done
+    planRef: standardize-doctor-control-plane-25
+    parentTaskId: task-standardize-doctor-control-plane
+    countedForProgress: true
+  - id: task-standardize-doctor-control-plane-2
+    name: Align guidance, verification, and package install checks with doctor
+    summary: Remove validate from bundled guidance, docs, tests, and package verification so the public command surface is consistently doctor-first.
+    status: done
+    planRef: standardize-doctor-control-plane-25
+    parentTaskId: task-standardize-doctor-control-plane
+    countedForProgress: true
+  - id: task-standardize-doctor-control-plane-3
+    name: Trim doctor output semantics and payload duplication
+    summary: Align APCC doctor output more closely with ACLIP by using shared doctor status constants, removing the legacy validation payload mirror, and slimming the default Markdown rendering.
+    status: done
+    planRef: standardize-doctor-control-plane-25
+    parentTaskId: task-standardize-doctor-control-plane
+    countedForProgress: true
+  - id: task-release-docs-final-cleanup-2
+    name: Refresh the recommended docs package example and reinit the repo scaffold
+    summary: Update the public recommended docs package example to match the current scaffold and run a non-invasive init on the APCC repository itself so missing managed scaffold files are backfilled before release.
+    status: done
+    planRef: release-docs-final-cleanup
+    parentTaskId: null
+    countedForProgress: true
+  - id: task-standardize-doctor-control-plane-4
+    name: Simplify doctor status typing usage
+    summary: Stop deriving local doctor status and severity values from ACLIP constant-array indexes and instead use the exported ACLIP types with explicit string literals for clearer APCC code.
+    status: done
+    planRef: standardize-doctor-control-plane-25
+    parentTaskId: task-standardize-doctor-control-plane
+    countedForProgress: true
+  - id: task-release-docs-final-cleanup-3
+    name: Replace placeholder docs directories with directory meta files
+    summary: Use `meta.json` instead of `.gitkeep` in the scaffolded example docs package and add explicit reading-order metadata across the APCC repository docs directories.
+    status: done
+    planRef: release-docs-final-cleanup
+    parentTaskId: null
+    countedForProgress: true
+  - id: task-standardize-workflow-skill-source
+    name: Standardize the workflow skill source and ACLIP hook registration
+    summary: Make the APCC workflow skill a canonical skill package source, register it through ACLIP hooks, and keep guide plus init output aligned to that source.
+    status: done
+    planRef: standardize-workflow-skill-source-26
+    parentTaskId: null
+    countedForProgress: false
+  - id: task-standardize-workflow-skill-source-1
+    name: Canonicalize the workflow guidance as a skill package source
+    summary: Replace the loose workflow-guide asset with a canonical skill package directory that keeps the workflow body stable while using a standards-aligned skill package name.
+    status: done
+    planRef: standardize-workflow-skill-source-26
+    parentTaskId: task-standardize-workflow-skill-source
+    countedForProgress: true
+  - id: task-standardize-workflow-skill-source-2
+    name: Register the workflow skill through ACLIP and verify export parity
+    summary: Attach the canonical workflow skill package to the CLI through ACLIP hooks, materialize it during init, and verify that exported skill packages preserve the workflow body while injecting ACLIP anchor metadata.
+    status: done
+    planRef: standardize-workflow-skill-source-26
+    parentTaskId: task-standardize-workflow-skill-source
+    countedForProgress: true
+  - id: task-release-docs-final-cleanup-4
+    name: Standardize the workflow skill source and ACLIP hook registration
+    summary: Turn the APCC workflow skill into a canonical skill package source, register it through ACLIP CLI skill hooks, and keep `init`, `guide workflow`, and exported skill content aligned without changing the substantive workflow body.
+    status: done
+    planRef: release-docs-final-cleanup
+    parentTaskId: null
+    countedForProgress: true
+  - id: task-assess-and-publish-next-release
+    name: Assess release readiness and publish the next APCC release
+    summary: Review the current repository against release quality bars, resolve any remaining code or packaging issues, and publish the next package release instead of stopping at GitHub push.
+    status: in_progress
+    planRef: assess-and-publish-next-release-27
+    parentTaskId: null
+    countedForProgress: false
+  - id: task-assess-and-publish-next-release-1
+    name: Run the release readiness review and verification suite
+    summary: Re-check code quality, docs maturity, tests, packaging, and publish prerequisites so the release decision is based on current evidence instead of stale status.
+    status: done
+    planRef: assess-and-publish-next-release-27
+    parentTaskId: task-assess-and-publish-next-release
+    countedForProgress: true
+  - id: task-assess-and-publish-next-release-2
+    name: Close remaining release blockers
+    summary: Fix any defects or packaging gaps found by the release review, update release artifacts, and rerun targeted verification until the release surface is clean.
+    status: done
+    planRef: assess-and-publish-next-release-27
+    parentTaskId: task-assess-and-publish-next-release
+    countedForProgress: true
+  - id: task-assess-and-publish-next-release-3
+    name: Publish the next APCC package release
+    summary: Bump the package version, prepare the publishable artifact, publish the package, and verify remote installation of the released version.
+    status: pending
+    planRef: assess-and-publish-next-release-27
+    parentTaskId: task-assess-and-publish-next-release
+    countedForProgress: true

@@ -7,7 +7,13 @@ import { spawn } from "node:child_process";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { initWorkspace } from "../src/core/bootstrap.js";
-import { listSiteRuntimes, stageDocsForSiteRuntime, stopAllSiteRuntimes, stopSiteRuntime } from "../src/core/site.js";
+import {
+  getSiteRuntimeStatus,
+  listSiteRuntimes,
+  stageDocsForSiteRuntime,
+  stopAllSiteRuntimes,
+  stopSiteRuntime
+} from "../src/core/site.js";
 import { buildSiteControlPlaneSnapshot } from "../src/core/site-data.js";
 import { resolveSiteWatchRoots } from "../src/core/site-watch-roots.js";
 import { createWorkspaceFixture } from "./helpers/workspace.js";
@@ -96,10 +102,32 @@ describe("site runtime staging", () => {
     });
     expect(JSON.parse(stagedConsoleMeta)).toEqual({
       title: "Console",
-      pages: ["plans", "index"]
+      pages: ["index", "plans"]
     });
     expect(stagedConsoleIndex).toContain("name: Overview");
     expect(stagedAsset).toBe("site-asset\n");
+  });
+
+  it("reports absent and staged runtime states without starting a live server", async () => {
+    const fixture = await createWorkspaceFixture();
+    restorers.push(fixture.use());
+    cleanups.push(fixture.cleanup);
+
+    const absent = await getSiteRuntimeStatus();
+    expect(absent.state).toBe("absent");
+    expect(absent.runtimePresent).toBe(false);
+    expect(absent.port).toBeNull();
+    expect(absent.url).toBeNull();
+
+    const staged = await stageDocsForSiteRuntime();
+    const afterStage = await getSiteRuntimeStatus();
+
+    expect(afterStage.state).toBe("staged");
+    expect(afterStage.runtimePresent).toBe(true);
+    expect(afterStage.runtimeRoot).toBe(staged.runtimeRoot);
+    expect(afterStage.stagedDocsRoot).toBe(staged.stagedDocsRoot);
+    expect(afterStage.port).toBeNull();
+    expect(afterStage.url).toBeNull();
   });
 
   it("writes a viewer-data contract with navigation and authored page payloads", async () => {

@@ -72,7 +72,7 @@ Current rule:
 
 - build the shared shell from `site-runtime/`
 - package the resulting artifact under `dist/site-runtime-prebuilt/`
-- let `site open` reuse that shared shell while each project only contributes runtime data
+- let `site start` reuse that shared shell while each project only contributes runtime data
 
 `npm` remains the build-time package manager for the shell source for now.
 
