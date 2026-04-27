@@ -4,7 +4,7 @@ items:
     title: npm publish manifest polish
     summary: Patch release that removes the remaining npm publish warning by normalizing the packaged bin entry while keeping the APCC CLI surface unchanged.
     docPath: internal/versions/0-2-1-npm-publish-manifest-polish.md
-    status: draft
+    status: recorded
     decisionRefs: []
     highlights:
       - Normalizes the packaged `bin` entry so npm no longer rewrites it during publish.
@@ -14,9 +14,9 @@ items:
       - None.
     migrationNotes:
       - None for APCC users; this patch only removes npm publish noise and keeps the public CLI behavior unchanged.
-    validationSummary: npm run check, npm run test, npm run build, npm run verify:package-install, npm run verify:site-lifecycle, npm run prepare:publish-package -- --out .tmp/apcc-publish, npm run prepare:publish-package -- --out .tmp/apcc-scoped-publish --name @rendo-studio/apcc, npm publish --dry-run, npm publish --dry-run --access public
+    validationSummary: npm run check, npm run test, npm run build, npm run verify:package-install, npm run verify:site-lifecycle, npm run prepare:publish-package -- --out .tmp/apcc-publish, npm run prepare:publish-package -- --out .tmp/apcc-scoped-publish --name @rendo-studio/apcc, npm publish --dry-run, npm publish --dry-run --access public, GitHub release v0.2.1, npm publish apcc@0.2.1, npm publish @rendo-studio/apcc@0.2.1
     createdAt: 2026-04-28T00:00:00.000Z
-    recordedAt: null
+    recordedAt: 2026-04-27T23:25:14.4769183Z
   - id: 0-2-0-doctor-and-workflow-skill-standardization
     version: 0.2.0
     title: Doctor and workflow skill standardization

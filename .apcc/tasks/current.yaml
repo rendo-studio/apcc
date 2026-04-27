@@ -583,7 +583,7 @@ items:
   - id: task-remove-publish-warning-and-ship-patch
     name: Remove npm publish warnings and ship a patch release
     summary: Identify the remaining npm publish warning, tighten the package surface to eliminate it, and publish the next patch release after full verification.
-    status: in_progress
+    status: done
     planRef: remove-publish-warning-and-ship-patch-28
     parentTaskId: null
     countedForProgress: false
@@ -604,7 +604,7 @@ items:
   - id: task-remove-publish-warning-and-ship-patch-3
     name: Publish the patch release
     summary: Bump to the next patch version, push the release commit and tag, publish the GitHub release, and publish both npm package names once the warning-free release surface is confirmed.
-    status: in_progress
+    status: done
     planRef: remove-publish-warning-and-ship-patch-28
     parentTaskId: task-remove-publish-warning-and-ship-patch
     countedForProgress: true
