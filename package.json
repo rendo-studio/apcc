@@ -1,6 +1,6 @@
 {
   "name": "apcc",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "type": "module",
   "description": "APCC is an agent-first project context framework for human developers and development agents.",
   "license": "MIT",
@@ -24,7 +24,7 @@
     "docs/public"
   ],
   "bin": {
-    "apcc": "./dist/bin/apcc.js"
+    "apcc": "dist/bin/apcc.js"
   },
   "scripts": {
     "dev": "node --import tsx ./src/bin/apcc.ts",

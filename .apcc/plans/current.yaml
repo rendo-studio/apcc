@@ -108,3 +108,7 @@ items:
     name: Assess release readiness and publish the next APCC release
     summary: Run a final release-quality review over code, docs, packaging, and publication prerequisites, close any remaining blockers, and publish the next real package release.
     parentPlanId: null
+  - id: remove-publish-warning-and-ship-patch-28
+    name: Remove npm publish warnings and ship a patch release
+    summary: Eliminate the remaining npm publish warning from the package surface, verify the fix end to end, and publish the next patch release across GitHub and npm.
+    parentPlanId: null

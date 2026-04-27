@@ -580,3 +580,31 @@ items:
     planRef: assess-and-publish-next-release-27
     parentTaskId: task-assess-and-publish-next-release
     countedForProgress: true
+  - id: task-remove-publish-warning-and-ship-patch
+    name: Remove npm publish warnings and ship a patch release
+    summary: Identify the remaining npm publish warning, tighten the package surface to eliminate it, and publish the next patch release after full verification.
+    status: in_progress
+    planRef: remove-publish-warning-and-ship-patch-28
+    parentTaskId: null
+    countedForProgress: false
+  - id: task-remove-publish-warning-and-ship-patch-1
+    name: Diagnose and remove the npm publish warning
+    summary: Reproduce the current npm publish warning locally, trace it to the package manifest or staging logic, and implement the smallest fix that removes it without changing the CLI surface.
+    status: done
+    planRef: remove-publish-warning-and-ship-patch-28
+    parentTaskId: task-remove-publish-warning-and-ship-patch
+    countedForProgress: true
+  - id: task-remove-publish-warning-and-ship-patch-2
+    name: Re-verify the package release surface
+    summary: Rebuild, restage, and dry-run the package release flow after the fix to prove the warning is gone and the published artifact still behaves correctly.
+    status: done
+    planRef: remove-publish-warning-and-ship-patch-28
+    parentTaskId: task-remove-publish-warning-and-ship-patch
+    countedForProgress: true
+  - id: task-remove-publish-warning-and-ship-patch-3
+    name: Publish the patch release
+    summary: Bump to the next patch version, push the release commit and tag, publish the GitHub release, and publish both npm package names once the warning-free release surface is confirmed.
+    status: in_progress
+    planRef: remove-publish-warning-and-ship-patch-28
+    parentTaskId: task-remove-publish-warning-and-ship-patch
+    countedForProgress: true
