@@ -6,8 +6,8 @@ This section is the bootstrap rule set. The full operating protocol lives in the
 
 Mandatory:
 
-1. Run `apcc guide workflow` for the APCC Workflow Guide.
-2. Read `.agents/skills/apcc-workflow/SKILL.md`. It is identical to `apcc guide workflow`.
+1. Verify `apcc` is available. If it is not, install it first with `npm install -g apcc`, then confirm with `apcc --help`.
+2. Read the APCC Workflow Guide through `apcc guide workflow`. This is the preferred path because it does not depend on IDE skill discovery behavior. If the same workflow guide is already in context through your IDE skill system, do not reread the duplicate copy.
 3. If this is a cold round or the workspace may be desynced, run `apcc site start`, then `apcc status`.
 4. If context is still warm and no external change is suspected, continue without rerunning the full round-start sequence.
 5. When plans change, refresh the workspace before resuming code work.

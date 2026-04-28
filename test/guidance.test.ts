@@ -32,7 +32,12 @@ describe("workflow guidance artifacts", () => {
     const inspection = await inspectGuidanceArtifacts(fixture.root);
 
     expect(workflowSkill).toBe(guide.markdown);
-    expect(agents).toContain("It is identical to `apcc guide workflow`");
+    expect(agents).toContain("Verify `apcc` is available.");
+    expect(agents).toContain("`npm install -g apcc`");
+    expect(agents).toContain("Read the APCC Workflow Guide through `apcc guide workflow`");
+    expect(agents).toContain("do not reread the duplicate copy");
+    expect(agents).not.toContain("If `apcc` cannot be run yet in the current environment");
+    expect(agents).not.toContain("It is identical to `apcc guide workflow`");
     expect(agents).toContain("cold round or the workspace may be desynced");
     expect(agents).toContain("`apcc site start`");
     expect(agents).toContain("continue without rerunning the full round-start sequence");

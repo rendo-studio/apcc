@@ -7,9 +7,17 @@ description: Canonical Agent-first workflow guidance for operating an APCC works
 
 Use this guide as the single operating protocol for an APCC workspace.
 
-You can read the same content through `apcc guide workflow` or the generated `.agents/skills/apcc-workflow/SKILL.md`.
+Prefer `apcc guide workflow` as the primary explicit way to read it because that path does not depend on IDE skill discovery behavior. This file is the same canonical guidance in skill form for skill-aware runtimes and workspaces that already materialized APCC guidance. If you are already reading this skill in context, do not reread `apcc guide workflow` just for ritual.
 
-APCC is a agent-first project context framework for development agents and the humans directing them.
+If `apcc` is unavailable in the current environment, install it first:
+
+```bash
+npm install -g apcc
+apcc --help
+apcc guide workflow
+```
+
+APCC is an agent-first project context framework for development agents and the humans directing them.
 
 It gives a repository a structured project context control plane without turning the framework itself into a hosted service.
 

@@ -148,3 +148,11 @@ items:
     name: Automate contract doc generation and publish the next APCC release
     summary: Generate the public control-plane contract doc from runtime constants, run a release-quality review over the combined changes, and publish the next APCC release if the release surface is clean.
     parentPlanId: null
+  - id: refine-agent-bootstrap-guidance-and-apcc-availab-38
+    name: Refine agent bootstrap guidance and APCC availability fallbacks
+    summary: Remove redundant workflow-guide rereads, define the preferred APCC workflow-reading path, and add explicit APCC CLI availability and installation guidance across the agent bootstrap assets.
+    parentPlanId: null
+  - id: publish-the-bootstrap-guidance-patch-release-39
+    name: Publish the bootstrap-guidance patch release
+    summary: Cut and publish a patch release that removes redundant APCC workflow-reading guidance, makes APCC CLI availability an explicit prerequisite, and verifies the packaged guidance surfaces before release.
+    parentPlanId: null

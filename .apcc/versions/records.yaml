@@ -1,4 +1,26 @@
 items:
+  - id: 0-3-1-agent-bootstrap-guidance-polish
+    version: 0.3.1
+    title: Agent bootstrap guidance polish
+    summary: Patch release that removes redundant workflow-guide reread instructions, makes APCC CLI availability explicit in agent bootstrap assets, and keeps the canonical plus packaged guidance surfaces aligned.
+    docPath: internal/versions/0-3-1-agent-bootstrap-guidance-polish.md
+    status: recorded
+    decisionRefs: []
+    highlights:
+      - Makes `apcc` availability an explicit prerequisite in `AGENTS.md` and the canonical agents template before workflow or control-plane commands are expected to work.
+      - Treats `apcc guide workflow` as the preferred explicit workflow-reading path and stops telling agents to read both the CLI guide and the materialized skill copy.
+      - Removes the misleading fallback that suggested agents could keep operating from the local skill copy when the APCC CLI itself was unavailable.
+      - Keeps the canonical workflow skill and the materialized `.agents/skills/apcc-workflow/SKILL.md` plus `AGENTS.md` aligned on the same non-redundant bootstrap rules.
+      - Re-verifies the staged package install path so published tarballs carry the updated workflow guidance surfaces.
+    breakingChanges:
+      - None.
+    migrationNotes:
+      - Development agents should ensure `apcc` is installed before invoking workflow or control-plane commands.
+      - Prefer `apcc guide workflow` as the explicit bootstrap read path in environment-agnostic instructions.
+      - If a skill-aware runtime has already injected the APCC workflow guide into context, do not reread the same guide for ritual.
+    validationSummary: npm run check, npx vitest run test/guidance.test.ts test/workflow-guide.test.ts test/bootstrap.test.ts, npm run build, npm run verify:package-install, npm run dev -- doctor check, npm run dev -- status, npm run prepare:publish-package -- --out .tmp/apcc-publish, npm run prepare:publish-package -- --out .tmp/apcc-scoped-publish --name @rendo-studio/apcc, npm pack --dry-run, GitHub release v0.3.1, npm publish apcc@0.3.1, npm publish @rendo-studio/apcc@0.3.1
+    createdAt: 2026-04-28T00:00:00.000Z
+    recordedAt: 2026-04-28T21:00:00.0000000Z
   - id: 0-3-0-aclip-build-stage-and-control-plane-contract
     version: 0.3.0
     title: ACLIP build stage and control-plane contract

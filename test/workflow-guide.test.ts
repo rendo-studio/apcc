@@ -19,6 +19,8 @@ describe("workflow guide", () => {
     expect(getWorkflowGuideAssetPath()).toBe(path.join(getWorkflowSkillPackageDir(), "SKILL.md"));
     expect(guide.title).toBe("APCC Workflow Guide");
     expect(guide.markdown).toContain("# APCC Workflow Guide");
+    expect(guide.markdown).toContain("Prefer `apcc guide workflow` as the primary explicit way to read it");
+    expect(guide.markdown).toContain("npm install -g apcc");
     expect(guide.markdown).toContain("apcc guide workflow");
     expect(guide.markdown).toContain("## Operating States");
     expect(guide.markdown).toContain("### Cold Round");

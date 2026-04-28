@@ -825,3 +825,45 @@ items:
     planRef: automate-contract-doc-and-publish-36
     parentTaskId: task-automate-contract-doc-and-publish
     countedForProgress: true
+  - id: tighten-bootstrap-reading-rules-51
+    name: Tighten bootstrap reading rules
+    summary: Make the workflow guide reading path single-source by preferring `apcc guide workflow`, avoiding duplicate rereads when the same content is already in context, and keeping a file-based fallback only for environments that need it.
+    status: done
+    planRef: refine-agent-bootstrap-guidance-and-apcc-availab-38
+    parentTaskId: null
+    countedForProgress: true
+  - id: document-apcc-cli-availability-fallback-52
+    name: Document APCC CLI availability fallback
+    summary: Teach agent bootstrap assets to check whether `apcc` is available and, when it is not, direct the agent to the documented APCC installation path before expecting workflow or control-plane commands to work.
+    status: done
+    planRef: refine-agent-bootstrap-guidance-and-apcc-availab-38
+    parentTaskId: null
+    countedForProgress: true
+  - id: sync-canonical-and-materialized-agent-guidance-53
+    name: Sync canonical and materialized agent guidance
+    summary: Apply the bootstrap-rule cleanup consistently across the canonical assets and the generated AGENTS or skill copies so repositories do not carry divergent instructions.
+    status: done
+    planRef: refine-agent-bootstrap-guidance-and-apcc-availab-38
+    parentTaskId: null
+    countedForProgress: true
+  - id: record-the-0-3-1-patch-release-54
+    name: Record the 0.3.1 patch release
+    summary: Bump the package version, add the internal version record, and capture the scope of the bootstrap-guidance cleanup in APCC's release history.
+    status: done
+    planRef: publish-the-bootstrap-guidance-patch-release-39
+    parentTaskId: null
+    countedForProgress: true
+  - id: verify-the-0-3-1-release-surface-55
+    name: Verify the 0.3.1 release surface
+    summary: Run the targeted and release-level verification suite so the packaged workflow guidance, AGENTS template, CLI artifact, and install path are clean before publication.
+    status: done
+    planRef: publish-the-bootstrap-guidance-patch-release-39
+    parentTaskId: null
+    countedForProgress: true
+  - id: publish-the-0-3-1-release-56
+    name: Publish the 0.3.1 release
+    summary: Publish the 0.3.1 patch to GitHub and npm under both package names, then verify the remote release artifacts are live.
+    status: in_progress
+    planRef: publish-the-bootstrap-guidance-patch-release-39
+    parentTaskId: null
+    countedForProgress: true
