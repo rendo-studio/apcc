@@ -32,7 +32,9 @@ This patch release removes redundant workflow-guide reread instructions from APC
 - `npm run check`
 - `npx vitest run test/guidance.test.ts test/workflow-guide.test.ts test/bootstrap.test.ts`
 - `npm run build`
+- `npm run dev -- site build`
 - `npm run verify:package-install`
+- `npm run verify:site-lifecycle`
 - `npm run dev -- doctor check`
 - `npm run dev -- status`
 - `npm run prepare:publish-package -- --out .tmp/apcc-publish`

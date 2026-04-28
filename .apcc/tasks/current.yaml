@@ -863,7 +863,7 @@ items:
   - id: publish-the-0-3-1-release-56
     name: Publish the 0.3.1 release
     summary: Publish the 0.3.1 patch to GitHub and npm under both package names, then verify the remote release artifacts are live.
-    status: in_progress
+    status: done
     planRef: publish-the-bootstrap-guidance-patch-release-39
     parentTaskId: null
     countedForProgress: true

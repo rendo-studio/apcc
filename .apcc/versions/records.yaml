@@ -18,9 +18,9 @@ items:
       - Development agents should ensure `apcc` is installed before invoking workflow or control-plane commands.
       - Prefer `apcc guide workflow` as the explicit bootstrap read path in environment-agnostic instructions.
       - If a skill-aware runtime has already injected the APCC workflow guide into context, do not reread the same guide for ritual.
-    validationSummary: npm run check, npx vitest run test/guidance.test.ts test/workflow-guide.test.ts test/bootstrap.test.ts, npm run build, npm run verify:package-install, npm run dev -- doctor check, npm run dev -- status, npm run prepare:publish-package -- --out .tmp/apcc-publish, npm run prepare:publish-package -- --out .tmp/apcc-scoped-publish --name @rendo-studio/apcc, npm pack --dry-run, GitHub release v0.3.1, npm publish apcc@0.3.1, npm publish @rendo-studio/apcc@0.3.1
+    validationSummary: npm run check, npx vitest run test/guidance.test.ts test/workflow-guide.test.ts test/bootstrap.test.ts, npm run build, npm run dev -- site build, npm run verify:package-install, npm run verify:site-lifecycle, npm run dev -- doctor check, npm run dev -- status, npm run prepare:publish-package -- --out .tmp/apcc-publish, npm run prepare:publish-package -- --out .tmp/apcc-scoped-publish --name @rendo-studio/apcc, npm pack --dry-run, GitHub release v0.3.1, npm publish apcc@0.3.1, npm publish @rendo-studio/apcc@0.3.1
     createdAt: 2026-04-28T00:00:00.000Z
-    recordedAt: 2026-04-28T21:00:00.0000000Z
+    recordedAt: 2026-04-28T21:15:07.8178035+08:00
   - id: 0-3-0-aclip-build-stage-and-control-plane-contract
     version: 0.3.0
     title: ACLIP build stage and control-plane contract
