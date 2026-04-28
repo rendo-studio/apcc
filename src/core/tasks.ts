@@ -3,7 +3,7 @@ import { readYamlFile, writeYamlFile } from "./storage.js";
 import { getWorkspacePaths } from "./workspace.js";
 import { computeProgress } from "./progress.js";
 import { assertControlPlaneId } from "./ids.js";
-import type { TaskNode, TasksState, TaskStatus, TaskTreeNode } from "./types.js";
+import { TASK_STATUSES, type TaskNode, type TasksState, type TaskStatus, type TaskTreeNode } from "./types.js";
 import { loadPlans } from "./plans.js";
 
 export async function loadTasks(): Promise<TasksState> {
@@ -19,8 +19,21 @@ export function assertValidTaskTree(tasks: TaskNode[]): void {
   }
 
   for (const task of tasks) {
+    assertControlPlaneId(task.id, "Task");
+    if (!task.name || task.name.trim().length === 0) {
+      throw new Error(`Task ${task.id} is missing name`);
+    }
     if (!task.summary || task.summary.trim().length === 0) {
       throw new Error(`Task ${task.id} is missing summary`);
+    }
+    if (!(TASK_STATUSES as readonly string[]).includes(task.status)) {
+      throw new Error(`Task ${task.id} uses unsupported status "${String(task.status)}"`);
+    }
+    if (!task.planRef || task.planRef.trim().length === 0) {
+      throw new Error(`Task ${task.id} is missing planRef`);
+    }
+    if (typeof task.countedForProgress !== "boolean") {
+      throw new Error(`Task ${task.id} must set countedForProgress to true or false`);
     }
     if (task.parentTaskId !== null && !ids.has(task.parentTaskId)) {
       throw new Error(`Task ${task.id} points to missing parent ${task.parentTaskId}`);

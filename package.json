@@ -1,6 +1,6 @@
 {
   "name": "apcc",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "type": "module",
   "description": "APCC is an agent-first project context framework for human developers and development agents.",
   "license": "MIT",
@@ -24,19 +24,20 @@
     "docs/public"
   ],
   "bin": {
-    "apcc": "dist/bin/apcc.js"
+    "apcc": "dist/bin/apcc.cjs"
   },
   "scripts": {
     "dev": "node --import tsx ./src/bin/apcc.ts",
     "test": "vitest run",
     "check": "tsc --noEmit",
-    "build": "node --import tsx ./scripts/clean-build-output.ts && tsc -p tsconfig.json && node --import tsx ./scripts/build-prebuilt-site-runtime.ts",
+    "build": "node --import tsx ./scripts/clean-build-output.ts && tsc -p tsconfig.json && node --import tsx ./scripts/build-cli.ts && node --import tsx ./scripts/build-prebuilt-site-runtime.ts",
+    "generate:control-plane-contract-doc": "node --import tsx ./scripts/generate-control-plane-contract-doc.ts",
     "prepare:publish-package": "node --import tsx ./scripts/prepare-publish-package.ts",
     "verify:package-install": "node --import tsx ./scripts/verify-package-install.ts",
     "verify:site-lifecycle": "node --import tsx ./scripts/verify-site-lifecycle.ts"
   },
   "dependencies": {
-    "@rendo-studio/aclip": "^0.3.1",
+    "@rendo-studio/aclip": "^0.3.4",
     "tsx": "^4.21.0",
     "typescript": "^6.0.3",
     "yaml": "^2.8.3"

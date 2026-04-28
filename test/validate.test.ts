@@ -58,4 +58,59 @@ describe("workspace validation and repair", () => {
     expect(repaired.validation.ok).toBe(true);
     expect(repaired.validation.repairNeeded).toBe(false);
   });
+
+  it("reports invalid persisted control-plane enum values for direct .apcc edits", async () => {
+    const root = path.join(process.env.TEMP ?? process.cwd(), `apcc-validate-enums-${Date.now()}`);
+    cleanups.push(root);
+
+    await initWorkspace({
+      targetPath: root,
+      projectName: "Contract Workspace",
+      endGoalName: "Validate contract enums",
+      endGoalSummary: "Ensure doctor rejects unsupported persisted values."
+    });
+
+    await fs.writeFile(
+      path.join(root, ".apcc", "tasks", "current.yaml"),
+      [
+        "items:",
+        "  - id: invalid-task",
+        "    name: Invalid task",
+        "    summary: Invalid task",
+        "    status: started",
+        "    planRef: establish-shared-project-context-1",
+        "    parentTaskId: null",
+        "    countedForProgress: true",
+        ""
+      ].join("\n"),
+      "utf8"
+    );
+    await fs.writeFile(
+      path.join(root, ".apcc", "config", "workspace.yaml"),
+      [
+        "siteFramework: fumadocs",
+        "packageManager: npm",
+        "projectKind: general",
+        "docsMode: standard",
+        "docsLanguage: fr",
+        "docsSite:",
+        "  enabled: true",
+        "  sourcePath: docs",
+        "  preferredPort: null",
+        "workspaceSchemaVersion: 9",
+        ""
+      ].join("\n"),
+      "utf8"
+    );
+
+    const validation = await withWorkspaceRoot(root, async () => validateWorkspace());
+
+    expect(validation.ok).toBe(false);
+    expect(validation.schemaIssues).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining('unsupported status "started"'),
+        expect.stringContaining('unsupported docsLanguage "fr"')
+      ])
+    );
+  });
 });

@@ -47,6 +47,10 @@ export function assertValidPlanTree(plans: PlanNode[]): void {
   }
 
   for (const plan of plans) {
+    assertControlPlaneId(plan.id, "Plan");
+    if (!plan.name || plan.name.trim().length === 0) {
+      throw new Error(`Plan ${plan.id} is missing name`);
+    }
     if (!plan.summary || plan.summary.trim().length === 0) {
       throw new Error(`Plan ${plan.id} is missing summary`);
     }

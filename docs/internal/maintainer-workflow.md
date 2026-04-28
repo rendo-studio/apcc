@@ -42,11 +42,17 @@ npm run verify:package-install
 npm run verify:site-lifecycle
 ```
 
-`npm run build` is the maintainer path that compiles the APCC CLI and packages the shared prebuilt docs viewer shell under `dist/site-runtime-prebuilt/`.
+`npm run build` is the maintainer path that builds the APCC CLI artifact through ACLIP's standard build helper and packages the shared prebuilt docs viewer shell under `dist/site-runtime-prebuilt/`.
 
 `npm run dev -- site build` verifies the public user-facing build command by producing a deployable read-only docs-site artifact. It must not be used as the internal shell prebuild step, and it must not stop a healthy live runtime.
 
 Add targeted runtime smoke checks when the change affects the site runtime, docs rendering, or CLI command behavior.
+
+When the control-plane contract or persisted value domains change, regenerate the published contract guide with:
+
+```bash
+npm run generate:control-plane-contract-doc
+```
 
 ## README Surfaces
 

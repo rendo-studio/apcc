@@ -1,4 +1,26 @@
 items:
+  - id: 0-3-0-aclip-build-stage-and-control-plane-contract
+    version: 0.3.0
+    title: ACLIP build stage and control-plane contract
+    summary: Minor release that adopts ACLIP's standard CLI build stage, hardens APCC's bundler-facing runtime surface, and formalizes the `.apcc` direct-edit contract as a generated and validated public guide.
+    docPath: internal/versions/0-3-0-aclip-build-stage-and-control-plane-contract.md
+    status: recorded
+    decisionRefs: []
+    highlights:
+      - Builds the shipped CLI artifact through ACLIP's standard `build(...)` helper while preserving APCC's Markdown-first runtime behavior.
+      - Makes package-root and version resolution bundler-safe across the CLI entrypoint, workflow guidance, packaged assets, and docs-site runtime helpers.
+      - Publishes `apcc guide control-plane-contract` and generates the contract doc from runtime-backed constants instead of hand-maintained enum lists.
+      - Extends doctor validation to reject unsupported persisted task, decision, version, and workspace-config values in directly edited `.apcc` workspaces.
+      - Re-verifies installed-package behavior, staged publish packages, and docs-site lifecycle behavior against the new build-stage and contract surfaces.
+    breakingChanges:
+      - None.
+    migrationNotes:
+      - If you edit `.apcc/` directly, switch to `apcc guide control-plane-contract` as the authoritative persisted-field reference.
+      - Replace unsupported direct-edit task statuses such as `todo` with `pending`, `in_progress`, `done`, or `blocked`.
+      - If you change persisted value domains while maintaining APCC, rerun `npm run generate:control-plane-contract-doc`.
+    validationSummary: npm run check, npm run test, npm run build, npm run verify:package-install, npm run verify:site-lifecycle, npm run dev -- guide, npm run dev -- guide control-plane-contract, npm run prepare:publish-package -- --out .tmp/apcc-publish, npm run prepare:publish-package -- --out .tmp/apcc-scoped-publish --name @rendo-studio/apcc, npm pack --dry-run
+    createdAt: 2026-04-28T00:00:00.000Z
+    recordedAt: 2026-04-28T00:00:00.000Z
   - id: 0-2-1-npm-publish-manifest-polish
     version: 0.2.1
     title: npm publish manifest polish

@@ -298,6 +298,8 @@ Use direct `.apcc/` edits as the best practice when:
 - you are refining plans and tasks in bulk
 - you already understand the workspace schema
 
+When editing `.apcc/` directly, use `apcc guide control-plane-contract` as the authoritative persisted-field and allowed-value reference. Do not guess enum values from memory.
+
 Use CLI as the best practice when:
 
 - initializing a workspace in a new or existing repository

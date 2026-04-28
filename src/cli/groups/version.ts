@@ -6,6 +6,7 @@ import {
   listVersionRecords,
   updateVersionRecord
 } from "../../core/version.js";
+import { VERSION_RECORD_STATUSES } from "../../core/types.js";
 import { withGuideHint } from "../guide-hint.js";
 
 function splitCsv(value?: string): string[] {
@@ -20,7 +21,7 @@ function splitCsv(value?: string): string[] {
 }
 
 function assertVersionStatus(value: string): "draft" | "recorded" {
-  if (!["draft", "recorded"].includes(value)) {
+  if (!(VERSION_RECORD_STATUSES as readonly string[]).includes(value)) {
     throw new Error(`Unsupported version status "${value}". Use draft or recorded.`);
   }
 

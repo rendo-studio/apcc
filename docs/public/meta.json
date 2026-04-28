@@ -3,6 +3,7 @@
     "quickstart",
     "cli",
     "workspace-model",
+    "control-plane-contract",
     "docs-package",
     "docs-site",
     "decisions-and-versions"

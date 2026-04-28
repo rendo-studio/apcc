@@ -608,3 +608,220 @@ items:
     planRef: remove-publish-warning-and-ship-patch-28
     parentTaskId: task-remove-publish-warning-and-ship-patch
     countedForProgress: true
+  - id: task-align-with-aclip-0-3-2
+    name: Align with ACLIP 0.3.2 and assess standard packaging adoption
+    summary: Upgrade the ACLIP dependency, verify APCC compatibility, and determine whether the current npm publish staging flow can be replaced by ACLIP standard packaging without adding awkward wrapper complexity.
+    status: done
+    planRef: align-with-aclip-0-3-2-and-assess-standard-packaging-29
+    parentTaskId: null
+    countedForProgress: false
+  - id: task-align-with-aclip-0-3-2-1
+    name: Upgrade APCC to ACLIP 0.3.2
+    summary: Move the dependency and lockfile to ACLIP 0.3.2, update any affected code paths, and rerun the relevant compatibility checks.
+    status: done
+    planRef: align-with-aclip-0-3-2-and-assess-standard-packaging-29
+    parentTaskId: task-align-with-aclip-0-3-2
+    countedForProgress: true
+  - id: task-align-with-aclip-0-3-2-2
+    name: Assess standard CLI packaging migration
+    summary: Compare APCC's current staged npm package contents and release needs with ACLIP 0.3.2 build helpers to decide whether a seamless migration is possible or whether APCC still needs a thin packaging wrapper.
+    status: done
+    planRef: align-with-aclip-0-3-2-and-assess-standard-packaging-29
+    parentTaskId: task-align-with-aclip-0-3-2
+    countedForProgress: true
+  - id: task-reassess-aclip-standard-packaging
+    name: Reassess ACLIP standard packaging with corrected 0.3.2 source
+    summary: Re-check the actual ACLIP 0.3.2 packaging API and runtime behavior, then decide whether APCC can migrate its npm release flow cleanly onto that standard path.
+    status: done
+    planRef: reassess-aclip-standard-packaging-with-corrected-0-3-2-source-30
+    parentTaskId: null
+    countedForProgress: false
+  - id: task-reassess-aclip-standard-packaging-1
+    name: Inspect corrected ACLIP 0.3.2 packaging surface
+    summary: Read the refreshed ACLIP 0.3.2 source and examples so the migration assessment is based on the actual current API instead of stale helper signatures.
+    status: done
+    planRef: reassess-aclip-standard-packaging-with-corrected-0-3-2-source-30
+    parentTaskId: task-reassess-aclip-standard-packaging
+    countedForProgress: true
+  - id: task-reassess-aclip-standard-packaging-2
+    name: Re-run migration assessment against APCC
+    summary: Exercise the corrected ACLIP build flow against APCC, compare artifact expectations, and conclude whether migration is now seamless, wrapper-based, or still blocked.
+    status: done
+    planRef: reassess-aclip-standard-packaging-with-corrected-0-3-2-source-30
+    parentTaskId: task-reassess-aclip-standard-packaging
+    countedForProgress: true
+  - id: task-upgrade-to-aclip-0-3-3-and-reassess-build-stage
+    name: Upgrade to ACLIP 0.3.3 and reassess build-stage adoption
+    summary: Upgrade the ACLIP dependency, verify APCC compatibility, and reassess only the AclipApp build stage migration question rather than full npm package staging equivalence.
+    status: done
+    planRef: upgrade-to-aclip-0-3-3-and-reassess-build-stage-31
+    parentTaskId: null
+    countedForProgress: false
+  - id: task-upgrade-to-aclip-0-3-3-and-reassess-build-stage-1
+    name: Upgrade APCC to ACLIP 0.3.3
+    summary: Move the dependency and lockfile to ACLIP 0.3.3 and rerun compatibility checks so the assessment is based on the latest released SDK.
+    status: done
+    planRef: upgrade-to-aclip-0-3-3-and-reassess-build-stage-31
+    parentTaskId: task-upgrade-to-aclip-0-3-3-and-reassess-build-stage
+    countedForProgress: true
+  - id: task-upgrade-to-aclip-0-3-3-and-reassess-build-stage-2
+    name: Reassess ACLIP standard build-stage adoption
+    summary: Decide whether APCC should adopt ACLIP's standard build helper specifically for the AclipApp artifact build stage, based on real benefits and side effects rather than full publish-stage parity.
+    status: done
+    planRef: upgrade-to-aclip-0-3-3-and-reassess-build-stage-31
+    parentTaskId: task-upgrade-to-aclip-0-3-3-and-reassess-build-stage
+    countedForProgress: true
+  - id: task-reassess-aclip-build-step-adoption
+    name: Reassess ACLIP build-step adoption under clarified scope
+    summary: Re-evaluate migration feasibility with the narrower question of whether APCC's AclipApp build step should move to ACLIP standard build even if APCC keeps its own publish-stage wrapper.
+    status: done
+    planRef: reassess-aclip-build-step-adoption-31
+    parentTaskId: null
+    countedForProgress: false
+  - id: task-reassess-aclip-build-step-adoption-1
+    name: Inspect runtime assumptions that affect ACLIP build-step adoption
+    summary: Check whether APCC's built CLI currently depends on tsc-style file layout or package-relative assets in ways that would make ACLIP's bundled build step unsafe or noisy.
+    status: done
+    planRef: reassess-aclip-build-step-adoption-31
+    parentTaskId: task-reassess-aclip-build-step-adoption
+    countedForProgress: true
+  - id: task-reassess-aclip-build-step-adoption-2
+    name: Decide whether ACLIP build-step adoption is worthwhile
+    summary: Weigh the real benefits of adopting ACLIP standard build for the AclipApp layer against any runtime, verification, or maintenance side effects in APCC.
+    status: done
+    planRef: reassess-aclip-build-step-adoption-31
+    parentTaskId: task-reassess-aclip-build-step-adoption
+    countedForProgress: true
+  - id: task-investigate-aclip-0-3-3-consumer-build-bug
+    name: Investigate ACLIP 0.3.3 consumer build artifact bug
+    summary: Reproduce the downstream consumer build failure in the ACLIP 0.3.3 source tree, patch it locally if possible, and capture the exact maintainer-facing proposal grounded in the verified fix.
+    status: done
+    planRef: investigate-aclip-0-3-3-consumer-build-bug-32
+    parentTaskId: null
+    countedForProgress: false
+  - id: task-investigate-aclip-0-3-3-consumer-build-bug-1
+    name: Reproduce the consumer build artifact failure in ACLIP source
+    summary: Use the ACLIP 0.3.3 source tree and a realistic downstream consumer setup to confirm the emitted build artifact still fails at runtime for package-based imports.
+    status: done
+    planRef: investigate-aclip-0-3-3-consumer-build-bug-32
+    parentTaskId: task-investigate-aclip-0-3-3-consumer-build-bug
+    countedForProgress: true
+  - id: task-investigate-aclip-0-3-3-consumer-build-bug-2
+    name: Patch and validate a local ACLIP fix
+    summary: Implement the smallest credible packaging fix in the ACLIP source tree and verify that the downstream consumer artifact becomes runnable without regressing the ACLIP source-repo example.
+    status: done
+    planRef: investigate-aclip-0-3-3-consumer-build-bug-32
+    parentTaskId: task-investigate-aclip-0-3-3-consumer-build-bug
+    countedForProgress: true
+  - id: task-investigate-aclip-0-3-3-consumer-build-bug-3
+    name: Draft a concrete maintainer proposal
+    summary: Summarize the verified reproduction, root cause, patch shape, and follow-up guidance in a maintainer-ready proposal once the local fix is proven.
+    status: done
+    planRef: investigate-aclip-0-3-3-consumer-build-bug-32
+    parentTaskId: task-investigate-aclip-0-3-3-consumer-build-bug
+    countedForProgress: true
+  - id: task-upgrade-to-aclip-0-3-4-and-reassess
+    name: Upgrade to ACLIP 0.3.4 and reassess downstream build behavior
+    summary: Upgrade the ACLIP dependency, verify APCC compatibility, and re-evaluate the published-package consumer build behavior against the current 0.3.4 source and release.
+    status: done
+    planRef: upgrade-to-aclip-0-3-4-and-reassess-33
+    parentTaskId: null
+    countedForProgress: false
+  - id: task-upgrade-to-aclip-0-3-4-and-reassess-1
+    name: Upgrade APCC to ACLIP 0.3.4
+    summary: Move the dependency and lockfile to ACLIP 0.3.4 and rerun the APCC compatibility checks.
+    status: done
+    planRef: upgrade-to-aclip-0-3-4-and-reassess-33
+    parentTaskId: task-upgrade-to-aclip-0-3-4-and-reassess
+    countedForProgress: true
+  - id: task-upgrade-to-aclip-0-3-4-and-reassess-2
+    name: Reassess published-package consumer build behavior
+    summary: Compare the ACLIP 0.3.4 source tree and published package to determine whether the downstream consumer build bug is fixed and whether APCC build-step adoption guidance should change.
+    status: done
+    planRef: upgrade-to-aclip-0-3-4-and-reassess-33
+    parentTaskId: task-upgrade-to-aclip-0-3-4-and-reassess
+    countedForProgress: true
+  - id: task-adopt-aclip-standard-cli-build-stage
+    name: Adopt ACLIP standard CLI build stage
+    summary: Replace APCC's custom CLI artifact build path with ACLIP's standard build helper, make the runtime path logic bundler-safe, and keep the existing package surface intact.
+    status: done
+    planRef: adopt-aclip-standard-cli-build-stage-34
+    parentTaskId: null
+    countedForProgress: false
+  - id: task-adopt-aclip-standard-cli-build-stage-1
+    name: Remove APCC bundler hazards from the CLI runtime surface
+    summary: Audit and fix version and package-root resolution so the CLI remains correct when bundled by ACLIP instead of relying on the current tsc output layout.
+    status: done
+    planRef: adopt-aclip-standard-cli-build-stage-34
+    parentTaskId: task-adopt-aclip-standard-cli-build-stage
+    countedForProgress: true
+  - id: task-adopt-aclip-standard-cli-build-stage-2
+    name: Switch the build script to ACLIP standard CLI build
+    summary: Use ACLIP's build helper for the CLI artifact while preserving the rest of APCC's package staging and runtime assets.
+    status: done
+    planRef: adopt-aclip-standard-cli-build-stage-34
+    parentTaskId: task-adopt-aclip-standard-cli-build-stage
+    countedForProgress: true
+  - id: task-adopt-aclip-standard-cli-build-stage-3
+    name: Re-verify installed behavior and release-facing references
+    summary: Update any tests or docs that still assume the old tsc-built CLI entrypoint and rerun the release-level verification suite.
+    status: done
+    planRef: adopt-aclip-standard-cli-build-stage-34
+    parentTaskId: task-adopt-aclip-standard-cli-build-stage
+    countedForProgress: true
+  - id: task-standardize-control-plane-contract
+    name: Standardize the APCC control-plane contract
+    summary: Close the gap between direct `.apcc` editing guidance and the actual published contract by documenting authoritative value domains and validating them in doctor.
+    status: done
+    planRef: standardize-control-plane-contract-35
+    parentTaskId: null
+    countedForProgress: false
+  - id: task-standardize-control-plane-contract-1
+    name: Publish the normative control-plane contract
+    summary: Add a public APCC contract guide that defines `.apcc` file roles, field semantics, allowed values, and CLI-to-storage mappings for direct workspace editing.
+    status: done
+    planRef: standardize-control-plane-contract-35
+    parentTaskId: task-standardize-control-plane-contract
+    countedForProgress: true
+  - id: task-standardize-control-plane-contract-2
+    name: Align runtime constants and doctor validation
+    summary: Replace scattered value-domain literals with shared runtime constants and make doctor reject invalid persisted enum and boolean values across the control plane.
+    status: done
+    planRef: standardize-control-plane-contract-35
+    parentTaskId: task-standardize-control-plane-contract
+    countedForProgress: true
+  - id: task-standardize-control-plane-contract-3
+    name: Expose the contract through the public guide surface
+    summary: Add the contract guide to the public topic set and update adjacent guidance so Agents have a single authoritative entrypoint when editing `.apcc` directly.
+    status: done
+    planRef: standardize-control-plane-contract-35
+    parentTaskId: task-standardize-control-plane-contract
+    countedForProgress: true
+  - id: task-automate-contract-doc-and-publish
+    name: Automate contract doc generation and publish the next APCC release
+    summary: Turn the control-plane contract page into a generated artifact backed by runtime constants, then review and publish the next release if the surface is clean.
+    status: in_progress
+    planRef: automate-contract-doc-and-publish-36
+    parentTaskId: null
+    countedForProgress: false
+  - id: task-automate-contract-doc-and-publish-1
+    name: Generate the control-plane contract doc from runtime constants
+    summary: Move the contract page content to a runtime-backed source model, add a generation script and sync test, and regenerate the published docs page from that source.
+    status: done
+    planRef: automate-contract-doc-and-publish-36
+    parentTaskId: task-automate-contract-doc-and-publish
+    countedForProgress: true
+  - id: task-automate-contract-doc-and-publish-2
+    name: Reassess release readiness after contract automation
+    summary: Run the release-quality review and full verification suite after the generation pipeline lands, then close any remaining blockers.
+    status: done
+    planRef: automate-contract-doc-and-publish-36
+    parentTaskId: task-automate-contract-doc-and-publish
+    countedForProgress: true
+  - id: task-automate-contract-doc-and-publish-3
+    name: Publish the next APCC release
+    summary: Bump the version, record the release, publish to GitHub and npm, and verify the published artifacts once the release surface is clean.
+    status: in_progress
+    planRef: automate-contract-doc-and-publish-36
+    parentTaskId: task-automate-contract-doc-and-publish
+    countedForProgress: true

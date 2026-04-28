@@ -112,3 +112,39 @@ items:
     name: Remove npm publish warnings and ship a patch release
     summary: Eliminate the remaining npm publish warning from the package surface, verify the fix end to end, and publish the next patch release across GitHub and npm.
     parentPlanId: null
+  - id: align-with-aclip-0-3-2-and-assess-standard-packaging-29
+    name: Align with ACLIP 0.3.2 and assess standard packaging adoption
+    summary: Upgrade APCC to ACLIP 0.3.2, verify compatibility, and determine whether APCC's npm release flow can move cleanly onto ACLIP's standard CLI packaging helpers.
+    parentPlanId: null
+  - id: reassess-aclip-standard-packaging-with-corrected-0-3-2-source-30
+    name: Reassess ACLIP standard packaging against corrected 0.3.2 source
+    summary: Re-evaluate APCC's migration path to ACLIP standard CLI packaging after the ACLIP 0.3.2 reference source is refreshed to the actual current implementation.
+    parentPlanId: null
+  - id: upgrade-to-aclip-0-3-3-and-reassess-build-stage-31
+    name: Upgrade to ACLIP 0.3.3 and reassess standard build-stage adoption
+    summary: Move APCC to ACLIP 0.3.3 and re-evaluate whether the AclipApp build stage itself can cleanly adopt ACLIP's standard build flow for clear benefit without undesirable side effects.
+    parentPlanId: null
+  - id: reassess-aclip-build-step-adoption-31
+    name: Reassess ACLIP build-step adoption under clarified scope
+    summary: Evaluate whether APCC should adopt ACLIP's standard AclipApp build step specifically, independent of the rest of APCC's npm staging and packaging flow.
+    parentPlanId: null
+  - id: investigate-aclip-0-3-3-consumer-build-bug-32
+    name: Investigate ACLIP 0.3.3 consumer build artifact bug
+    summary: Reproduce the downstream build artifact failure in the ACLIP 0.3.3 source tree, validate a local fix, and prepare a concrete maintainer proposal based on the verified patch.
+    parentPlanId: null
+  - id: upgrade-to-aclip-0-3-4-and-reassess-33
+    name: Upgrade to ACLIP 0.3.4 and reassess downstream build behavior
+    summary: Move APCC to ACLIP 0.3.4, verify compatibility, and re-evaluate whether the published SDK now fixes or changes the downstream consumer build behavior.
+    parentPlanId: null
+  - id: adopt-aclip-standard-cli-build-stage-34
+    name: Adopt ACLIP standard CLI build stage
+    summary: Move APCC's CLI artifact build onto ACLIP's standard build flow, remove APCC-side bundler hazards, and preserve the existing package capabilities and publish-stage behavior.
+    parentPlanId: null
+  - id: standardize-control-plane-contract-35
+    name: Standardize the APCC control-plane contract
+    summary: Publish a normative APCC control-plane contract for direct `.apcc` editing, align runtime constants to that contract, and make doctor validate the documented value domains.
+    parentPlanId: null
+  - id: automate-contract-doc-and-publish-36
+    name: Automate contract doc generation and publish the next APCC release
+    summary: Generate the public control-plane contract doc from runtime constants, run a release-quality review over the combined changes, and publish the next APCC release if the release surface is clean.
+    parentPlanId: null

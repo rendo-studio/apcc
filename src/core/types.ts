@@ -1,9 +1,26 @@
-export type TaskStatus = "pending" | "in_progress" | "done" | "blocked";
-export type DecisionCategory = "goal" | "scope" | "change" | "architecture" | "version" | "policy" | "other";
-export type DecisionStatus = "pending" | "approved" | "rejected";
-export type VersionRecordStatus = "draft" | "recorded";
-export type PageBoundaryMode = "editable" | "projection" | "hybrid";
-export type DocsLanguage = "en" | "zh-CN";
+export const TASK_STATUSES = ["pending", "in_progress", "done", "blocked"] as const;
+export const DECISION_CATEGORIES = ["goal", "scope", "change", "architecture", "version", "policy", "other"] as const;
+export const DECISION_STATUSES = ["pending", "approved", "rejected"] as const;
+export const VERSION_RECORD_STATUSES = ["draft", "recorded"] as const;
+export const PAGE_BOUNDARY_MODES = ["editable", "projection", "hybrid"] as const;
+export const DOCS_LANGUAGES = ["en", "zh-CN"] as const;
+export const PROJECT_KINDS = ["general", "frontend", "library", "service"] as const;
+export const DOCS_MODES = ["minimal", "standard"] as const;
+export const BOOTSTRAP_MODES = ["init"] as const;
+export const SITE_FRAMEWORKS = ["fumadocs"] as const;
+export const PACKAGE_MANAGERS = ["npm"] as const;
+
+export type TaskStatus = (typeof TASK_STATUSES)[number];
+export type DecisionCategory = (typeof DECISION_CATEGORIES)[number];
+export type DecisionStatus = (typeof DECISION_STATUSES)[number];
+export type VersionRecordStatus = (typeof VERSION_RECORD_STATUSES)[number];
+export type PageBoundaryMode = (typeof PAGE_BOUNDARY_MODES)[number];
+export type DocsLanguage = (typeof DOCS_LANGUAGES)[number];
+export type ProjectKind = (typeof PROJECT_KINDS)[number];
+export type DocsMode = (typeof DOCS_MODES)[number];
+export type BootstrapMode = (typeof BOOTSTRAP_MODES)[number];
+export type SiteFramework = (typeof SITE_FRAMEWORKS)[number];
+export type PackageManager = (typeof PACKAGE_MANAGERS)[number];
 
 export interface GoalState {
   goalId: string;
@@ -111,10 +128,10 @@ export interface WorkspaceMetaState {
   workspaceName: string;
   docsRoot: string;
   workspaceRoot: string;
-  bootstrapMode: "init";
+  bootstrapMode: BootstrapMode;
   templateVersion: string;
-  projectKind: "general" | "frontend" | "library" | "service";
-  docsMode: "minimal" | "standard";
+  projectKind: ProjectKind;
+  docsMode: DocsMode;
   docsLanguage: DocsLanguage;
   createdAt: string;
   lastUpgradedAt: string | null;
@@ -127,10 +144,10 @@ export interface WorkspaceDocsSiteConfig {
 }
 
 export interface WorkspaceConfigState {
-  siteFramework: string;
-  packageManager: string;
-  projectKind: "general" | "frontend" | "library" | "service";
-  docsMode: "minimal" | "standard";
+  siteFramework: SiteFramework;
+  packageManager: PackageManager;
+  projectKind: ProjectKind;
+  docsMode: DocsMode;
   docsLanguage: DocsLanguage;
   docsSite: WorkspaceDocsSiteConfig;
   workspaceSchemaVersion: number;

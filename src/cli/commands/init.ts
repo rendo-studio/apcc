@@ -2,6 +2,7 @@ import { AclipApp, booleanArgument, stringArgument } from "@rendo-studio/aclip";
 
 import { initWorkspace } from "../../core/bootstrap.js";
 import { normalizeDocsLanguage } from "../../core/workspace-config.js";
+import { DOCS_MODES, PROJECT_KINDS } from "../../core/types.js";
 import { withGuideHint } from "../guide-hint.js";
 
 function assertProjectKind(value?: string): "general" | "frontend" | "library" | "service" | undefined {
@@ -9,7 +10,7 @@ function assertProjectKind(value?: string): "general" | "frontend" | "library" |
     return undefined;
   }
 
-  if (!["general", "frontend", "library", "service"].includes(value)) {
+  if (!(PROJECT_KINDS as readonly string[]).includes(value)) {
     throw new Error(`Unsupported projectKind "${value}".`);
   }
 
@@ -21,7 +22,7 @@ function assertDocsMode(value?: string): "minimal" | "standard" | undefined {
     return undefined;
   }
 
-  if (!["minimal", "standard"].includes(value)) {
+  if (!(DOCS_MODES as readonly string[]).includes(value)) {
     throw new Error(`Unsupported docsMode "${value}".`);
   }
 

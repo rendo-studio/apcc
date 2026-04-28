@@ -6,10 +6,11 @@ import {
   getDecisionRecord,
   listDecisionRecords
 } from "../../core/decision.js";
+import { DECISION_CATEGORIES } from "../../core/types.js";
 import { withGuideHint } from "../guide-hint.js";
 
 function assertCategory(value: string): "goal" | "scope" | "change" | "architecture" | "version" | "policy" | "other" {
-  if (!["goal", "scope", "change", "architecture", "version", "policy", "other"].includes(value)) {
+  if (!(DECISION_CATEGORIES as readonly string[]).includes(value)) {
     throw new Error(
       `Unsupported category "${value}". Use goal, scope, change, architecture, version, policy, or other.`
     );

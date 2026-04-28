@@ -4,10 +4,22 @@ import path from "node:path";
 import { initWorkspace, WORKSPACE_SCHEMA_VERSION, WORKSPACE_TEMPLATE_VERSION } from "./bootstrap.js";
 import { migrateDecisionState } from "./decision.js";
 import { loadEndGoal } from "./end-goal.js";
+import { assertValidPlanTree } from "./plans.js";
 import { loadProjectOverview } from "./project-overview.js";
 import { readText, readYamlFile, writeYamlFile } from "./storage.js";
 import { loadTasks, assertValidTaskTree } from "./tasks.js";
-import type { WorkspaceConfigState, WorkspaceMetaState } from "./types.js";
+import type { DecisionState, PlansState, TasksState, VersionState, WorkspaceConfigState, WorkspaceMetaState } from "./types.js";
+import {
+  BOOTSTRAP_MODES,
+  DECISION_CATEGORIES,
+  DECISION_STATUSES,
+  DOCS_LANGUAGES,
+  DOCS_MODES,
+  PACKAGE_MANAGERS,
+  PROJECT_KINDS,
+  SITE_FRAMEWORKS,
+  VERSION_RECORD_STATUSES
+} from "./types.js";
 import { normalizeWorkspaceConfig } from "./workspace-config.js";
 import { getWorkspacePaths } from "./workspace.js";
 
@@ -26,6 +38,18 @@ function unique(items: string[]): string[] {
   return [...new Set(items)];
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isAllowedString<T extends string>(value: unknown, allowed: readonly T[]): value is T {
+  return typeof value === "string" && (allowed as readonly string[]).includes(value);
+}
+
+function describeAllowedValues(values: readonly string[]): string {
+  return values.join(", ");
+}
+
 function resolveDocPath(docsRoot: string, docPath: string | null | undefined): string | null {
   if (!docPath?.trim()) {
     return null;
@@ -38,35 +62,42 @@ async function loadMetaAndConfig() {
   const paths = getWorkspacePaths();
   let meta: WorkspaceMetaState | null = null;
   let config: WorkspaceConfigState | null = null;
+  let rawMeta: WorkspaceMetaState | null = null;
+  let rawConfig: Record<string, unknown> | null = null;
 
   try {
-    meta = await readYamlFile<WorkspaceMetaState>(paths.workspaceMetaFile);
+    rawMeta = await readYamlFile<WorkspaceMetaState>(paths.workspaceMetaFile);
+    meta = rawMeta;
   } catch {
+    rawMeta = null;
     meta = null;
   }
 
   try {
-    const rawConfig = await readYamlFile<WorkspaceConfigState>(paths.workspaceConfigFile);
-    config = normalizeWorkspaceConfig(rawConfig, {
+    rawConfig = await readYamlFile<Record<string, unknown>>(paths.workspaceConfigFile);
+    config = normalizeWorkspaceConfig(rawConfig as unknown as WorkspaceConfigState, {
       projectKind: meta?.projectKind ?? "general",
       docsMode: meta?.docsMode ?? "standard",
       docsLanguage: meta?.docsLanguage ?? "en",
       workspaceSchemaVersion: WORKSPACE_SCHEMA_VERSION
     });
   } catch {
+    rawConfig = null;
     config = null;
   }
 
-  return { meta, config };
+  return { meta, config, rawMeta, rawConfig };
 }
 
 export async function validateWorkspace() {
   const paths = getWorkspacePaths();
-  const [endGoal, projectOverview, decisions, versions] = await Promise.all([
+  const [endGoal, projectOverview, decisions, versions, rawPlans, rawTasks] = await Promise.all([
     loadEndGoal(),
     loadProjectOverview().catch(() => null),
-    readYamlFile<{ items?: Array<{ docPath?: string | null }> }>(paths.decisionFile).catch(() => ({ items: [] })),
-    readYamlFile<{ items?: Array<{ docPath?: string | null }> }>(paths.versionFile).catch(() => ({ items: [] }))
+    readYamlFile<DecisionState>(paths.decisionFile).catch(() => ({ items: [] })),
+    readYamlFile<VersionState>(paths.versionFile).catch(() => ({ items: [] })),
+    readYamlFile<PlansState>(paths.planFile).catch(() => ({ endGoalRef: "", items: [] })),
+    readYamlFile<TasksState>(paths.taskFile).catch(() => ({ items: [] }))
   ]);
   const requiredFiles = [
     paths.projectOverviewFile,
@@ -95,13 +126,82 @@ export async function validateWorkspace() {
       : true,
     goal: endGoal.docPath ? await hasMinimalMetadata(path.join(paths.docsRoot, endGoal.docPath)).catch(() => false) : true
   };
-  const tasks = await loadTasks();
-  assertValidTaskTree(tasks.items);
-
-  const { meta, config } = await loadMetaAndConfig();
+  const { meta, config, rawConfig } = await loadMetaAndConfig();
   const schemaIssues: string[] = [];
   const repairableIssues: string[] = [];
   const warnings: string[] = [];
+  const rawPlanItems = Array.isArray(rawPlans.items) ? rawPlans.items : [];
+  const rawTaskItems = Array.isArray(rawTasks.items) ? rawTasks.items : [];
+  const rawDecisionItems = Array.isArray(decisions.items) ? decisions.items : [];
+  const rawVersionItems = Array.isArray(versions.items) ? versions.items : [];
+  const planItems = rawPlanItems.filter((item): item is PlansState["items"][number] => Boolean(item) && typeof item === "object");
+  const taskItems = rawTaskItems.filter((item): item is TasksState["items"][number] => Boolean(item) && typeof item === "object");
+  const decisionItems = rawDecisionItems.filter((item): item is DecisionState["items"][number] => Boolean(item) && typeof item === "object");
+  const versionItems = rawVersionItems.filter((item): item is VersionState["items"][number] => Boolean(item) && typeof item === "object");
+
+  if (!Array.isArray(rawPlans.items)) {
+    schemaIssues.push("Plan state must define an items array");
+  } else if (planItems.length !== rawPlanItems.length) {
+    schemaIssues.push("Plan state items must all be objects");
+  } else {
+    try {
+      assertValidPlanTree(planItems);
+    } catch (error) {
+      schemaIssues.push(error instanceof Error ? error.message : "Plan tree is invalid");
+    }
+  }
+
+  if (!Array.isArray(rawTasks.items)) {
+    schemaIssues.push("Task state must define an items array");
+  } else if (taskItems.length !== rawTaskItems.length) {
+    schemaIssues.push("Task state items must all be objects");
+  } else {
+    try {
+      assertValidTaskTree(taskItems);
+    } catch (error) {
+      schemaIssues.push(error instanceof Error ? error.message : "Task tree is invalid");
+    }
+  }
+
+  const planIds = new Set(planItems.map((plan) => plan.id));
+  for (const task of taskItems) {
+    if (!planIds.has(task.planRef)) {
+      schemaIssues.push(`Task ${task.id} points to missing plan ${task.planRef}`);
+    }
+  }
+
+  if (!Array.isArray(decisions.items)) {
+    schemaIssues.push("Decision state must define an items array");
+  } else if (decisionItems.length !== rawDecisionItems.length) {
+    schemaIssues.push("Decision state items must all be objects");
+  } else {
+    for (const record of decisionItems) {
+      if (!isAllowedString(record?.category, DECISION_CATEGORIES)) {
+        schemaIssues.push(
+          `Decision ${typeof record?.id === "string" ? record.id : "unknown"} uses unsupported category "${String(record?.category)}"; allowed values: ${describeAllowedValues(DECISION_CATEGORIES)}`
+        );
+      }
+      if (!isAllowedString(record?.status, DECISION_STATUSES)) {
+        schemaIssues.push(
+          `Decision ${typeof record?.id === "string" ? record.id : "unknown"} uses unsupported status "${String(record?.status)}"; allowed values: ${describeAllowedValues(DECISION_STATUSES)}`
+        );
+      }
+    }
+  }
+
+  if (!Array.isArray(versions.items)) {
+    schemaIssues.push("Version state must define an items array");
+  } else if (versionItems.length !== rawVersionItems.length) {
+    schemaIssues.push("Version state items must all be objects");
+  } else {
+    for (const record of versionItems) {
+      if (!isAllowedString(record?.status, VERSION_RECORD_STATUSES)) {
+        schemaIssues.push(
+          `Version ${typeof record?.id === "string" ? record.id : "unknown"} uses unsupported status "${String(record?.status)}"; allowed values: ${describeAllowedValues(VERSION_RECORD_STATUSES)}`
+        );
+      }
+    }
+  }
 
   if (!meta) {
     schemaIssues.push("Missing .apcc/meta/workspace.yaml");
@@ -116,10 +216,28 @@ export async function validateWorkspace() {
     if (!meta.bootstrapMode) {
       schemaIssues.push("Workspace metadata is missing bootstrapMode");
       repairableIssues.push("Backfill workspace bootstrapMode");
+    } else if (!isAllowedString(meta.bootstrapMode, BOOTSTRAP_MODES)) {
+      schemaIssues.push(
+        `Workspace metadata uses unsupported bootstrapMode "${String(meta.bootstrapMode)}"; allowed values: ${describeAllowedValues(BOOTSTRAP_MODES)}`
+      );
     }
     if (!meta.docsLanguage) {
       schemaIssues.push("Workspace metadata is missing docsLanguage");
       repairableIssues.push("Backfill workspace docsLanguage");
+    } else if (!isAllowedString(meta.docsLanguage, DOCS_LANGUAGES)) {
+      schemaIssues.push(
+        `Workspace metadata uses unsupported docsLanguage "${String(meta.docsLanguage)}"; allowed values: ${describeAllowedValues(DOCS_LANGUAGES)}`
+      );
+    }
+    if (!isAllowedString(meta.projectKind, PROJECT_KINDS)) {
+      schemaIssues.push(
+        `Workspace metadata uses unsupported projectKind "${String(meta.projectKind)}"; allowed values: ${describeAllowedValues(PROJECT_KINDS)}`
+      );
+    }
+    if (!isAllowedString(meta.docsMode, DOCS_MODES)) {
+      schemaIssues.push(
+        `Workspace metadata uses unsupported docsMode "${String(meta.docsMode)}"; allowed values: ${describeAllowedValues(DOCS_MODES)}`
+      );
     }
     if (!meta.templateVersion || meta.templateVersion !== WORKSPACE_TEMPLATE_VERSION) {
       warnings.push(
@@ -139,21 +257,65 @@ export async function validateWorkspace() {
       );
       repairableIssues.push("Upgrade workspace config schema");
     }
-    if (!config.projectKind) {
+    const rawProjectKind = rawConfig?.projectKind;
+    const rawDocsMode = rawConfig?.docsMode;
+    const rawDocsLanguage = rawConfig?.docsLanguage;
+    const rawSiteFramework = rawConfig?.siteFramework;
+    const rawPackageManager = rawConfig?.packageManager;
+    const rawDocsSite = rawConfig?.docsSite;
+
+    if (rawProjectKind === undefined) {
       schemaIssues.push("Workspace config is missing projectKind");
       repairableIssues.push("Backfill workspace projectKind");
+    } else if (!isAllowedString(rawProjectKind, PROJECT_KINDS)) {
+      schemaIssues.push(
+        `Workspace config uses unsupported projectKind "${String(rawProjectKind)}"; allowed values: ${describeAllowedValues(PROJECT_KINDS)}`
+      );
     }
-    if (!config.docsMode) {
+    if (rawDocsMode === undefined) {
       schemaIssues.push("Workspace config is missing docsMode");
       repairableIssues.push("Backfill workspace docsMode");
+    } else if (!isAllowedString(rawDocsMode, DOCS_MODES)) {
+      schemaIssues.push(
+        `Workspace config uses unsupported docsMode "${String(rawDocsMode)}"; allowed values: ${describeAllowedValues(DOCS_MODES)}`
+      );
     }
-    if (!config.docsLanguage) {
+    if (rawDocsLanguage === undefined) {
       schemaIssues.push("Workspace config is missing docsLanguage");
       repairableIssues.push("Backfill workspace docsLanguage");
+    } else if (!isAllowedString(rawDocsLanguage, DOCS_LANGUAGES)) {
+      schemaIssues.push(
+        `Workspace config uses unsupported docsLanguage "${String(rawDocsLanguage)}"; allowed values: ${describeAllowedValues(DOCS_LANGUAGES)}`
+      );
     }
-    if (!config.docsSite || config.docsSite.sourcePath === null) {
+    if (!isRecord(rawDocsSite) || rawDocsSite.sourcePath === undefined) {
       schemaIssues.push("Workspace config is missing docsSite configuration");
       repairableIssues.push("Backfill workspace docsSite config");
+    } else {
+      if (!isAllowedString(rawSiteFramework, SITE_FRAMEWORKS)) {
+        schemaIssues.push(
+          `Workspace config uses unsupported siteFramework "${String(rawSiteFramework)}"; allowed values: ${describeAllowedValues(SITE_FRAMEWORKS)}`
+        );
+      }
+      if (!isAllowedString(rawPackageManager, PACKAGE_MANAGERS)) {
+        schemaIssues.push(
+          `Workspace config uses unsupported packageManager "${String(rawPackageManager)}"; allowed values: ${describeAllowedValues(PACKAGE_MANAGERS)}`
+        );
+      }
+      if (typeof rawDocsSite.enabled !== "boolean") {
+        schemaIssues.push("Workspace config docsSite.enabled must be true or false");
+      }
+      if (typeof rawDocsSite.sourcePath !== "string" || rawDocsSite.sourcePath.trim().length === 0) {
+        schemaIssues.push("Workspace config docsSite.sourcePath must be a non-empty string");
+      }
+      const preferredPort = rawDocsSite.preferredPort;
+      if (
+        preferredPort !== null &&
+        preferredPort !== undefined &&
+        (typeof preferredPort !== "number" || !Number.isInteger(preferredPort) || preferredPort <= 0)
+      ) {
+        schemaIssues.push("Workspace config docsSite.preferredPort must be a positive integer or null");
+      }
     }
   }
 
@@ -176,7 +338,7 @@ export async function validateWorkspace() {
     repairNeeded,
     repairableIssues: unique(repairableIssues),
     endGoalName: endGoal.name,
-    taskCount: tasks.items.length
+    taskCount: taskItems.length
   };
 }
 

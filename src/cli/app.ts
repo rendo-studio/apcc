@@ -14,12 +14,13 @@ import { createDoctorControlPlane } from "./commands/doctor.js";
 import { registerInitCommand } from "./commands/init.js";
 import { registerGuideCommand } from "./commands/guide.js";
 import { withGuideHint } from "./guide-hint.js";
+import { getApccPackageFile } from "../core/package-runtime.js";
 import { getWorkflowSkillPackageDir } from "../core/workflow-guide.js";
 
 function loadCliVersion(): string {
-  const packageJson = JSON.parse(
-    readFileSync(new URL("../../package.json", import.meta.url), "utf8")
-  ) as { version?: string };
+  const packageJson = JSON.parse(readFileSync(getApccPackageFile("package.json"), "utf8")) as {
+    version?: string;
+  };
   return packageJson.version ?? "0.1.0";
 }
 

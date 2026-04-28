@@ -52,6 +52,7 @@ Current public command groups:
 apcc guide
 apcc guide workflow
 apcc guide cli
+apcc guide control-plane-contract
 ```
 
 `workflow` is reserved for the Agent workflow guide.
@@ -135,6 +136,8 @@ For bulk plan or task restructuring, edit `.apcc/plans/current.yaml` and `.apcc/
 apcc doctor check
 apcc status
 ```
+
+When editing `.apcc/` directly, use `apcc guide control-plane-contract` as the authoritative value-domain reference for persisted fields such as task status, decision category, version status, docs language, and workspace config enums.
 
 APCC intentionally does not duplicate direct workspace editing with batch CLI import flags.
 

@@ -1,5 +1,6 @@
 {
   "pages": [
+    "0-3-0-aclip-build-stage-and-control-plane-contract",
     "0-2-1-npm-publish-manifest-polish",
     "0-2-0-doctor-and-workflow-skill-standardization",
     "0-1-2-docs-site-ergonomics-patch",

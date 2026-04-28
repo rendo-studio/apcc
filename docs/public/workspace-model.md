@@ -41,6 +41,8 @@ Put these in `.apcc/`:
 
 The control plane should store explicit facts that tools can read predictably.
 
+For the normative persisted field contract, allowed values, and direct-edit rules, see `apcc guide control-plane-contract`.
+
 Recommended active files include:
 
 ```text

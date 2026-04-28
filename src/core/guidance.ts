@@ -1,17 +1,13 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { existsSync } from "node:fs";
 
+import { getApccPackageFile } from "./package-runtime.js";
 import { readText, writeText } from "./storage.js";
 import { getWorkflowSkillPackageDir } from "./workflow-guide.js";
 
 const APCC_AGENTS_BEGIN = "<!-- APCC:BEGIN -->";
 const APCC_AGENTS_END = "<!-- APCC:END -->";
-
-function packageRoot(): string {
-  return path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
-}
 
 function workflowSkillPath(root = process.cwd()): string {
   return path.join(root, ".agents", "skills", "apcc-workflow", "SKILL.md");
@@ -26,7 +22,7 @@ function agentsMdPath(root = process.cwd()): string {
 }
 
 export function getAgentsTemplateAssetPath(): string {
-  return path.join(packageRoot(), "assets", "agents-template.md");
+  return getApccPackageFile("assets", "agents-template.md");
 }
 
 async function loadAgentsTemplate(): Promise<string> {

@@ -7,6 +7,7 @@ import {
   renderTaskTreeLines,
   updateTask
 } from "../../core/tasks.js";
+import { TASK_STATUSES } from "../../core/types.js";
 import { withGuideHint } from "../guide-hint.js";
 
 export function registerTaskGroup(app: AclipApp) {
@@ -115,7 +116,7 @@ export function registerTaskGroup(app: AclipApp) {
         }
 
         const nextStatus = input.status ? String(input.status) : undefined;
-        if (nextStatus && !["pending", "in_progress", "done", "blocked"].includes(nextStatus)) {
+        if (nextStatus && !(TASK_STATUSES as readonly string[]).includes(nextStatus)) {
           throw new Error(`Unsupported task status "${nextStatus}".`);
         }
 

@@ -7,6 +7,7 @@ import path from "node:path";
 import { spawn, spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
+import { getApccPackageFile, getApccPackageRoot, getCurrentModulePath } from "./package-runtime.js";
 import { loadDocsRevisionState, syncDocsRevisionState } from "./docs-revisions.js";
 import { readText, readYamlFile, writeText } from "./storage.js";
 import { buildSiteControlPlaneSnapshot, type SiteControlPlaneSnapshot } from "./site-data.js";
@@ -376,7 +377,7 @@ async function injectRuntimeConsoleDocs(stagedDocsRoot: string): Promise<void> {
 }
 
 function getTemplateRoot(): string {
-  return path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../site-runtime");
+  return getApccPackageFile("site-runtime");
 }
 
 function getRuntimeBase(): string {
@@ -1143,12 +1144,8 @@ export async function stageDocsForSiteRuntime(
   };
 }
 
-function packageRoot(): string {
-  return path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
-}
-
 function getPrebuiltShellRoot(): string {
-  return path.join(packageRoot(), "dist", "site-runtime-prebuilt");
+  return getApccPackageFile("dist", "site-runtime-prebuilt");
 }
 
 function resolvePrebuiltShellPointerRoot(artifactBase: string, root: string): string {
@@ -1426,8 +1423,8 @@ export async function buildPrebuiltSiteShellArtifact(): Promise<string> {
 }
 
 function watcherWorkerPath(): { command: string; args: string[]; cwd: string } {
-  const currentPath = fileURLToPath(import.meta.url);
-  const root = packageRoot();
+  const currentPath = getCurrentModulePath();
+  const root = getApccPackageRoot();
   const builtPath = path.join(root, "dist", "core", "site-watch-worker.js");
   const tsPath = path.join(root, "src", "core", "site-watch-worker.ts");
   const jsSiblingPath = currentPath.replace(/site\.js$/, "site-watch-worker.js");

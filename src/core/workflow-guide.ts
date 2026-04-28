@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 
+import { getApccPackageFile } from "./package-runtime.js";
 import { readText } from "./storage.js";
 
 export interface GuideTopic {
@@ -12,12 +12,8 @@ export interface GuideTopic {
   path: string;
 }
 
-function packageRoot(): string {
-  return path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
-}
-
 export function getWorkflowSkillPackageDir(): string {
-  return path.join(packageRoot(), "assets", "skills", "apcc-workflow");
+  return getApccPackageFile("assets", "skills", "apcc-workflow");
 }
 
 export function getWorkflowGuideAssetPath(): string {
@@ -25,7 +21,7 @@ export function getWorkflowGuideAssetPath(): string {
 }
 
 export function getPublicGuideDocsPath(): string {
-  return path.join(packageRoot(), "docs", "public");
+  return getApccPackageFile("docs", "public");
 }
 
 function parseFrontmatter(content: string): { frontmatter: { name?: string; description?: string }; body: string } {

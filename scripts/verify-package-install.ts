@@ -1,4 +1,6 @@
 import { spawnSync } from "node:child_process";
+import { randomUUID } from "node:crypto";
+import { unlinkSync, writeFileSync } from "node:fs";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -43,9 +45,29 @@ function run(command: string, args: string[], options: { cwd?: string; shell?: b
   return result.stdout;
 }
 
+function quoteCmdArg(value: string): string {
+  if (!/[\s"&()^<>|]/.test(value)) {
+    return value;
+  }
+
+  return `"${value.replace(/"/g, '""')}"`;
+}
+
 function runInstalledBin(binPath: string, args: string[], options: { cwd?: string } = {}) {
   if (process.platform === "win32") {
-    return run(binPath, args, { ...options, shell: true });
+    const shell = process.env.ComSpec ?? path.join(process.env.SystemRoot ?? "C:\\Windows", "System32", "cmd.exe");
+    const wrapperPath = path.join(os.tmpdir(), `apcc-installed-bin-${randomUUID()}.cmd`);
+    const commandLine = `@echo off\r\ncall ${quoteCmdArg(binPath)} ${args.map(quoteCmdArg).join(" ")}\r\n`;
+    writeFileSync(wrapperPath, commandLine, "utf8");
+    try {
+      return run(shell, ["/d", "/s", "/c", quoteCmdArg(wrapperPath)], options);
+    } finally {
+      try {
+        unlinkSync(wrapperPath);
+      } catch {
+        // best-effort cleanup
+      }
+    }
   }
 
   return run(binPath, args, options);
@@ -63,10 +85,24 @@ try {
   const installInvocation = npmInvocation(["install", "--prefix", installRoot, tarballPath, "--silent"]);
   run(installInvocation.command, installInvocation.args);
 
+  const packageRoot = path.join(installRoot, "node_modules", "apcc");
   const binPath = path.join(installRoot, "node_modules", ".bin", process.platform === "win32" ? "apcc.cmd" : "apcc");
+  const packagedCliEntry = path.join(packageRoot, "dist", "bin", "apcc.cjs");
+  const packagedCliManifest = path.join(packageRoot, "dist", "bin", "apcc.aclip.json");
+  if (
+    !(await fs.stat(packagedCliEntry).then(() => true).catch(() => false)) ||
+    !(await fs.stat(packagedCliManifest).then(() => true).catch(() => false))
+  ) {
+    throw new Error("installed package is missing the ACLIP-built CLI artifact or manifest.");
+  }
+
   const helpOutput = runInstalledBin(binPath, ["--help"]);
   if (!helpOutput.includes("APCC CLI")) {
     throw new Error("installed apcc --help did not render the expected CLI help output.");
+  }
+  const directArtifactHelpOutput = run(process.execPath, [packagedCliEntry, "--help"]);
+  if (!directArtifactHelpOutput.includes("APCC CLI")) {
+    throw new Error("installed ACLIP-built CLI artifact did not render the expected help output.");
   }
 
   const guideIndexOutput = runInstalledBin(binPath, ["guide"]);
@@ -90,6 +126,10 @@ try {
   const workflowGuideOutput = runInstalledBin(binPath, ["guide", "workflow"]);
   if (!workflowGuideOutput.includes("# APCC Workflow Guide")) {
     throw new Error("installed apcc guide workflow did not render the workflow guide.");
+  }
+  const contractGuideOutput = runInstalledBin(binPath, ["guide", "control-plane-contract"]);
+  if (!contractGuideOutput.includes("# Control Plane Contract") || !contractGuideOutput.includes("status: pending")) {
+    throw new Error("installed apcc guide control-plane-contract did not render the bundled control-plane contract.");
   }
 
   runInstalledBin(binPath, [

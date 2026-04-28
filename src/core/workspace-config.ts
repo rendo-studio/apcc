@@ -1,9 +1,13 @@
-import type { DocsLanguage, WorkspaceConfigState, WorkspaceDocsSiteConfig } from "./types.js";
+import type {
+  DocsLanguage,
+  DocsMode,
+  ProjectKind,
+  WorkspaceConfigState,
+  WorkspaceDocsSiteConfig
+} from "./types.js";
 import { readYamlFile } from "./storage.js";
 import { getWorkspacePaths } from "./workspace.js";
 
-type ProjectKind = "general" | "frontend" | "library" | "service";
-type DocsMode = "minimal" | "standard";
 type LegacyDocsLanguage = DocsLanguage | "zh" | "en-US";
 
 interface LegacyWorkspaceConfigState {
@@ -57,8 +61,8 @@ export function normalizeWorkspaceConfig(
   const docsSite = raw?.docsSite;
 
   return {
-    siteFramework: raw?.siteFramework ?? "fumadocs",
-    packageManager: raw?.packageManager ?? "npm",
+    siteFramework: raw?.siteFramework === "fumadocs" ? raw.siteFramework : "fumadocs",
+    packageManager: raw?.packageManager === "npm" ? raw.packageManager : "npm",
     projectKind: raw?.projectKind ?? fallback.projectKind ?? "general",
     docsMode: raw?.docsMode ?? fallback.docsMode ?? "standard",
     docsLanguage: normalizeDocsLanguage(raw?.docsLanguage ?? raw?.primaryDocsLanguage ?? fallback.docsLanguage),
