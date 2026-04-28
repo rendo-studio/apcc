@@ -40,3 +40,6 @@ This minor release moves APCC's CLI artifact build onto ACLIP's standard build h
 - `npm run prepare:publish-package -- --out .tmp/apcc-publish`
 - `npm run prepare:publish-package -- --out .tmp/apcc-scoped-publish --name @rendo-studio/apcc`
 - `npm pack --dry-run`
+- GitHub release `v0.3.0`
+- npm publish `apcc@0.3.0`
+- npm publish `@rendo-studio/apcc@0.3.0`

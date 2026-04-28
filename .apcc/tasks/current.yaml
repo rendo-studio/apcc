@@ -800,7 +800,7 @@ items:
   - id: task-automate-contract-doc-and-publish
     name: Automate contract doc generation and publish the next APCC release
     summary: Turn the control-plane contract page into a generated artifact backed by runtime constants, then review and publish the next release if the surface is clean.
-    status: in_progress
+    status: done
     planRef: automate-contract-doc-and-publish-36
     parentTaskId: null
     countedForProgress: false
@@ -821,7 +821,7 @@ items:
   - id: task-automate-contract-doc-and-publish-3
     name: Publish the next APCC release
     summary: Bump the version, record the release, publish to GitHub and npm, and verify the published artifacts once the release surface is clean.
-    status: in_progress
+    status: done
     planRef: automate-contract-doc-and-publish-36
     parentTaskId: task-automate-contract-doc-and-publish
     countedForProgress: true

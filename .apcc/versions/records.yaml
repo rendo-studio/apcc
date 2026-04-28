@@ -18,9 +18,9 @@ items:
       - If you edit `.apcc/` directly, switch to `apcc guide control-plane-contract` as the authoritative persisted-field reference.
       - Replace unsupported direct-edit task statuses such as `todo` with `pending`, `in_progress`, `done`, or `blocked`.
       - If you change persisted value domains while maintaining APCC, rerun `npm run generate:control-plane-contract-doc`.
-    validationSummary: npm run check, npm run test, npm run build, npm run verify:package-install, npm run verify:site-lifecycle, npm run dev -- guide, npm run dev -- guide control-plane-contract, npm run prepare:publish-package -- --out .tmp/apcc-publish, npm run prepare:publish-package -- --out .tmp/apcc-scoped-publish --name @rendo-studio/apcc, npm pack --dry-run
+    validationSummary: npm run check, npm run test, npm run build, npm run verify:package-install, npm run verify:site-lifecycle, npm run dev -- guide, npm run dev -- guide control-plane-contract, npm run prepare:publish-package -- --out .tmp/apcc-publish, npm run prepare:publish-package -- --out .tmp/apcc-scoped-publish --name @rendo-studio/apcc, npm pack --dry-run, GitHub release v0.3.0, npm publish apcc@0.3.0, npm publish @rendo-studio/apcc@0.3.0
     createdAt: 2026-04-28T00:00:00.000Z
-    recordedAt: 2026-04-28T00:00:00.000Z
+    recordedAt: 2026-04-28T06:45:25.4854719Z
   - id: 0-2-1-npm-publish-manifest-polish
     version: 0.2.1
     title: npm publish manifest polish
