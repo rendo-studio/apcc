@@ -41,3 +41,6 @@ This patch release unifies APCC workspace schema naming around `workspaceSchemaV
 - `npm run dev -- doctor check`
 - `npm run dev -- status`
 - `npm run generate:control-plane-contract-doc`
+- GitHub release `v0.3.2`
+- npm publish `apcc@0.3.2`
+- npm publish `@rendo-studio/apcc@0.3.2`

@@ -905,7 +905,7 @@ items:
   - id: publish-to-github-and-npm-63
     name: Publish to GitHub and npm
     summary: Publish the validated patch release to GitHub and npm, then confirm the public artifacts and remote state.
-    status: in_progress
+    status: done
     planRef: publish-the-schema-provenance-and-localization-patch-release-41
     parentTaskId: null
     countedForProgress: true
