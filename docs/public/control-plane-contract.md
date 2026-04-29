@@ -229,16 +229,36 @@ File:
 
 Allowed values:
 
+- `workspaceSchemaVersion`: integer APCC-managed schema version
+- `apccVersion`: APCC CLI version that last initialized or repaired the workspace
 - `bootstrapMode`: `init`
 - `projectKind`: `general`, `frontend`, `library`, `service`
 - `docsMode`: `minimal`, `standard`
 - `docsLanguage`: `en`, `zh-CN`
 
+Current default shape:
+
+```yaml
+workspaceSchemaVersion: 10
+apccVersion: 0.3.2
+workspaceName: apcc-project
+docsRoot: docs
+workspaceRoot: .apcc
+bootstrapMode: init
+templateVersion: 2026-04-29.workspace-schema-provenance-1
+projectKind: general
+docsMode: standard
+docsLanguage: en
+createdAt: 2026-04-29T00:00:00.000Z
+lastUpgradedAt: null
+```
+
 Rules:
 
 - this file stores managed workspace metadata
 - `templateVersion` is APCC-managed and should match the current scaffold template
-- `schemaVersion` is APCC-managed and should match the current workspace schema
+- `workspaceSchemaVersion` is APCC-managed and should match the current workspace schema
+- `apccVersion` records which APCC CLI version last initialized or repaired the workspace
 
 ## Workspace Config
 
@@ -274,7 +294,7 @@ docsSite:
   enabled: true
   sourcePath: docs
   preferredPort: null
-workspaceSchemaVersion: 9
+workspaceSchemaVersion: 10
 ```
 
 ## CLI-To-Storage Mappings

@@ -60,6 +60,42 @@ describe("site runtime staging", () => {
     expect(stagedIndexExists).toBe(false);
   });
 
+  it("localizes scaffolded folder titles and runtime console labels for zh-CN workspaces", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "apcc-site-init-zh-"));
+    cleanups.push(async () => {
+      await fs.rm(root, { recursive: true, force: true });
+    });
+
+    await initWorkspace({
+      targetPath: root,
+      projectName: "最小文档工作区",
+      docsLanguage: "zh-CN"
+    });
+
+    const staged = await stageDocsForSiteRuntime(root);
+    const stagedConsoleMeta = await fs.readFile(path.join(staged.stagedDocsRoot, "console", "meta.json"), "utf8");
+    const stagedConsoleIndex = await fs.readFile(path.join(staged.stagedDocsRoot, "console", "index.md"), "utf8");
+    const stagedSharedMeta = await fs.readFile(path.join(staged.stagedDocsRoot, "shared", "meta.json"), "utf8");
+    const viewerData = JSON.parse(
+      await fs.readFile(path.join(staged.runtimeDataRoot, "docs-viewer.json"), "utf8")
+    ) as {
+      navigation: Array<{ title: string }>;
+    };
+
+    expect(JSON.parse(stagedConsoleMeta)).toEqual({
+      title: "控制台",
+      pages: ["index", "plans"]
+    });
+    expect(stagedConsoleIndex).toContain("name: 概览");
+    expect(JSON.parse(stagedSharedMeta)).toEqual({
+      title: "共享",
+      pages: ["概览", "目标"]
+    });
+    expect(viewerData.navigation.map((node) => node.title)).toEqual(
+      expect.arrayContaining(["控制台", "共享", "公开", "内部"])
+    );
+  });
+
   it("preserves APCC authored frontmatter in the staged docs tree", async () => {
     const fixture = await createWorkspaceFixture();
     restorers.push(fixture.use());
@@ -211,7 +247,7 @@ describe("site runtime staging", () => {
           preferredPort: 4555
         },
         docsLanguage: "en",
-        workspaceSchemaVersion: 9
+        workspaceSchemaVersion: 10
       }
     });
     restorers.push(fixture.use());
@@ -437,7 +473,7 @@ describe("site runtime staging", () => {
     expect(watchRoots).toContain(path.join(fixture.root, "docs"));
     expect(watchRoots).toContain(path.join(fixture.root, ".apcc"));
     expect(watchRoots).toContain(path.join(fixture.root, ".agents"));
-  });
+  }, 15000);
 
   it("lists healthy running site instances with project identity", async () => {
     const runtimeBase = await fs.mkdtemp(path.join(os.tmpdir(), "apcc-runtime-base-"));

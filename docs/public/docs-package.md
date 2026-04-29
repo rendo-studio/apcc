@@ -25,6 +25,7 @@ docs/
 This is a recommendation and the default scaffold profile, not a runtime requirement.
 
 If the repository's primary docs language is not English, the shared anchor filenames may be localized while preserving the same structural roles.
+Directory display labels can also be localized through `meta.json.title` without renaming the structural directories themselves.
 
 ## Section Roles
 
@@ -35,13 +36,15 @@ If the repository's primary docs language is not English, the shared anchor file
 - where the project is going
 - content referenced by `.apcc/project/overview.yaml` and `.apcc/goals/end.yaml`
 - `shared/meta.json` can make the shared-anchor reading order explicit, usually `overview` before `goal`
+- `shared/meta.json.title` can localize the visible section label in the docs-site navigation
 
 `public/`
 
 - external-facing usage docs
 - material another developer needs to adopt and operate the project or framework
 - source material for public `apcc guide` topics when bundled with APCC itself
-- `public/meta.json` can stay empty at first and later become the navigation-order file for public docs
+- `public/meta.json` can start as a minimal directory metadata file and later grow into the navigation-order file for public docs
+- `public/meta.json.title` controls the visible docs-site label for the public section
 
 `internal/`
 
@@ -49,7 +52,8 @@ If the repository's primary docs language is not English, the shared anchor file
 - repository-specific verification rules
 - implementation notes
 - release and packaging details
-- `internal/meta.json` can stay empty at first and later become the navigation-order file for internal docs
+- `internal/meta.json` can start as a minimal directory metadata file and later grow into the navigation-order file for internal docs
+- `internal/meta.json.title` controls the visible docs-site label for the internal section
 
 `docs/meta.json`
 

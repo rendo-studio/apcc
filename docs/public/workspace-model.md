@@ -31,6 +31,7 @@ Authored docs should help a human or Agent understand the project. They should n
 
 Put these in `.apcc/`:
 
+- workspace metadata
 - project overview
 - end goal
 - plans
@@ -47,6 +48,7 @@ Recommended active files include:
 
 ```text
 .apcc/
+  meta/workspace.yaml
   config/workspace.yaml
   project/overview.yaml
   goals/end.yaml
@@ -108,3 +110,12 @@ This keeps APCC neutral. The runtime should not infer business meaning from fixe
 Runtime artifacts do not belong in authored docs or structured control-plane files.
 
 `apcc site start` stages runtime data for the live local docs site. `apcc site build` creates a deployable read-only artifact. Both are generated outputs, not source-of-truth project context.
+
+## Metadata And Provenance
+
+APCC keeps workspace compatibility and tool provenance separate:
+
+- `.apcc/meta/workspace.yaml.workspaceSchemaVersion` tracks the persisted workspace schema
+- `.apcc/meta/workspace.yaml.apccVersion` records which APCC CLI version last initialized or repaired the workspace
+
+Do not treat the APCC package version as a replacement for the workspace schema version. One APCC release may keep the same persisted workspace schema, and one schema may remain compatible across multiple APCC releases.

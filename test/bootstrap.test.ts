@@ -78,7 +78,10 @@ describe("init", () => {
     expect(result.createdFiles).toContain("docs/shared/meta.json");
     expect(config).toContain("docsLanguage: zh-CN");
     expect(meta).toContain("docsLanguage: zh-CN");
+    expect(meta).toContain("workspaceSchemaVersion: 10");
+    expect(meta).toContain("apccVersion:");
     expect(JSON.parse(sharedMeta)).toEqual({
+      title: "共享",
       pages: ["概览", "目标"]
     });
     expect(overviewDoc).toContain("# 项目概览");
@@ -164,6 +167,7 @@ describe("init", () => {
       pages: ["shared", "public", "internal"]
     });
     expect(JSON.parse(sharedMeta)).toEqual({
+      title: "Shared",
       pages: ["overview", "goal"]
     });
     expect(overviewDoc).not.toContain(".apcc/project/overview.yaml");
@@ -226,7 +230,7 @@ describe("init", () => {
     expect(sharedGoalExists).toBe(true);
   });
 
-  it("creates empty directory meta files inside existing public and internal docs directories", async () => {
+  it("creates titled directory meta files inside existing public and internal docs directories", async () => {
     const root = await fs.mkdtemp(path.join(os.tmpdir(), "apcc-init-existing-docs-placeholders-"));
     cleanups.push(root);
 
@@ -245,8 +249,8 @@ describe("init", () => {
 
     expect(result.createdFiles).toContain("docs/public/meta.json");
     expect(result.createdFiles).toContain("docs/internal/meta.json");
-    expect(JSON.parse(publicMeta)).toEqual({});
-    expect(JSON.parse(internalMeta)).toEqual({});
+    expect(JSON.parse(publicMeta)).toEqual({ title: "Public" });
+    expect(JSON.parse(internalMeta)).toEqual({ title: "Internal" });
   });
 
   it("can initialize the current directory when it is already an existing project", async () => {

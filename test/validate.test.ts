@@ -57,6 +57,11 @@ describe("workspace validation and repair", () => {
     expect(repaired.repaired).toBe(true);
     expect(repaired.validation.ok).toBe(true);
     expect(repaired.validation.repairNeeded).toBe(false);
+
+    const repairedMeta = await fs.readFile(path.join(root, ".apcc", "meta", "workspace.yaml"), "utf8");
+    expect(repairedMeta).toContain("workspaceSchemaVersion: 10");
+    expect(repairedMeta).toContain("apccVersion:");
+    expect(repairedMeta).not.toContain("\nschemaVersion:");
   });
 
   it("reports invalid persisted control-plane enum values for direct .apcc edits", async () => {
@@ -97,7 +102,7 @@ describe("workspace validation and repair", () => {
         "  enabled: true",
         "  sourcePath: docs",
         "  preferredPort: null",
-        "workspaceSchemaVersion: 9",
+        "workspaceSchemaVersion: 10",
         ""
       ].join("\n"),
       "utf8"

@@ -867,3 +867,52 @@ items:
     planRef: publish-the-bootstrap-guidance-patch-release-39
     parentTaskId: null
     countedForProgress: true
+  - id: unify-workspace-schema-and-provenance-fields-57
+    name: Unify workspace schema and provenance fields
+    summary: Replace the split schemaVersion/workspaceSchemaVersion semantics with one canonical workspaceSchemaVersion surface, add an explicit apccVersion provenance field, and update repair/validation plus public contract docs accordingly.
+    status: done
+    planRef: unify-workspace-schema-provenance-and-complete-c-40
+    parentTaskId: null
+    countedForProgress: true
+  - id: localize-runtime-console-labels-58
+    name: Localize runtime Console labels
+    summary: Make the injected docs-site runtime Console folder and its Overview/Plans pages honor docsLanguage so zh-CN workspaces do not show English runtime navigation labels.
+    status: done
+    planRef: unify-workspace-schema-provenance-and-complete-c-40
+    parentTaskId: null
+    countedForProgress: true
+  - id: localize-docs-package-directory-titles-59
+    name: Localize docs-package directory titles
+    summary: Keep shared/public/internal as stable structural directories, but make their displayed navigation titles come from localized meta.json metadata in zh-CN workspaces and examples.
+    status: done
+    planRef: unify-workspace-schema-provenance-and-complete-c-40
+    parentTaskId: null
+    countedForProgress: true
+  - id: reverify-localized-schema-release-surface-60
+    name: Reverify localized schema release surface
+    summary: Regenerate the published contract and rerun focused plus release-level verification so schema-field migration and zh-CN navigation behavior are proven clean before any future release.
+    status: done
+    planRef: unify-workspace-schema-provenance-and-complete-c-40
+    parentTaskId: null
+    countedForProgress: true
+  - id: cut-the-release-version-and-records-61
+    name: Cut the release version and records
+    summary: Bump the APCC package, workspace provenance, and version records for the next patch release.
+    status: done
+    planRef: publish-the-schema-provenance-and-localization-patch-release-41
+    parentTaskId: null
+    countedForProgress: true
+  - id: publish-to-github-and-npm-63
+    name: Publish to GitHub and npm
+    summary: Publish the validated patch release to GitHub and npm, then confirm the public artifacts and remote state.
+    status: in_progress
+    planRef: publish-the-schema-provenance-and-localization-patch-release-41
+    parentTaskId: null
+    countedForProgress: true
+  - id: run-release-verification-and-stage-packages-62
+    name: Run release verification and stage packages
+    summary: Run the release-level verification suite and confirm the staged unscoped and scoped packages are publish-ready.
+    status: done
+    planRef: publish-the-schema-provenance-and-localization-patch-release-41
+    parentTaskId: null
+    countedForProgress: true

@@ -1,9 +1,11 @@
 import type {
+  BootstrapMode,
   DocsLanguage,
   DocsMode,
   ProjectKind,
   WorkspaceConfigState,
-  WorkspaceDocsSiteConfig
+  WorkspaceDocsSiteConfig,
+  WorkspaceMetaState
 } from "./types.js";
 import { readYamlFile } from "./storage.js";
 import { getWorkspacePaths } from "./workspace.js";
@@ -22,11 +24,20 @@ interface LegacyWorkspaceConfigState {
   workspaceSchemaVersion?: number;
 }
 
-interface WorkspaceMetaLike {
+interface LegacyWorkspaceMetaState {
+  workspaceSchemaVersion?: number;
   projectKind?: ProjectKind;
   docsMode?: DocsMode;
-  docsLanguage?: DocsLanguage;
+  docsLanguage?: LegacyDocsLanguage;
   schemaVersion?: number;
+  apccVersion?: string;
+  workspaceName?: string;
+  docsRoot?: string;
+  workspaceRoot?: string;
+  bootstrapMode?: BootstrapMode;
+  templateVersion?: string;
+  createdAt?: string;
+  lastUpgradedAt?: string | null;
 }
 
 export function defaultDocsSiteConfig(): WorkspaceDocsSiteConfig {
@@ -78,14 +89,51 @@ export function normalizeWorkspaceConfig(
   };
 }
 
+export function normalizeWorkspaceMeta(
+  raw: LegacyWorkspaceMetaState | null | undefined,
+  fallback: {
+    workspaceSchemaVersion?: number;
+    apccVersion?: string;
+  } = {}
+): WorkspaceMetaState | null {
+  if (!raw) {
+    return null;
+  }
+
+  return {
+    workspaceSchemaVersion: raw.workspaceSchemaVersion ?? raw.schemaVersion ?? fallback.workspaceSchemaVersion ?? 0,
+    apccVersion:
+      typeof raw.apccVersion === "string" && raw.apccVersion.trim().length > 0
+        ? raw.apccVersion
+        : fallback.apccVersion ?? "unknown",
+    workspaceName: raw.workspaceName ?? "apcc-workspace",
+    docsRoot: raw.docsRoot ?? "docs",
+    workspaceRoot: raw.workspaceRoot ?? ".apcc",
+    bootstrapMode: raw.bootstrapMode ?? "init",
+    templateVersion: raw.templateVersion ?? "",
+    projectKind: raw.projectKind ?? "general",
+    docsMode: raw.docsMode ?? "standard",
+    docsLanguage: normalizeDocsLanguage(raw.docsLanguage),
+    createdAt: raw.createdAt ?? "",
+    lastUpgradedAt: raw.lastUpgradedAt ?? null
+  };
+}
+
+export async function loadWorkspaceMeta(start = process.cwd()): Promise<WorkspaceMetaState | null> {
+  const paths = getWorkspacePaths(start);
+  const raw = await readYamlFile<LegacyWorkspaceMetaState>(paths.workspaceMetaFile).catch(() => null);
+  return normalizeWorkspaceMeta(raw);
+}
+
 export async function loadWorkspaceConfig(start = process.cwd()): Promise<WorkspaceConfigState> {
   const paths = getWorkspacePaths(start);
-  const meta = await readYamlFile<WorkspaceMetaLike>(paths.workspaceMetaFile).catch(() => null);
+  const rawMeta = await readYamlFile<LegacyWorkspaceMetaState>(paths.workspaceMetaFile).catch(() => null);
+  const meta = normalizeWorkspaceMeta(rawMeta);
   const raw = await readYamlFile<LegacyWorkspaceConfigState>(paths.workspaceConfigFile).catch(() => null);
   return normalizeWorkspaceConfig(raw, {
     projectKind: meta?.projectKind,
     docsMode: meta?.docsMode,
     docsLanguage: meta?.docsLanguage,
-    workspaceSchemaVersion: meta?.schemaVersion
+    workspaceSchemaVersion: meta?.workspaceSchemaVersion
   });
 }

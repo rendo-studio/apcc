@@ -183,7 +183,9 @@ Relevant fields:
 
 `docsSite.preferredPort` is the stable workspace default. `apcc site start --port <port>` is a per-start override.
 
-Within the docs package itself, `meta.json` files can be used to make navigation order explicit. The default scaffold includes `docs/meta.json` for top-level ordering, `docs/shared/meta.json` for the shared anchor page order, and empty `docs/public/meta.json` plus `docs/internal/meta.json` placeholders that can later become directory-order files.
+Within the docs package itself, `meta.json` files can be used to make navigation order explicit. The default scaffold includes `docs/meta.json` for top-level ordering, `docs/shared/meta.json` for the shared anchor page order, and minimal `docs/public/meta.json` plus `docs/internal/meta.json` directory metadata that can later grow into directory-order files.
+
+Directory labels in the docs-site navigation come from the docs package metadata itself. If a directory-level `meta.json` provides `title`, the docs site uses that visible label instead of deriving one from the directory name. This is the preferred way to localize section labels such as `shared`, `public`, and `internal` without changing the structural directory names.
 
 The docs site uses the workspace `docsLanguage` value as its default locale when opening `/docs` without an explicit language prefix.
 

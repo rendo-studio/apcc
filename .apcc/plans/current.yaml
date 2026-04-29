@@ -156,3 +156,11 @@ items:
     name: Publish the bootstrap-guidance patch release
     summary: Cut and publish a patch release that removes redundant APCC workflow-reading guidance, makes APCC CLI availability an explicit prerequisite, and verifies the packaged guidance surfaces before release.
     parentPlanId: null
+  - id: unify-workspace-schema-provenance-and-complete-c-40
+    name: Unify workspace schema provenance and complete Chinese docs-site localization
+    summary: Clarify APCC workspace schema versus CLI provenance fields, localize docs-package navigation labels through metadata instead of runtime special cases, and complete the docs-site runtime Console labels for zh-CN workspaces.
+    parentPlanId: null
+  - id: publish-the-schema-provenance-and-localization-patch-release-41
+    name: Publish the schema provenance and localization patch release
+    summary: Cut, verify, and publish the next APCC patch release for workspace schema provenance unification and docs-site localization completion.
+    parentPlanId: null

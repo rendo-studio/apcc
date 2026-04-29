@@ -124,7 +124,8 @@ export interface WorkspaceState {
 }
 
 export interface WorkspaceMetaState {
-  schemaVersion: number;
+  workspaceSchemaVersion: number;
+  apccVersion: string;
   workspaceName: string;
   docsRoot: string;
   workspaceRoot: string;

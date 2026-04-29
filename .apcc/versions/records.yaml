@@ -1,4 +1,26 @@
 items:
+  - id: 0-3-2-workspace-schema-provenance-and-docs-site-localization
+    version: 0.3.2
+    title: Workspace schema provenance and docs-site localization
+    summary: Patch release that unifies workspace schema provenance fields, records APCC CLI provenance explicitly, and completes metadata-driven plus runtime docs-site localization behavior.
+    docPath: internal/versions/0-3-2-workspace-schema-provenance-and-docs-site-localization.md
+    status: recorded
+    decisionRefs: []
+    highlights:
+      - Replaces the split metadata `schemaVersion` naming with the canonical `workspaceSchemaVersion` field while keeping legacy reads compatible during repair and validation.
+      - Adds `apccVersion` to workspace metadata so migrated or repaired workspaces record which APCC CLI version last managed them.
+      - Makes zh-CN docs-site navigation fully metadata-driven by localizing section titles through `meta.json.title` and localizing runtime Console labels by `docsLanguage`.
+      - Regenerates the public control-plane contract so direct `.apcc` editors have an authoritative schema/provenance reference that matches runtime validation.
+      - Re-verifies package install, docs-site lifecycle, staged publish packages, and release-level build flows against the updated workspace contract.
+    breakingChanges:
+      - None.
+    migrationNotes:
+      - Existing workspaces with legacy `.apcc/meta/workspace.yaml.schemaVersion` should run `apcc doctor fix` to migrate to `workspaceSchemaVersion` and backfill `apccVersion`.
+      - Docs-package section labels should be localized through directory `meta.json.title` instead of renaming `shared`, `public`, or `internal`.
+      - Runtime Console labels now follow the workspace `docsLanguage`; re-stage or restart the docs site after upgrading if an old runtime is still cached.
+    validationSummary: npm run check, npm run test, npm run build, npm run verify:package-install, npm run verify:site-lifecycle, npm run prepare:publish-package -- --out .tmp/apcc-publish-0.3.2, npm run prepare:publish-package -- --out .tmp/apcc-scoped-publish-0.3.2 --name @rendo-studio/apcc, npm pack --dry-run (apcc), npm pack --dry-run (@rendo-studio/apcc), npm run dev -- doctor check, npm run dev -- status, npm run generate:control-plane-contract-doc, pending GitHub release v0.3.2, pending npm publish apcc@0.3.2, pending npm publish @rendo-studio/apcc@0.3.2
+    createdAt: 2026-04-29T00:00:00.000Z
+    recordedAt: pending
   - id: 0-3-1-agent-bootstrap-guidance-polish
     version: 0.3.1
     title: Agent bootstrap guidance polish

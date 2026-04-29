@@ -284,6 +284,26 @@ function renderRuntimeConsoleDoc(title: string, description: string): string {
   return `---\nname: ${title}\ndescription: ${description}\n---\n\n# ${title}\n`;
 }
 
+function getRuntimeConsoleCopy(docsLanguage: "en" | "zh-CN") {
+  if (docsLanguage === "zh-CN") {
+    return {
+      consoleTitle: "控制台",
+      overviewTitle: "概览",
+      overviewDescription: "APCC 运行时控制台概览。",
+      plansTitle: "计划",
+      plansDescription: "APCC 运行时计划控制台。"
+    };
+  }
+
+  return {
+    consoleTitle: "Console",
+    overviewTitle: "Overview",
+    overviewDescription: "APCC runtime console overview.",
+    plansTitle: "Plans",
+    plansDescription: "APCC runtime plan console."
+  };
+}
+
 function isMarkdownLike(fileName: string): boolean {
   return [".md", ".mdx"].includes(path.extname(fileName).toLowerCase());
 }
@@ -347,7 +367,8 @@ async function patchRootMetaForConsole(stagedDocsRoot: string): Promise<void> {
   );
 }
 
-async function injectRuntimeConsoleDocs(stagedDocsRoot: string): Promise<void> {
+async function injectRuntimeConsoleDocs(stagedDocsRoot: string, docsLanguage: "en" | "zh-CN"): Promise<void> {
+  const copy = getRuntimeConsoleCopy(docsLanguage);
   const consoleRoot = path.join(stagedDocsRoot, "console");
   await fs.rm(consoleRoot, { recursive: true, force: true, maxRetries: 3, retryDelay: 200 });
   await fs.mkdir(consoleRoot, { recursive: true });
@@ -356,7 +377,7 @@ async function injectRuntimeConsoleDocs(stagedDocsRoot: string): Promise<void> {
     path.join(consoleRoot, "meta.json"),
     `${JSON.stringify(
       {
-        title: "Console",
+        title: copy.consoleTitle,
         pages: ["index", "plans"]
       },
       null,
@@ -366,11 +387,11 @@ async function injectRuntimeConsoleDocs(stagedDocsRoot: string): Promise<void> {
 
   await writeText(
     path.join(consoleRoot, "index.md"),
-    renderRuntimeConsoleDoc("Overview", "APCC runtime console overview.")
+    renderRuntimeConsoleDoc(copy.overviewTitle, copy.overviewDescription)
   );
   await writeText(
     path.join(consoleRoot, "plans.md"),
-    renderRuntimeConsoleDoc("Plans", "APCC runtime plan console.")
+    renderRuntimeConsoleDoc(copy.plansTitle, copy.plansDescription)
   );
 
   await patchRootMetaForConsole(stagedDocsRoot);
@@ -1054,7 +1075,7 @@ async function stageSiteData(
       }
     }
 
-    await injectRuntimeConsoleDocs(nextDocsRoot);
+    await injectRuntimeConsoleDocs(nextDocsRoot, context.docsLanguage);
     await syncDirectoryContents(nextDocsRoot, stagedDocsRoot);
     await fs.rm(nextDocsRoot, { recursive: true, force: true, maxRetries: 3, retryDelay: 200 });
   } else {

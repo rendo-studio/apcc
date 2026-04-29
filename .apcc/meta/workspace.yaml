@@ -1,11 +1,12 @@
-schemaVersion: 9
+workspaceSchemaVersion: 10
+apccVersion: 0.3.2
 workspaceName: apcc
 docsRoot: docs
 workspaceRoot: .apcc
 bootstrapMode: init
-templateVersion: 2026-04-23.docs-language-1
+templateVersion: 2026-04-29.workspace-schema-provenance-1
 projectKind: general
 docsMode: standard
 docsLanguage: en
 createdAt: 2026-04-22T18:47:35.212Z
-lastUpgradedAt: null
+lastUpgradedAt: 2026-04-29T09:49:57.511Z

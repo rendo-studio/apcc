@@ -4,6 +4,7 @@ import { existsSync } from "node:fs";
 import { parse, stringify } from "yaml";
 
 import { inspectGuidanceArtifacts, syncGuidanceArtifacts } from "./guidance.js";
+import { getApccPackageVersion } from "./package-runtime.js";
 import { writeText, writeYamlFile } from "./storage.js";
 import { loadWorkspaceConfig, normalizeDocsLanguage, normalizeWorkspaceConfig } from "./workspace-config.js";
 import type {
@@ -24,8 +25,8 @@ import { withWorkspaceRoot } from "./workspace.js";
 type ProjectKind = "general" | "frontend" | "library" | "service";
 type DocsMode = "minimal" | "standard";
 
-export const WORKSPACE_SCHEMA_VERSION = 9;
-export const WORKSPACE_TEMPLATE_VERSION = "2026-04-23.docs-language-1";
+export const WORKSPACE_SCHEMA_VERSION = 10;
+export const WORKSPACE_TEMPLATE_VERSION = "2026-04-29.workspace-schema-provenance-1";
 
 interface BootstrapInput {
   targetPath?: string;
@@ -390,7 +391,8 @@ function buildWorkspaceFiles(
     items: []
   };
   const meta: WorkspaceMetaState = {
-    schemaVersion: WORKSPACE_SCHEMA_VERSION,
+    workspaceSchemaVersion: WORKSPACE_SCHEMA_VERSION,
+    apccVersion: getApccPackageVersion(),
     workspaceName: slugify(projectName) || "apcc-project",
     docsRoot: "docs",
     workspaceRoot: ".apcc",
@@ -525,6 +527,9 @@ function buildDocsFiles(
 
 function buildDocsTextFiles(docsLanguage: DocsLanguage): ManagedTextFile[] {
   const sharedPages = docsLanguage === "zh-CN" ? ["概览", "目标"] : ["overview", "goal"];
+  const sharedTitle = docsLanguage === "zh-CN" ? "共享" : "Shared";
+  const publicTitle = docsLanguage === "zh-CN" ? "公开" : "Public";
+  const internalTitle = docsLanguage === "zh-CN" ? "内部" : "Internal";
   return [
     {
       relativePath: "docs/meta.json",
@@ -540,6 +545,7 @@ function buildDocsTextFiles(docsLanguage: DocsLanguage): ManagedTextFile[] {
       relativePath: "docs/shared/meta.json",
       content: `${JSON.stringify(
         {
+          title: sharedTitle,
           pages: sharedPages
         },
         null,
@@ -548,11 +554,23 @@ function buildDocsTextFiles(docsLanguage: DocsLanguage): ManagedTextFile[] {
     },
     {
       relativePath: "docs/public/meta.json",
-      content: "{}\n"
+      content: `${JSON.stringify(
+        {
+          title: publicTitle
+        },
+        null,
+        2
+      )}\n`
     },
     {
       relativePath: "docs/internal/meta.json",
-      content: "{}\n"
+      content: `${JSON.stringify(
+        {
+          title: internalTitle
+        },
+        null,
+        2
+      )}\n`
     }
   ];
 }

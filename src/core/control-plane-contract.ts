@@ -10,6 +10,8 @@ import {
   TASK_STATUSES,
   VERSION_RECORD_STATUSES
 } from "./types.js";
+import { WORKSPACE_SCHEMA_VERSION, WORKSPACE_TEMPLATE_VERSION } from "./bootstrap.js";
+import { getApccPackageVersion } from "./package-runtime.js";
 
 function code(value: string): string {
   return `\`${value}\``;
@@ -63,7 +65,24 @@ function renderCurrentWorkspaceConfigShape(): string {
     "  enabled: true",
     "  sourcePath: docs",
     "  preferredPort: null",
-    "workspaceSchemaVersion: 9"
+    `workspaceSchemaVersion: ${WORKSPACE_SCHEMA_VERSION}`
+  ].join("\n");
+}
+
+function renderCurrentWorkspaceMetaShape(): string {
+  return [
+    `workspaceSchemaVersion: ${WORKSPACE_SCHEMA_VERSION}`,
+    `apccVersion: ${getApccPackageVersion()}`,
+    "workspaceName: apcc-project",
+    "docsRoot: docs",
+    "workspaceRoot: .apcc",
+    `bootstrapMode: ${BOOTSTRAP_MODES[0]}`,
+    `templateVersion: ${WORKSPACE_TEMPLATE_VERSION}`,
+    `projectKind: ${PROJECT_KINDS[0]}`,
+    `docsMode: ${DOCS_MODES[1]}`,
+    `docsLanguage: ${DOCS_LANGUAGES[0]}`,
+    "createdAt: 2026-04-29T00:00:00.000Z",
+    "lastUpgradedAt: null"
   ].join("\n");
 }
 
@@ -307,18 +326,25 @@ export function renderControlPlaneContractMarkdown(): string {
         "Allowed values:",
         "",
         bulletList([
+          `${code("workspaceSchemaVersion")}: integer APCC-managed schema version`,
+          `${code("apccVersion")}: APCC CLI version that last initialized or repaired the workspace`,
           `${code("bootstrapMode")}: ${BOOTSTRAP_MODES.map(code).join(", ")}`,
           `${code("projectKind")}: ${PROJECT_KINDS.map(code).join(", ")}`,
           `${code("docsMode")}: ${DOCS_MODES.map(code).join(", ")}`,
           `${code("docsLanguage")}: ${DOCS_LANGUAGES.map(code).join(", ")}`
         ]),
         "",
+        "Current default shape:",
+        "",
+        fenced("yaml", renderCurrentWorkspaceMetaShape()),
+        "",
         "Rules:",
         "",
         bulletList([
           "this file stores managed workspace metadata",
           `${code("templateVersion")} is APCC-managed and should match the current scaffold template`,
-          `${code("schemaVersion")} is APCC-managed and should match the current workspace schema`
+          `${code("workspaceSchemaVersion")} is APCC-managed and should match the current workspace schema`,
+          `${code("apccVersion")} records which APCC CLI version last initialized or repaired the workspace`
         ])
       ].join("\n")
     ),

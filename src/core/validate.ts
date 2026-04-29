@@ -4,6 +4,7 @@ import path from "node:path";
 import { initWorkspace, WORKSPACE_SCHEMA_VERSION, WORKSPACE_TEMPLATE_VERSION } from "./bootstrap.js";
 import { migrateDecisionState } from "./decision.js";
 import { loadEndGoal } from "./end-goal.js";
+import { getApccPackageVersion } from "./package-runtime.js";
 import { assertValidPlanTree } from "./plans.js";
 import { loadProjectOverview } from "./project-overview.js";
 import { readText, readYamlFile, writeYamlFile } from "./storage.js";
@@ -20,7 +21,7 @@ import {
   SITE_FRAMEWORKS,
   VERSION_RECORD_STATUSES
 } from "./types.js";
-import { normalizeWorkspaceConfig } from "./workspace-config.js";
+import { normalizeWorkspaceConfig, normalizeWorkspaceMeta } from "./workspace-config.js";
 import { getWorkspacePaths } from "./workspace.js";
 
 async function hasMinimalMetadata(filePath: string): Promise<boolean> {
@@ -62,12 +63,12 @@ async function loadMetaAndConfig() {
   const paths = getWorkspacePaths();
   let meta: WorkspaceMetaState | null = null;
   let config: WorkspaceConfigState | null = null;
-  let rawMeta: WorkspaceMetaState | null = null;
+  let rawMeta: Record<string, unknown> | null = null;
   let rawConfig: Record<string, unknown> | null = null;
 
   try {
-    rawMeta = await readYamlFile<WorkspaceMetaState>(paths.workspaceMetaFile);
-    meta = rawMeta;
+    rawMeta = await readYamlFile<Record<string, unknown>>(paths.workspaceMetaFile);
+    meta = normalizeWorkspaceMeta(rawMeta);
   } catch {
     rawMeta = null;
     meta = null;
@@ -79,7 +80,7 @@ async function loadMetaAndConfig() {
       projectKind: meta?.projectKind ?? "general",
       docsMode: meta?.docsMode ?? "standard",
       docsLanguage: meta?.docsLanguage ?? "en",
-      workspaceSchemaVersion: WORKSPACE_SCHEMA_VERSION
+      workspaceSchemaVersion: meta?.workspaceSchemaVersion ?? WORKSPACE_SCHEMA_VERSION
     });
   } catch {
     rawConfig = null;
@@ -126,7 +127,7 @@ export async function validateWorkspace() {
       : true,
     goal: endGoal.docPath ? await hasMinimalMetadata(path.join(paths.docsRoot, endGoal.docPath)).catch(() => false) : true
   };
-  const { meta, config, rawConfig } = await loadMetaAndConfig();
+  const { meta, config, rawMeta, rawConfig } = await loadMetaAndConfig();
   const schemaIssues: string[] = [];
   const repairableIssues: string[] = [];
   const warnings: string[] = [];
@@ -207,41 +208,68 @@ export async function validateWorkspace() {
     schemaIssues.push("Missing .apcc/meta/workspace.yaml");
     repairableIssues.push("Backfill workspace metadata");
   } else {
-    if ((meta.schemaVersion ?? 0) < WORKSPACE_SCHEMA_VERSION) {
+    const rawMetaWorkspaceSchemaVersion = rawMeta?.workspaceSchemaVersion;
+    const rawMetaLegacySchemaVersion = rawMeta?.schemaVersion;
+    const rawMetaBootstrapMode = rawMeta?.bootstrapMode;
+    const rawMetaDocsLanguage = rawMeta?.docsLanguage;
+    const rawMetaProjectKind = rawMeta?.projectKind;
+    const rawMetaDocsMode = rawMeta?.docsMode;
+    const rawMetaTemplateVersion = rawMeta?.templateVersion;
+    const rawMetaApccVersion = rawMeta?.apccVersion;
+
+    if (rawMetaWorkspaceSchemaVersion === undefined) {
+      if (typeof rawMetaLegacySchemaVersion === "number") {
+        schemaIssues.push("Workspace metadata still uses legacy schemaVersion; migrate to workspaceSchemaVersion");
+      } else {
+        schemaIssues.push("Workspace metadata is missing workspaceSchemaVersion");
+      }
+      repairableIssues.push("Upgrade workspace metadata schema");
+    }
+    if ((meta.workspaceSchemaVersion ?? 0) < WORKSPACE_SCHEMA_VERSION) {
       schemaIssues.push(
-        `Workspace schemaVersion ${meta.schemaVersion ?? 0} is behind the current schema ${WORKSPACE_SCHEMA_VERSION}`
+        `Workspace metadata workspaceSchemaVersion ${meta.workspaceSchemaVersion ?? 0} is behind the current schema ${WORKSPACE_SCHEMA_VERSION}`
       );
       repairableIssues.push("Upgrade workspace metadata schema");
     }
-    if (!meta.bootstrapMode) {
+    if (typeof rawMetaApccVersion !== "string" || rawMetaApccVersion.trim().length === 0) {
+      schemaIssues.push("Workspace metadata is missing apccVersion");
+      repairableIssues.push("Backfill workspace apccVersion provenance");
+    }
+    if (rawMetaBootstrapMode === undefined) {
       schemaIssues.push("Workspace metadata is missing bootstrapMode");
       repairableIssues.push("Backfill workspace bootstrapMode");
-    } else if (!isAllowedString(meta.bootstrapMode, BOOTSTRAP_MODES)) {
+    } else if (!isAllowedString(rawMetaBootstrapMode, BOOTSTRAP_MODES)) {
       schemaIssues.push(
-        `Workspace metadata uses unsupported bootstrapMode "${String(meta.bootstrapMode)}"; allowed values: ${describeAllowedValues(BOOTSTRAP_MODES)}`
+        `Workspace metadata uses unsupported bootstrapMode "${String(rawMetaBootstrapMode)}"; allowed values: ${describeAllowedValues(BOOTSTRAP_MODES)}`
       );
     }
-    if (!meta.docsLanguage) {
+    if (rawMetaDocsLanguage === undefined) {
       schemaIssues.push("Workspace metadata is missing docsLanguage");
       repairableIssues.push("Backfill workspace docsLanguage");
-    } else if (!isAllowedString(meta.docsLanguage, DOCS_LANGUAGES)) {
+    } else if (!isAllowedString(rawMetaDocsLanguage, DOCS_LANGUAGES)) {
       schemaIssues.push(
-        `Workspace metadata uses unsupported docsLanguage "${String(meta.docsLanguage)}"; allowed values: ${describeAllowedValues(DOCS_LANGUAGES)}`
+        `Workspace metadata uses unsupported docsLanguage "${String(rawMetaDocsLanguage)}"; allowed values: ${describeAllowedValues(DOCS_LANGUAGES)}`
       );
     }
-    if (!isAllowedString(meta.projectKind, PROJECT_KINDS)) {
+    if (rawMetaProjectKind === undefined) {
+      schemaIssues.push("Workspace metadata is missing projectKind");
+      repairableIssues.push("Backfill workspace projectKind");
+    } else if (!isAllowedString(rawMetaProjectKind, PROJECT_KINDS)) {
       schemaIssues.push(
-        `Workspace metadata uses unsupported projectKind "${String(meta.projectKind)}"; allowed values: ${describeAllowedValues(PROJECT_KINDS)}`
+        `Workspace metadata uses unsupported projectKind "${String(rawMetaProjectKind)}"; allowed values: ${describeAllowedValues(PROJECT_KINDS)}`
       );
     }
-    if (!isAllowedString(meta.docsMode, DOCS_MODES)) {
+    if (rawMetaDocsMode === undefined) {
+      schemaIssues.push("Workspace metadata is missing docsMode");
+      repairableIssues.push("Backfill workspace docsMode");
+    } else if (!isAllowedString(rawMetaDocsMode, DOCS_MODES)) {
       schemaIssues.push(
-        `Workspace metadata uses unsupported docsMode "${String(meta.docsMode)}"; allowed values: ${describeAllowedValues(DOCS_MODES)}`
+        `Workspace metadata uses unsupported docsMode "${String(rawMetaDocsMode)}"; allowed values: ${describeAllowedValues(DOCS_MODES)}`
       );
     }
-    if (!meta.templateVersion || meta.templateVersion !== WORKSPACE_TEMPLATE_VERSION) {
+    if (typeof rawMetaTemplateVersion !== "string" || rawMetaTemplateVersion !== WORKSPACE_TEMPLATE_VERSION) {
       warnings.push(
-        `Workspace templateVersion is ${meta.templateVersion ?? "missing"}; current templateVersion is ${WORKSPACE_TEMPLATE_VERSION}`
+        `Workspace templateVersion is ${typeof rawMetaTemplateVersion === "string" ? rawMetaTemplateVersion : "missing"}; current templateVersion is ${WORKSPACE_TEMPLATE_VERSION}`
       );
       repairableIssues.push("Refresh managed docs and control-plane templates");
     }
@@ -251,9 +279,13 @@ export async function validateWorkspace() {
     schemaIssues.push("Missing .apcc/config/workspace.yaml");
     repairableIssues.push("Backfill workspace config");
   } else {
+    if (rawConfig?.workspaceSchemaVersion === undefined) {
+      schemaIssues.push("Workspace config is missing workspaceSchemaVersion");
+      repairableIssues.push("Upgrade workspace config schema");
+    }
     if ((config.workspaceSchemaVersion ?? 0) < WORKSPACE_SCHEMA_VERSION) {
       schemaIssues.push(
-        `Workspace config schemaVersion ${config.workspaceSchemaVersion ?? 0} is behind the current schema ${WORKSPACE_SCHEMA_VERSION}`
+        `Workspace config workspaceSchemaVersion ${config.workspaceSchemaVersion ?? 0} is behind the current schema ${WORKSPACE_SCHEMA_VERSION}`
       );
       repairableIssues.push("Upgrade workspace config schema");
     }
@@ -361,7 +393,8 @@ export async function repairWorkspace() {
   await migrateDecisionState();
 
   const nextMeta: WorkspaceMetaState = {
-    schemaVersion: WORKSPACE_SCHEMA_VERSION,
+    workspaceSchemaVersion: WORKSPACE_SCHEMA_VERSION,
+    apccVersion: getApccPackageVersion(),
     workspaceName: meta?.workspaceName ?? path.basename(paths.root),
     docsRoot: meta?.docsRoot ?? "docs",
     workspaceRoot: meta?.workspaceRoot ?? ".apcc",

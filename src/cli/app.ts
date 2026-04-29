@@ -1,5 +1,3 @@
-import { readFileSync } from "node:fs";
-
 import { AclipApp } from "@rendo-studio/aclip";
 
 import { registerDecisionGroup } from "./groups/decision.js";
@@ -14,21 +12,14 @@ import { createDoctorControlPlane } from "./commands/doctor.js";
 import { registerInitCommand } from "./commands/init.js";
 import { registerGuideCommand } from "./commands/guide.js";
 import { withGuideHint } from "./guide-hint.js";
-import { getApccPackageFile } from "../core/package-runtime.js";
+import { getApccPackageVersion } from "../core/package-runtime.js";
 import { getWorkflowSkillPackageDir } from "../core/workflow-guide.js";
-
-function loadCliVersion(): string {
-  const packageJson = JSON.parse(readFileSync(getApccPackageFile("package.json"), "utf8")) as {
-    version?: string;
-  };
-  return packageJson.version ?? "0.1.0";
-}
 
 export function createApp() {
   const doctor = createDoctorControlPlane();
   const app = new AclipApp({
     name: "apcc",
-    version: loadCliVersion(),
+    version: getApccPackageVersion(),
     summary: "APCC CLI.",
     description: withGuideHint(
       "A agent-first project context framework for human developers and development agents."

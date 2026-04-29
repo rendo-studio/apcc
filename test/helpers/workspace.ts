@@ -61,7 +61,8 @@ const defaultActive: WorkspaceState = {
 };
 
 const defaultMeta: WorkspaceMetaState = {
-  schemaVersion: 9,
+  workspaceSchemaVersion: 10,
+  apccVersion: "0.0.0-test",
   workspaceName: "test-workspace",
   docsRoot: "docs",
   workspaceRoot: ".apcc",
@@ -85,7 +86,7 @@ const defaultConfig: WorkspaceConfigState = {
     sourcePath: "docs",
     preferredPort: null
   },
-  workspaceSchemaVersion: 9
+  workspaceSchemaVersion: 10
 };
 
 async function writeYaml(filePath: string, value: unknown) {
@@ -131,6 +132,17 @@ export async function createWorkspaceFixture(input: WorkspaceFixtureInput = {}) 
   await writeYaml(path.join(root, ".apcc", "state", "active.yaml"), active);
 
   await writeText(
+    path.join(root, "docs", "shared", "meta.json"),
+    JSON.stringify(
+      {
+        title: "Shared",
+        pages: ["overview", "goal"]
+      },
+      null,
+      2
+    ) + "\n"
+  );
+  await writeText(
     path.join(root, "docs", "shared", "overview.md"),
     doc(
       "Shared Overview",
@@ -158,8 +170,26 @@ export async function createWorkspaceFixture(input: WorkspaceFixtureInput = {}) 
 `
     )
   );
-  await writeText(path.join(root, "docs", "public", "meta.json"), "{}\n");
-  await writeText(path.join(root, "docs", "internal", "meta.json"), "{}\n");
+  await writeText(
+    path.join(root, "docs", "public", "meta.json"),
+    JSON.stringify(
+      {
+        title: "Public"
+      },
+      null,
+      2
+    ) + "\n"
+  );
+  await writeText(
+    path.join(root, "docs", "internal", "meta.json"),
+    JSON.stringify(
+      {
+        title: "Internal"
+      },
+      null,
+      2
+    ) + "\n"
+  );
   await writeText(
     path.join(root, "docs", "project", "overview.md"),
     doc(
