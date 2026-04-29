@@ -4,167 +4,244 @@ items:
     name: Re-integrate the repository under a fresh APCC workspace
     summary: Re-establish the repository as a clean APCC workspace without relying on archived control-plane or docs material.
     parentPlanId: null
+    versionRef: 0-1-0-apcc-public-baseline
   - id: author-formal-public-docs-package-1
     name: Author a formal public docs package
     summary: Replace scaffold docs with concise external documentation that explains how to use APCC without exposing repository-specific maintainer detail.
     parentPlanId: null
+    versionRef: 0-1-0-apcc-public-baseline
   - id: align-maintainer-docs-and-verification-1
     name: Align maintainer docs and verification
     summary: Keep internal maintainer guidance, validation rules, and docs-site checks aligned with the new clean integration.
     parentPlanId: null
+    versionRef: 0-1-0-apcc-public-baseline
   - id: finalize-apcc-public-positioning-1
     name: Finalize APCC public positioning
     summary: Rename the framework surfaces to APCC and align release-facing guidance, docs, and version records with the new public positioning.
     parentPlanId: null
+    versionRef: 0-1-0-apcc-public-baseline
   - id: harden-workspace-first-and-docs-language-1
     name: Harden workspace-first execution and docs-language defaults
     summary: Make workspace-first updates explicit in agent guidance and persist the primary docs language without introducing multilingual content maintenance overhead.
     parentPlanId: null
+    versionRef: 0-1-0-apcc-public-baseline
   - id: harden-docs-site-lifecycle-1
     name: Harden docs-site lifecycle management
     summary: Make site open, stop, and clean reuse or terminate the local docs runtime predictably without mutating healthy runtimes or leaving stale Windows wrapper processes behind.
     parentPlanId: null
+    versionRef: 0-1-0-apcc-public-baseline
   - id: broaden-cross-platform-verification-1
     name: Broaden cross-platform verification coverage
     summary: Add automated multi-OS verification for the CLI and docs-site lifecycle so APCC has explicit evidence for Linux, macOS, and Windows behavior.
     parentPlanId: null
+    versionRef: 0-1-0-apcc-public-baseline
   - id: migrate-to-prebuilt-docs-runtime-1
     name: Migrate toward a prebuilt docs runtime
     summary: Replace the per-project source-driven docs runtime with a prebuilt viewer shell backed by APCC-generated runtime data, without regressing the current docs-site experience.
     parentPlanId: null
+    versionRef: 0-1-0-apcc-public-baseline
   - id: restore-prebuilt-docs-live-refresh-1
     name: Restore automatic docs-site refresh under the prebuilt runtime
     summary: Make authored doc edits refresh the browser experience automatically again so the prebuilt shell matches the previous dev-time feedback loop without manual reloads.
     parentPlanId: null
+    versionRef: 0-1-0-apcc-public-baseline
   - id: harden-repeated-prebuilt-live-refresh-1
     name: Harden repeated automatic refresh under the prebuilt runtime
     summary: Ensure the prebuilt docs viewer keeps auto-refreshing after every subsequent doc edit instead of only responding to the first change after `site open`.
     parentPlanId: null
+    versionRef: 0-1-0-apcc-public-baseline
   - id: verify-stale-runtime-recovery-1
     name: Verify stale runtime recovery
     summary: Prove that `site open` recovers from stale runtime metadata and abandoned runtime roots without requiring a clean shutdown first.
     parentPlanId: null
+    versionRef: 0-1-0-apcc-public-baseline
   - id: improve-site-instance-visibility-and-bulk-stop-1
     name: Improve site instance visibility and bulk stop control
     summary: Expose running docs-site instances through the CLI and support a one-shot bulk stop flow so users do not need to manually re-enter each project just to inspect or stop runtimes.
     parentPlanId: null
+    versionRef: 0-1-0-apcc-public-baseline
   - id: normalize-site-live-terminology-1
     name: Normalize site runtime terminology around live mode
     summary: Remove the remaining public-facing dev-server wording from the prebuilt docs runtime model by renaming the running mode and associated CLI/docs language to live runtime terminology.
     parentPlanId: null
+    versionRef: 0-1-0-apcc-public-baseline
   - id: harden-cli-package-release-readiness-14
     name: Harden CLI package release readiness
     summary: Close the remaining packaging and installed-binary gaps so APCC can be released as a agent-first framework.
     parentPlanId: null
+    versionRef: 0-1-0-apcc-public-baseline
   - id: make-guide-discover-public-docs-dynamically-15
     name: Make guide discover public docs dynamically
     summary: Turn the guide command into a thin progressive-disclosure entry over package public docs while keeping workflow as the Agent skill guide.
     parentPlanId: null
+    versionRef: 0-1-0-apcc-public-baseline
   - id: reduce-cli-mutation-output-noise-16
     name: Reduce CLI mutation output noise
     summary: Make APCC mutation commands return concise deltas for development agents while keeping full context in explicit inspection commands.
     parentPlanId: null
+    versionRef: 0-1-0-apcc-public-baseline
   - id: site-build-deployable-docs-site
     name: Make site build produce a deployable docs site
     summary: Change site build from an internal runtime staging check into the public command that builds a deployable read-only APCC docs site artifact.
     parentPlanId: null
+    versionRef: 0-1-0-apcc-public-baseline
   - id: console-plan-tree-view
     name: Make console plan-first
     summary: Change the docs-site Console from a task-first tree into a plan-first execution view that shows plan status and scoped task trees.
     parentPlanId: null
+    versionRef: 0-1-0-apcc-public-baseline
   - id: release-docs-final-cleanup
     name: Final release docs cleanup
     summary: Clean up release-facing APCC documentation, Agent onboarding assets, stale docs-site wording, and public docs structure before publication.
     parentPlanId: null
+    versionRef: 0-1-0-apcc-public-baseline
   - id: publish-apcc-public-release
     name: Publish APCC public release
     summary: Initialize the GitHub repository, publish the APCC CLI package to npmjs under the available package names, and verify remote installation works as the delivery bar.
     parentPlanId: null
+    versionRef: 0-1-0-apcc-public-baseline
   - id: harden-post-release-docs-site-ergonomics-21
     name: Harden post-release docs-site ergonomics
     summary: Fix non-English docs-site failures, make the console the default landing surface, improve site open port control, and tighten the agent workflow guidance so human developers can reliably access and keep the docs site running.
     parentPlanId: null
+    versionRef: 0-1-2-docs-site-ergonomics-patch
   - id: harden-apcc-reinit-language-preservation-22
     name: Harden APCC reinit language preservation
     summary: Make repeated init on an existing APCC workspace preserve the persisted docs language and avoid backfilling default-language scaffold files that do not match the current workspace language.
     parentPlanId: null
+    versionRef: 0-1-2-docs-site-ergonomics-patch
   - id: refine-cli-status-and-site-lifecycle-23
     name: Refine CLI status and site lifecycle ergonomics
     summary: Flatten single-purpose status inspection, add site runtime status inspection, rename site open to site start, and make scaffold navigation order align with human reading expectations.
     parentPlanId: null
+    versionRef: 0-1-2-docs-site-ergonomics-patch
   - id: fix-docs-site-root-locale-selection-24
     name: Fix docs-site root locale selection
     summary: Make the bare docs-site root respect the workspace docsLanguage instead of serving a build-time English redirect.
     parentPlanId: null
+    versionRef: 0-1-2-docs-site-ergonomics-patch
   - id: standardize-doctor-control-plane-25
     name: Standardize the doctor control plane
     summary: Replace the legacy validate command surface with the ACLIP-standard doctor check and fix hooks while preserving APCC workspace diagnostics and repair behavior.
     parentPlanId: null
+    versionRef: 0-2-0-doctor-and-workflow-skill-standardization
   - id: standardize-workflow-skill-source-26
     name: Standardize the workflow skill source and ACLIP hook registration
     summary: Move the APCC workflow guidance to a canonical skill package source, register it through ACLIP CLI-level skill hooks, and keep init materialization aligned without routing through export-time packaging.
     parentPlanId: null
+    versionRef: 0-2-0-doctor-and-workflow-skill-standardization
   - id: assess-and-publish-next-release-27
     name: Assess release readiness and publish the next APCC release
     summary: Run a final release-quality review over code, docs, packaging, and publication prerequisites, close any remaining blockers, and publish the next real package release.
     parentPlanId: null
+    versionRef: 0-2-0-doctor-and-workflow-skill-standardization
   - id: remove-publish-warning-and-ship-patch-28
     name: Remove npm publish warnings and ship a patch release
     summary: Eliminate the remaining npm publish warning from the package surface, verify the fix end to end, and publish the next patch release across GitHub and npm.
     parentPlanId: null
+    versionRef: 0-2-1-npm-publish-manifest-polish
   - id: align-with-aclip-0-3-2-and-assess-standard-packaging-29
     name: Align with ACLIP 0.3.2 and assess standard packaging adoption
     summary: Upgrade APCC to ACLIP 0.3.2, verify compatibility, and determine whether APCC's npm release flow can move cleanly onto ACLIP's standard CLI packaging helpers.
     parentPlanId: null
+    versionRef: 0-3-0-aclip-build-stage-and-control-plane-contract
   - id: reassess-aclip-standard-packaging-with-corrected-0-3-2-source-30
     name: Reassess ACLIP standard packaging against corrected 0.3.2 source
     summary: Re-evaluate APCC's migration path to ACLIP standard CLI packaging after the ACLIP 0.3.2 reference source is refreshed to the actual current implementation.
     parentPlanId: null
+    versionRef: 0-3-0-aclip-build-stage-and-control-plane-contract
   - id: upgrade-to-aclip-0-3-3-and-reassess-build-stage-31
     name: Upgrade to ACLIP 0.3.3 and reassess standard build-stage adoption
     summary: Move APCC to ACLIP 0.3.3 and re-evaluate whether the AclipApp build stage itself can cleanly adopt ACLIP's standard build flow for clear benefit without undesirable side effects.
     parentPlanId: null
+    versionRef: 0-3-0-aclip-build-stage-and-control-plane-contract
   - id: reassess-aclip-build-step-adoption-31
     name: Reassess ACLIP build-step adoption under clarified scope
     summary: Evaluate whether APCC should adopt ACLIP's standard AclipApp build step specifically, independent of the rest of APCC's npm staging and packaging flow.
     parentPlanId: null
+    versionRef: 0-3-0-aclip-build-stage-and-control-plane-contract
   - id: investigate-aclip-0-3-3-consumer-build-bug-32
     name: Investigate ACLIP 0.3.3 consumer build artifact bug
     summary: Reproduce the downstream build artifact failure in the ACLIP 0.3.3 source tree, validate a local fix, and prepare a concrete maintainer proposal based on the verified patch.
     parentPlanId: null
+    versionRef: 0-3-0-aclip-build-stage-and-control-plane-contract
   - id: upgrade-to-aclip-0-3-4-and-reassess-33
     name: Upgrade to ACLIP 0.3.4 and reassess downstream build behavior
     summary: Move APCC to ACLIP 0.3.4, verify compatibility, and re-evaluate whether the published SDK now fixes or changes the downstream consumer build behavior.
     parentPlanId: null
+    versionRef: 0-3-0-aclip-build-stage-and-control-plane-contract
   - id: adopt-aclip-standard-cli-build-stage-34
     name: Adopt ACLIP standard CLI build stage
     summary: Move APCC's CLI artifact build onto ACLIP's standard build flow, remove APCC-side bundler hazards, and preserve the existing package capabilities and publish-stage behavior.
     parentPlanId: null
+    versionRef: 0-3-0-aclip-build-stage-and-control-plane-contract
   - id: standardize-control-plane-contract-35
     name: Standardize the APCC control-plane contract
     summary: Publish a normative APCC control-plane contract for direct `.apcc` editing, align runtime constants to that contract, and make doctor validate the documented value domains.
     parentPlanId: null
+    versionRef: 0-3-0-aclip-build-stage-and-control-plane-contract
   - id: automate-contract-doc-and-publish-36
     name: Automate contract doc generation and publish the next APCC release
     summary: Generate the public control-plane contract doc from runtime constants, run a release-quality review over the combined changes, and publish the next APCC release if the release surface is clean.
     parentPlanId: null
+    versionRef: 0-3-0-aclip-build-stage-and-control-plane-contract
   - id: refine-agent-bootstrap-guidance-and-apcc-availab-38
     name: Refine agent bootstrap guidance and APCC availability fallbacks
     summary: Remove redundant workflow-guide rereads, define the preferred APCC workflow-reading path, and add explicit APCC CLI availability and installation guidance across the agent bootstrap assets.
     parentPlanId: null
+    versionRef: 0-3-1-agent-bootstrap-guidance-polish
   - id: publish-the-bootstrap-guidance-patch-release-39
     name: Publish the bootstrap-guidance patch release
     summary: Cut and publish a patch release that removes redundant APCC workflow-reading guidance, makes APCC CLI availability an explicit prerequisite, and verifies the packaged guidance surfaces before release.
     parentPlanId: null
+    versionRef: 0-3-1-agent-bootstrap-guidance-polish
   - id: unify-workspace-schema-provenance-and-complete-c-40
     name: Unify workspace schema provenance and complete Chinese docs-site localization
     summary: Clarify APCC workspace schema versus CLI provenance fields, localize docs-package navigation labels through metadata instead of runtime special cases, and complete the docs-site runtime Console labels for zh-CN workspaces.
     parentPlanId: null
+    versionRef: 0-3-2-workspace-schema-provenance-and-docs-site-localization
   - id: publish-the-schema-provenance-and-localization-patch-release-41
     name: Publish the schema provenance and localization patch release
     summary: Cut, verify, and publish the next APCC patch release for workspace schema provenance unification and docs-site localization completion.
     parentPlanId: null
+    versionRef: 0-3-2-workspace-schema-provenance-and-docs-site-localization
   - id: harden-invalid-yaml-recovery-and-guidance-42
     name: Harden invalid YAML recovery and guidance
     summary: Make APCC surface file-aware YAML parse errors, steer operators toward doctor-first recovery, and tighten CLI-versus-direct-edit guidance before releasing the next patch.
     parentPlanId: null
+    versionRef: 0-3-3-invalid-yaml-recovery-and-direct-edit-guidance-hardening
+  - id: harden-docs-structure-decoupling-and-runtime-ide-43
+    name: Harden docs-structure decoupling and runtime identity checks
+    summary: Document that runtime behavior cannot depend on the default docs package scaffold, audit the codebase for such coupling, and harden site runtime health checks from bare PID existence to verified process identity.
+    parentPlanId: null
+    versionRef: 0-3-4-docs-site-runtime-and-control-plane-hardening
+  - id: polish-docs-site-markdown-rendering-fidelity-44
+    name: Polish docs-site markdown rendering fidelity
+    summary: Diagnose and fix docs-site rendering gaps so authored markdown features such as tables and code blocks render with the expected Fumadocs semantics and styling.
+    parentPlanId: null
+    versionRef: 0-3-4-docs-site-runtime-and-control-plane-hardening
+  - id: separate-maintainer-guidance-from-shipped-worksp-45
+    name: Separate maintainer guidance from shipped workspace guidance
+    summary: Make the APCC source repository use maintainer-first AGENTS and local skills, while keeping shipped workflow guidance product-facing and adding a stable temp-directory production-verification rule.
+    parentPlanId: null
+    versionRef: 0-3-4-docs-site-runtime-and-control-plane-hardening
+  - id: harden-workspace-mutation-concurrency-46
+    name: Harden workspace mutation concurrency
+    summary: Add production-grade workspace mutation locking and atomic control-plane writes so concurrent APCC commands cannot lose or corrupt .apcc state.
+    parentPlanId: null
+    versionRef: 0-3-4-docs-site-runtime-and-control-plane-hardening
+  - id: rationalize-runtime-state-and-version-scoping-47
+    name: Rationalize runtime state and version scoping
+    summary: Move local mutation locks out of the workspace, retire stale active-state persistence, and let plans/tasks be filtered by explicit version anchors.
+    parentPlanId: null
+    versionRef: 0-3-4-docs-site-runtime-and-control-plane-hardening
+  - id: document-apcc-docs-site-internals-48
+    name: Document APCC docs-site internals
+    summary: Add maintainer-facing docs-package documentation that explains what the APCC docs site is, why it exists, how its runtime and packaging work, and how to develop it safely.
+    parentPlanId: null
+    versionRef: 0-3-4-docs-site-runtime-and-control-plane-hardening
+  - id: define-docs-site-functional-requirements-49
+    name: Define docs-site functional requirements
+    summary: Add a maintainer-facing requirements document for UI designers that defines the functional modules and capability bar a qualified APCC docs site must meet.
+    parentPlanId: null
+    versionRef: 0-3-4-docs-site-runtime-and-control-plane-hardening

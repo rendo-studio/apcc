@@ -313,7 +313,8 @@ function renderPlanRecord(payload: Record<string, unknown>): string {
     `- ID: ${typeof payload.id === "string" ? inlineCode(payload.id) : "Unknown"}`,
     `- Name: ${typeof payload.name === "string" ? payload.name : "Unknown"}`,
     `- Status: ${inlineCode(formatTaskStatus(payload.status))}`,
-    `- Parent: ${typeof payload.parentPlanId === "string" ? inlineCode(payload.parentPlanId) : inlineCode("root")}`
+    `- Parent: ${typeof payload.parentPlanId === "string" ? inlineCode(payload.parentPlanId) : inlineCode("root")}`,
+    `- Version: ${typeof payload.effectiveVersionRef === "string" ? inlineCode(payload.effectiveVersionRef) : "Unversioned"}`
   ];
 
   if (typeof payload.summary === "string" && payload.summary.trim().length > 0) {
@@ -333,6 +334,13 @@ function renderPlanPayload(payload: Record<string, unknown>): string {
   }
 
   const lines = ["# Plans", ""];
+  if (isRecord(payload.versionFilter)) {
+    const versionFilter =
+      typeof payload.versionFilter.version === "string"
+        ? `${payload.versionFilter.version}${typeof payload.versionFilter.id === "string" ? ` (${payload.versionFilter.id})` : ""}`
+        : "unversioned";
+    lines.push(renderSection("Filter", `- Version scope: ${versionFilter}`), "");
+  }
   if (Array.isArray(payload.topLevelPlans)) {
     lines.push(renderSection("Top-level Plans", renderList(asStringArray(payload.topLevelPlans))));
   }
@@ -384,6 +392,13 @@ function renderTaskPayload(payload: Record<string, unknown>): string {
   }
 
   const lines = ["# Tasks", ""];
+  if (isRecord(payload.versionFilter)) {
+    const versionFilter =
+      typeof payload.versionFilter.version === "string"
+        ? `${payload.versionFilter.version}${typeof payload.versionFilter.id === "string" ? ` (${payload.versionFilter.id})` : ""}`
+        : "unversioned";
+    lines.push(renderSection("Filter", `- Version scope: ${versionFilter}`), "");
+  }
   if (Array.isArray(payload.lines)) {
     lines.push(renderSection("Task Tree", renderList(asStringArray(payload.lines))));
   }
@@ -614,7 +629,6 @@ function renderDoctorPayload(payload: Record<string, unknown>): string {
       "",
       `- Mode: ${typeof workspace.mode === "string" ? inlineCode(workspace.mode) : "Unknown"}`,
       `- Root: ${typeof workspace.root === "string" ? inlineCode(workspace.root) : "Unknown"}`,
-      `- Active change: ${typeof workspace.activeChangeId === "string" ? inlineCode(workspace.activeChangeId) : "Unknown"}`,
       "",
       renderSection("Created Files", renderList(asStringArray(workspace.createdFiles))),
       "",
@@ -637,7 +651,6 @@ function renderBootstrapPayload(kind: "init", payload: Record<string, unknown>):
       `- Root: ${typeof record.root === "string" ? inlineCode(record.root) : "Unknown"}`,
       `- Docs root: ${typeof record.docsRoot === "string" ? inlineCode(record.docsRoot) : "Unknown"}`,
       `- Workspace root: ${typeof record.workspaceRoot === "string" ? inlineCode(record.workspaceRoot) : "Unknown"}`,
-      `- Active change: ${typeof record.activeChangeId === "string" ? inlineCode(record.activeChangeId) : "Unknown"}`,
       "",
       renderSection("Created Files", renderList(asStringArray(record.createdFiles))),
       "",

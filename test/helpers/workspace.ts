@@ -9,9 +9,9 @@ import type {
   PlansState,
   ProjectOverviewState,
   TasksState,
+  VersionState,
   WorkspaceConfigState,
-  WorkspaceMetaState,
-  WorkspaceState
+  WorkspaceMetaState
 } from "../../src/core/types.js";
 
 interface WorkspaceFixtureInput {
@@ -19,7 +19,7 @@ interface WorkspaceFixtureInput {
   endGoal?: GoalState;
   plans?: PlansState;
   tasks?: TasksState;
-  active?: WorkspaceState;
+  versions?: VersionState;
   config?: WorkspaceConfigState;
   meta?: WorkspaceMetaState;
 }
@@ -46,7 +46,8 @@ const defaultPlans: PlansState = {
       id: "plan-root",
       name: "Root plan",
       summary: "Default top-level plan used by workspace fixtures.",
-      parentPlanId: null
+      parentPlanId: null,
+      versionRef: null
     }
   ]
 };
@@ -55,9 +56,8 @@ const defaultTasks: TasksState = {
   items: []
 };
 
-const defaultActive: WorkspaceState = {
-  activeChange: "test-change",
-  currentRoundId: "round-test"
+const defaultVersions: VersionState = {
+  items: []
 };
 
 const defaultMeta: WorkspaceMetaState = {
@@ -67,7 +67,7 @@ const defaultMeta: WorkspaceMetaState = {
   docsRoot: "docs",
   workspaceRoot: ".apcc",
   bootstrapMode: "init",
-  templateVersion: "test-template",
+  templateVersion: "2026-04-30.runtime-state-and-version-scoping-1",
   projectKind: "general",
   docsMode: "standard",
   docsLanguage: "en",
@@ -116,7 +116,7 @@ export async function createWorkspaceFixture(input: WorkspaceFixtureInput = {}) 
   const endGoal = input.endGoal ?? defaultEndGoal;
   const plans = input.plans ?? defaultPlans;
   const tasks = input.tasks ?? defaultTasks;
-  const active = input.active ?? defaultActive;
+  const versions = input.versions ?? defaultVersions;
   const config = input.config ?? defaultConfig;
   const meta = input.meta ?? defaultMeta;
 
@@ -128,8 +128,7 @@ export async function createWorkspaceFixture(input: WorkspaceFixtureInput = {}) 
   await writeYaml(path.join(root, ".apcc", "tasks", "current.yaml"), tasks);
   await writeYaml(path.join(root, ".apcc", "tasks", "archive.yaml"), { items: [] });
   await writeYaml(path.join(root, ".apcc", "decisions", "records.yaml"), { items: [] });
-  await writeYaml(path.join(root, ".apcc", "versions", "records.yaml"), { items: [] });
-  await writeYaml(path.join(root, ".apcc", "state", "active.yaml"), active);
+  await writeYaml(path.join(root, ".apcc", "versions", "records.yaml"), versions);
 
   await writeText(
     path.join(root, "docs", "shared", "meta.json"),

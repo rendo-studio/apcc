@@ -48,6 +48,7 @@ Persist these explicitly:
 - names
 - summaries
 - parent relationships
+- plan version anchors
 - task status
 - doc references
 - decision records
@@ -91,6 +92,7 @@ items:
     name: Example plan
     summary: Example summary
     parentPlanId: null
+    versionRef: null
 ```
 
 Rules:
@@ -102,8 +104,12 @@ Rules:
   - `name`
   - `summary`
   - `parentPlanId`
+  - `versionRef`
 - `parentPlanId` is either another plan id or `null`
+- `versionRef` is either a version record id from `.apcc/versions/records.yaml` or `null`
 - `plan.status` is not stored
+- `effectiveVersionRef` is derived at read time by inheriting the nearest non-null `versionRef` from the plan tree
+- a child plan must not override an inherited non-null `versionRef` with a different version record id
 
 Derived plan status values are:
 
@@ -156,6 +162,8 @@ Rules:
 - `planRef` must reference an existing plan id
 - `parentTaskId` is either another task id or `null`
 - `countedForProgress` must be `true` or `false`
+- a child task must use the same `planRef` as its parent task
+- tasks do not persist a separate `versionRef`; version scope is derived from the referenced plan
 
 Progress rule:
 
@@ -241,12 +249,12 @@ Current default shape:
 
 ```yaml
 workspaceSchemaVersion: 10
-apccVersion: 0.3.3
+apccVersion: 0.3.4
 workspaceName: apcc-project
 docsRoot: docs
 workspaceRoot: .apcc
 bootstrapMode: init
-templateVersion: 2026-04-29.workspace-schema-provenance-1
+templateVersion: 2026-04-30.runtime-state-and-version-scoping-1
 projectKind: general
 docsMode: standard
 docsLanguage: en
@@ -305,6 +313,7 @@ The CLI accepts a few human-facing tokens that are not stored verbatim:
 - `--parent root` -> stored `null`
 - `--docs-language zh` -> stored `zh-CN`
 - `--docs-language en-US` -> stored `en`
+- `plan add/update --version <record-id-or-version-label>` -> stored `plan.versionRef` as the matching version record id
 
 Prefer the normalized persisted values when editing YAML directly.
 

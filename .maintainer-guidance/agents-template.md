@@ -1,6 +1,3 @@
-# AGENTS.md
-
-<!-- APCC:BEGIN -->
 ## APCC Source Repository
 
 This repository is the APCC source repo.
@@ -17,4 +14,3 @@ Mandatory:
 6. Treat `docs/internal/` as maintainer truth. Treat `assets/agents-template.md` and `assets/skills/apcc-workflow/SKILL.md` as shipped consumer guidance that must stay product-facing.
 7. Run production-style verification inside `.tmp/production-smoke/`. Only point install or init style checks at this repository itself when you are explicitly testing APCC self-migration, self-init, or repair behavior.
 8. Leave a healthy docs site running unless the human explicitly asks to stop or clean it.
-<!-- APCC:END -->

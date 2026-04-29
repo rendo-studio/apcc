@@ -4,6 +4,7 @@ import { existsSync } from "node:fs";
 
 import { readYamlFile, writeYamlFile } from "./storage.js";
 import { getWorkspacePaths } from "./workspace.js";
+import { withWorkspaceMutationLock } from "./workspace-mutation.js";
 import type { DecisionCategory, DecisionRecord, DecisionState, DecisionStatus } from "./types.js";
 
 interface LegacyDecisionRecordShape {
@@ -145,36 +146,42 @@ export async function loadDecisionState(): Promise<DecisionState> {
 }
 
 export async function saveDecisionState(state: DecisionState): Promise<void> {
-  const paths = getWorkspacePaths();
-  await writeYamlFile(paths.decisionFile, state);
-  await purgeLegacyDecisionState();
+  await withWorkspaceMutationLock(async () => {
+    const paths = getWorkspacePaths();
+    await writeYamlFile(paths.decisionFile, state);
+    await purgeLegacyDecisionState();
+  });
 }
 
 export async function migrateDecisionState() {
-  const current = await readYamlFile<DecisionState>(getWorkspacePaths().decisionFile).catch(() => ({ items: [] }));
-  const legacy = await loadLegacyDecisionState();
+  return withWorkspaceMutationLock(async () => {
+    const current = await readYamlFile<DecisionState>(getWorkspacePaths().decisionFile).catch(() => ({ items: [] }));
+    const legacy = await loadLegacyDecisionState();
 
-  if (!legacy) {
-    return { migrated: false, count: 0 };
-  }
+    if (!legacy) {
+      return { migrated: false, count: 0 };
+    }
 
-  const merged = new Map<string, DecisionRecord>();
-  for (const record of legacy.items) {
-    merged.set(record.id, record);
-  }
-  for (const record of current.items ?? []) {
-    merged.set(record.id, record);
-  }
+    const merged = new Map<string, DecisionRecord>();
+    for (const record of legacy.items) {
+      merged.set(record.id, record);
+    }
+    for (const record of current.items ?? []) {
+      merged.set(record.id, record);
+    }
 
-  const nextState: DecisionState = {
-    items: [...merged.values()].sort((left, right) => left.createdAt.localeCompare(right.createdAt))
-  };
-  await saveDecisionState(nextState);
+    const nextState: DecisionState = {
+      items: [...merged.values()].sort((left, right) => left.createdAt.localeCompare(right.createdAt))
+    };
+    const paths = getWorkspacePaths();
+    await writeYamlFile(paths.decisionFile, nextState);
+    await purgeLegacyDecisionState();
 
-  return {
-    migrated: true,
-    count: legacy.items.length
-  };
+    return {
+      migrated: true,
+      count: legacy.items.length
+    };
+  });
 }
 
 export async function listDecisionRecords(): Promise<DecisionRecord[]> {
@@ -202,40 +209,44 @@ export async function createDecisionRecord(input: {
   expectedOutcome: string;
   boundary: string;
 }) {
-  const state = await loadDecisionState();
-  const baseId = slugify(input.name) || "decision";
-  let id = baseId;
-  let sequence = 2;
+  return withWorkspaceMutationLock(async () => {
+    const state = await loadDecisionState();
+    const baseId = slugify(input.name) || "decision";
+    let id = baseId;
+    let sequence = 2;
 
-  while (state.items.some((item) => item.id === id)) {
-    id = `${baseId}-${sequence}`;
-    sequence += 1;
-  }
+    while (state.items.some((item) => item.id === id)) {
+      id = `${baseId}-${sequence}`;
+      sequence += 1;
+    }
 
-  const record: DecisionRecord = {
-    id,
-    name: input.name,
-    description: input.description,
-    docPath: input.docPath ?? null,
-    category: input.category,
-    proposedBy: input.proposedBy,
-    context: input.context,
-    impactOfNoAction: input.impactOfNoAction,
-    expectedOutcome: input.expectedOutcome,
-    boundary: input.boundary,
-    status: "pending",
-    decisionSummary: null,
-    revisitCondition: null,
-    createdAt: new Date().toISOString(),
-    decidedAt: null
-  };
+    const record: DecisionRecord = {
+      id,
+      name: input.name,
+      description: input.description,
+      docPath: input.docPath ?? null,
+      category: input.category,
+      proposedBy: input.proposedBy,
+      context: input.context,
+      impactOfNoAction: input.impactOfNoAction,
+      expectedOutcome: input.expectedOutcome,
+      boundary: input.boundary,
+      status: "pending",
+      decisionSummary: null,
+      revisitCondition: null,
+      createdAt: new Date().toISOString(),
+      decidedAt: null
+    };
 
-  const next: DecisionState = {
-    items: [...state.items, record]
-  };
-  await saveDecisionState(next);
+    const next: DecisionState = {
+      items: [...state.items, record]
+    };
+    const paths = getWorkspacePaths();
+    await writeYamlFile(paths.decisionFile, next);
+    await purgeLegacyDecisionState();
 
-  return record;
+    return record;
+  });
 }
 
 export async function decideDecisionRecord(input: {
@@ -244,28 +255,32 @@ export async function decideDecisionRecord(input: {
   summary: string;
   revisitCondition?: string;
 }) {
-  const state = await loadDecisionState();
-  const index = state.items.findIndex((item) => item.id === input.id);
+  return withWorkspaceMutationLock(async () => {
+    const state = await loadDecisionState();
+    const index = state.items.findIndex((item) => item.id === input.id);
 
-  if (index === -1) {
-    throw new Error(`Decision record "${input.id}" does not exist.`);
-  }
+    if (index === -1) {
+      throw new Error(`Decision record "${input.id}" does not exist.`);
+    }
 
-  const current = state.items[index];
-  const updated: DecisionRecord = {
-    ...current,
-    status: input.decision === "approve" ? "approved" : "rejected",
-    decisionSummary: input.summary,
-    revisitCondition: input.revisitCondition ?? current.revisitCondition,
-    decidedAt: new Date().toISOString()
-  };
+    const current = state.items[index];
+    const updated: DecisionRecord = {
+      ...current,
+      status: input.decision === "approve" ? "approved" : "rejected",
+      decisionSummary: input.summary,
+      revisitCondition: input.revisitCondition ?? current.revisitCondition,
+      decidedAt: new Date().toISOString()
+    };
 
-  const nextItems = [...state.items];
-  nextItems[index] = updated;
-  const next: DecisionState = {
-    items: nextItems
-  };
-  await saveDecisionState(next);
+    const nextItems = [...state.items];
+    nextItems[index] = updated;
+    const next: DecisionState = {
+      items: nextItems
+    };
+    const paths = getWorkspacePaths();
+    await writeYamlFile(paths.decisionFile, next);
+    await purgeLegacyDecisionState();
 
-  return updated;
+    return updated;
+  });
 }

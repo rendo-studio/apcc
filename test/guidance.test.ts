@@ -35,6 +35,8 @@ describe("workflow guidance artifacts", () => {
     expect(agents).toContain("Verify `apcc` is available.");
     expect(agents).toContain("`npm install -g apcc`");
     expect(agents).toContain("Read the APCC Workflow Guide through `apcc guide workflow`");
+    expect(agents).toContain("<!-- APCC:BEGIN -->");
+    expect(agents).toContain("<!-- APCC:END -->");
     expect(agents).toContain("do not reread the duplicate copy");
     expect(agents).not.toContain("If `apcc` cannot be run yet in the current environment");
     expect(agents).not.toContain("It is identical to `apcc guide workflow`");
@@ -63,5 +65,50 @@ describe("workflow guidance artifacts", () => {
     expect(agents).toContain("## APCC");
     expect(agents).toContain("<!-- APCC:BEGIN -->");
     expect(agents).toContain("<!-- APCC:END -->");
+  });
+
+  it("does not replace unmarked AGENTS content that happens to mention APCC", async () => {
+    const fixture = await createWorkspaceFixture();
+    restorers.push(fixture.use());
+    cleanups.push(fixture.cleanup);
+
+    await fs.writeFile(
+      `${fixture.root}/AGENTS.md`,
+      "# AGENTS.md\n\n## APCC\n\nLegacy local prompt.\n",
+      "utf8"
+    );
+
+    const result = await syncGuidanceArtifacts(fixture.root);
+    const agents = await fs.readFile(result.agentsMdPath, "utf8");
+
+    expect(agents).toContain("Legacy local prompt.");
+    expect(agents).toContain("<!-- APCC:BEGIN -->");
+    expect(agents.match(/## APCC/g)?.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("uses repo-local maintainer guidance overrides when they exist", async () => {
+    const fixture = await createWorkspaceFixture();
+    restorers.push(fixture.use());
+    cleanups.push(fixture.cleanup);
+
+    await fs.mkdir(`${fixture.root}/.maintainer-guidance/skills/apcc-workflow`, { recursive: true });
+    await fs.writeFile(
+      `${fixture.root}/.maintainer-guidance/agents-template.md`,
+      "## APCC Source Repository\n\nMaintainer-only rule.\n",
+      "utf8"
+    );
+    await fs.writeFile(
+      `${fixture.root}/.maintainer-guidance/skills/apcc-workflow/SKILL.md`,
+      "---\nname: apcc-workflow\ndescription: Maintainer override.\n---\n\n# Maintainer Override\n",
+      "utf8"
+    );
+
+    const result = await syncGuidanceArtifacts(fixture.root);
+    const workflowSkill = await fs.readFile(result.workflowSkillPath, "utf8");
+    const agents = await fs.readFile(result.agentsMdPath, "utf8");
+
+    expect(workflowSkill).toContain("# Maintainer Override");
+    expect(agents).toContain("Maintainer-only rule.");
+    expect(agents).not.toContain("Verify `apcc` is available.");
   });
 });

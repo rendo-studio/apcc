@@ -7,6 +7,7 @@ import { inspectGuidanceArtifacts, syncGuidanceArtifacts } from "./guidance.js";
 import { getApccPackageVersion } from "./package-runtime.js";
 import { writeText, writeYamlFile } from "./storage.js";
 import { loadWorkspaceConfig, normalizeDocsLanguage, normalizeWorkspaceConfig } from "./workspace-config.js";
+import { withWorkspaceMutationLock } from "./workspace-mutation.js";
 import type {
   DocsLanguage,
   GoalState,
@@ -18,7 +19,6 @@ import type {
   TasksState,
   WorkspaceConfigState,
   WorkspaceMetaState,
-  WorkspaceState
 } from "./types.js";
 import { withWorkspaceRoot } from "./workspace.js";
 
@@ -26,7 +26,7 @@ type ProjectKind = "general" | "frontend" | "library" | "service";
 type DocsMode = "minimal" | "standard";
 
 export const WORKSPACE_SCHEMA_VERSION = 10;
-export const WORKSPACE_TEMPLATE_VERSION = "2026-04-29.workspace-schema-provenance-1";
+export const WORKSPACE_TEMPLATE_VERSION = "2026-04-30.runtime-state-and-version-scoping-1";
 
 interface BootstrapInput {
   targetPath?: string;
@@ -46,7 +46,6 @@ interface BootstrapResult {
   root: string;
   docsRoot: string;
   workspaceRoot: string;
-  activeChangeId: string;
   createdFiles: string[];
   updatedFiles: string[];
   skippedFiles: string[];
@@ -259,7 +258,8 @@ function buildPlans(endGoal: GoalState, docsLanguage: DocsLanguage): PlansState 
           docsLanguage === "zh-CN"
             ? "在进入正式执行前，先锚定项目概览、最终目标与 authored docs。"
             : "Anchor the project overview, end goal, and authored docs before execution begins.",
-        parentPlanId: null
+        parentPlanId: null,
+        versionRef: null
       },
       {
         id: "translate-end-goal-into-plan-streams-1",
@@ -268,7 +268,8 @@ function buildPlans(endGoal: GoalState, docsLanguage: DocsLanguage): PlansState 
           docsLanguage === "zh-CN"
             ? "把长期目标拆解为明确的执行流与任务结构。"
             : "Break the long-lived end goal into explicit execution streams and task structure.",
-        parentPlanId: null
+        parentPlanId: null,
+        versionRef: null
       },
       {
         id: "deliver-and-validate-first-slice-1",
@@ -277,7 +278,8 @@ function buildPlans(endGoal: GoalState, docsLanguage: DocsLanguage): PlansState 
           docsLanguage === "zh-CN"
             ? "交付首个具体切片，并验证框架状态保持一致。"
             : "Ship the first concrete slice and verify the framework state stays coherent.",
-        parentPlanId: null
+        parentPlanId: null,
+        versionRef: null
       }
     ]
   };
@@ -362,16 +364,8 @@ function buildTasks(docsLanguage: DocsLanguage): TasksState {
   };
 }
 
-function buildActiveState(activeChangeId: string): WorkspaceState {
-  return {
-    activeChange: activeChangeId,
-    currentRoundId: `round-${isoNow().slice(0, 10)}-01`
-  };
-}
-
 function buildWorkspaceFiles(
   mode: "init",
-  activeChangeId: string,
   endGoal: GoalState,
   projectName: string,
   projectSummary: string | undefined,
@@ -421,10 +415,6 @@ function buildWorkspaceFiles(
     {
       relativePath: ".apcc/config/workspace.yaml",
       value: config
-    },
-    {
-      relativePath: ".apcc/state/active.yaml",
-      value: buildActiveState(activeChangeId)
     },
     {
       relativePath: ".apcc/goals/end.yaml",
@@ -706,7 +696,6 @@ async function bootstrapWorkspace(input: BootstrapInput): Promise<BootstrapResul
   const root = path.resolve(input.targetPath ?? process.cwd());
   const projectName = input.projectName?.trim() || path.basename(root);
   const projectSummary = input.projectSummary?.trim() || undefined;
-  const activeChangeId = `bootstrap-${slugify(projectName) || "project"}`;
   const force = Boolean(input.force);
   const preserveExistingDocs = Boolean(input.preserveExistingDocs);
   const existingWorkspaceConfig = hasExistingWorkspaceConfig(root)
@@ -738,61 +727,64 @@ async function bootstrapWorkspace(input: BootstrapInput): Promise<BootstrapResul
     root,
     docsRoot: path.join(root, "docs"),
     workspaceRoot: path.join(root, ".apcc"),
-    activeChangeId,
     createdFiles: [],
     updatedFiles: [],
     skippedFiles: []
   };
 
-  for (const file of buildWorkspaceFiles(
-    mode,
-    activeChangeId,
-    endGoal,
-    projectName,
-    projectSummary,
-    projectKind,
-    docsMode,
-    docsLanguage
-  )) {
-    await writeManagedWorkspaceFile(root, file, force, result);
-  }
-
-  const allowMergeExistingDocs = false;
-
-  for (const doc of buildDocsFiles(projectName, projectSummary, endGoal, docsLanguage, {
-    hasExplicitProjectSummary,
-    hasExplicitEndGoal
-  })) {
-    if (preserveExistingDocs && existsSync(path.join(root, doc.relativePath))) {
-      result.skippedFiles.push(doc.relativePath);
-      continue;
-    }
-    await upsertManagedDoc(root, doc, force, allowMergeExistingDocs, result);
-  }
-
-  for (const file of buildDocsTextFiles(docsLanguage)) {
-    await writeManagedTextFile(root, file, force, initStrategy === "new", result);
-  }
-
-  await withWorkspaceRoot(root, async () => {
-    const beforeGuidanceArtifacts = await inspectGuidanceArtifacts(root);
-    await syncGuidanceArtifacts(root);
-
-    const managedGuidanceFiles = [
-      {
-        relativePath: "AGENTS.md",
-        existed: beforeGuidanceArtifacts.agentsMdExists
-      },
-      {
-        relativePath: ".agents/skills/apcc-workflow/SKILL.md",
-        existed: beforeGuidanceArtifacts.workflowSkillExists
+  await withWorkspaceMutationLock(
+    async () => {
+      for (const file of buildWorkspaceFiles(
+        mode,
+        endGoal,
+        projectName,
+        projectSummary,
+        projectKind,
+        docsMode,
+        docsLanguage
+      )) {
+        await writeManagedWorkspaceFile(root, file, force, result);
       }
-    ];
 
-    for (const file of managedGuidanceFiles) {
-      result[file.existed ? "updatedFiles" : "createdFiles"].push(file.relativePath);
-    }
-  });
+      const allowMergeExistingDocs = false;
+
+      for (const doc of buildDocsFiles(projectName, projectSummary, endGoal, docsLanguage, {
+        hasExplicitProjectSummary,
+        hasExplicitEndGoal
+      })) {
+        if (preserveExistingDocs && existsSync(path.join(root, doc.relativePath))) {
+          result.skippedFiles.push(doc.relativePath);
+          continue;
+        }
+        await upsertManagedDoc(root, doc, force, allowMergeExistingDocs, result);
+      }
+
+      for (const file of buildDocsTextFiles(docsLanguage)) {
+        await writeManagedTextFile(root, file, force, initStrategy === "new", result);
+      }
+
+      await withWorkspaceRoot(root, async () => {
+        const beforeGuidanceArtifacts = await inspectGuidanceArtifacts(root);
+        await syncGuidanceArtifacts(root);
+
+        const managedGuidanceFiles = [
+          {
+            relativePath: "AGENTS.md",
+            existed: beforeGuidanceArtifacts.agentsMdExists
+          },
+          {
+            relativePath: ".agents/skills/apcc-workflow/SKILL.md",
+            existed: beforeGuidanceArtifacts.workflowSkillExists
+          }
+        ];
+
+        for (const file of managedGuidanceFiles) {
+          result[file.existed ? "updatedFiles" : "createdFiles"].push(file.relativePath);
+        }
+      });
+    },
+    { root }
+  );
 
   return result;
 }

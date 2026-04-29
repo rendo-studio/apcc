@@ -29,7 +29,8 @@ describe("status snapshot", () => {
             id: "plan-root",
             name: "Root plan",
             summary: "Default top-level plan used by workspace fixtures.",
-            parentPlanId: null
+            parentPlanId: null,
+            versionRef: null
           }
         ]
       },

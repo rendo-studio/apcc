@@ -28,8 +28,7 @@ import type {
   DerivedPlansState,
   DocsRevisionState,
   TaskArchiveState,
-  TaskTreeNode,
-  WorkspaceState
+  TaskTreeNode
 } from "./types.js";
 import { getStatusSnapshot } from "./status.js";
 import { getWorkspacePaths, resolveWorkspaceRoot, withWorkspaceRoot } from "./workspace.js";
@@ -55,8 +54,6 @@ interface WorkspaceSiteSnapshot {
   workspaceRoot: string | null;
   docsLanguage: "en" | "zh-CN";
   hasWorkspace: boolean;
-  activeChange: string | null;
-  currentRoundId: string | null;
   stateDigest: string | null;
 }
 
@@ -225,7 +222,6 @@ function tryResolveWorkspaceRootFromDocsRoot(docsRoot: string): string | null {
 }
 
 function createWorkspaceStateDigest(input: {
-  active: WorkspaceState;
   project: Awaited<ReturnType<typeof loadProjectOverview>> | null;
   endGoal: Awaited<ReturnType<typeof loadEndGoal>> | null;
   status: Awaited<ReturnType<typeof getStatusSnapshot>> | null;
@@ -237,8 +233,6 @@ function createWorkspaceStateDigest(input: {
   versions: Awaited<ReturnType<typeof loadVersionState>>;
 }): string {
   return hashPayload({
-    activeChange: input.active.activeChange,
-    currentRoundId: input.active.currentRoundId,
     project: input.project,
     endGoal: input.endGoal,
     status: input.status,
@@ -271,8 +265,6 @@ async function loadWorkspaceSiteSnapshot(
     ]);
     const plans = derivePlanStatuses(plansState, tasksState);
     const progress = computeProgress(tasksState.items);
-
-    const active = await readYamlFile<WorkspaceState>(paths.activeStateFile);
     const docsManifest = await buildDocsManifest(docsRoot, revisionState);
     const changedPages = listRecentlyChangedDocs(revisionState)
       .map((record) => docsManifest.find((page) => page.path === record.path))
@@ -286,10 +278,7 @@ async function loadWorkspaceSiteSnapshot(
         workspaceRoot: paths.workspaceRoot,
         docsLanguage: workspaceConfig?.docsLanguage ?? "en",
         hasWorkspace: true,
-        activeChange: active.activeChange,
-        currentRoundId: active.currentRoundId,
         stateDigest: createWorkspaceStateDigest({
-          active,
           project,
           endGoal,
           status,
@@ -349,8 +338,6 @@ export async function buildSiteControlPlaneSnapshot(
       workspaceRoot: null,
       docsLanguage: "en",
       hasWorkspace: false,
-      activeChange: null,
-      currentRoundId: null,
       stateDigest: null
     },
     project: null,

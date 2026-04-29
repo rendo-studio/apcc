@@ -1,6 +1,7 @@
 import { getWorkspacePaths } from "./workspace.js";
 import { readYamlFile, writeYamlFile } from "./storage.js";
 import { assertControlPlaneId } from "./ids.js";
+import { loadVersionState } from "./version.js";
 import type {
   DerivedPlanNode,
   DerivedPlansState,
@@ -11,14 +12,25 @@ import type {
   TaskStatus,
   TasksState
 } from "./types.js";
+import { withWorkspaceMutationLock } from "./workspace-mutation.js";
+
+export interface VersionScopeFilter {
+  versionRef?: string;
+  unversioned?: boolean;
+}
 
 function normalizePlanNode(raw: PlanNode): PlanNode {
   return {
     id: raw.id,
     name: raw.name,
     summary: raw.summary ?? null,
-    parentPlanId: raw.parentPlanId ?? null
+    parentPlanId: raw.parentPlanId ?? null,
+    versionRef: raw.versionRef ?? null
   };
+}
+
+function normalizePlanItems(plans: PlanNode[]): PlanNode[] {
+  return plans.map(normalizePlanNode);
 }
 
 export function normalizePlansState(plans: PlansState): PlansState {
@@ -35,18 +47,64 @@ export async function loadPlans(): Promise<PlansState> {
 }
 
 export async function savePlans(plans: PlansState): Promise<void> {
-  const paths = getWorkspacePaths();
-  await writeYamlFile(paths.planFile, normalizePlansState(plans));
+  await withWorkspaceMutationLock(async () => {
+    const paths = getWorkspacePaths();
+    await writeYamlFile(paths.planFile, normalizePlansState(plans));
+  });
+}
+
+function buildChildrenByParent(plans: PlanNode[]): Map<string | null, PlanNode[]> {
+  const result = new Map<string | null, PlanNode[]>();
+
+  for (const plan of normalizePlanItems(plans)) {
+    const key = plan.parentPlanId ?? null;
+    const children = result.get(key) ?? [];
+    children.push(plan);
+    result.set(key, children);
+  }
+
+  return result;
+}
+
+function assertConsistentPlanVersionScopes(plans: PlanNode[]): void {
+  const childrenByParent = buildChildrenByParent(plans);
+
+  const visit = (parentId: string | null, inheritedVersionRef: string | null) => {
+    for (const plan of childrenByParent.get(parentId) ?? []) {
+      if (
+        plan.versionRef !== null &&
+        inheritedVersionRef !== null &&
+        plan.versionRef !== inheritedVersionRef
+      ) {
+        throw new Error(
+          `Plan ${plan.id} cannot override inherited version scope ${inheritedVersionRef} with ${plan.versionRef}`
+        );
+      }
+
+      visit(plan.id, plan.versionRef ?? inheritedVersionRef);
+    }
+  };
+
+  visit(null, null);
+}
+
+export function assertPlanVersionRefsExist(plans: PlanNode[], versionIds: Set<string>): void {
+  for (const plan of normalizePlanItems(plans)) {
+    if (plan.versionRef !== null && !versionIds.has(plan.versionRef)) {
+      throw new Error(`Plan ${plan.id} points to missing version record ${plan.versionRef}`);
+    }
+  }
 }
 
 export function assertValidPlanTree(plans: PlanNode[]): void {
-  const ids = new Set(plans.map((plan) => plan.id));
+  const normalizedPlans = normalizePlanItems(plans);
+  const ids = new Set(normalizedPlans.map((plan) => plan.id));
 
-  if (ids.size !== plans.length) {
+  if (ids.size !== normalizedPlans.length) {
     throw new Error("Plan tree contains duplicate plan ids");
   }
 
-  for (const plan of plans) {
+  for (const plan of normalizedPlans) {
     assertControlPlaneId(plan.id, "Plan");
     if (!plan.name || plan.name.trim().length === 0) {
       throw new Error(`Plan ${plan.id} is missing name`);
@@ -59,9 +117,11 @@ export function assertValidPlanTree(plans: PlanNode[]): void {
     }
   }
 
+  assertConsistentPlanVersionScopes(normalizedPlans);
+
   const visiting = new Set<string>();
   const visited = new Set<string>();
-  const parentById = new Map(plans.map((plan) => [plan.id, plan.parentPlanId]));
+  const parentById = new Map(normalizedPlans.map((plan) => [plan.id, plan.parentPlanId]));
 
   const visit = (id: string) => {
     if (visited.has(id)) {
@@ -80,9 +140,36 @@ export function assertValidPlanTree(plans: PlanNode[]): void {
     visited.add(id);
   };
 
-  for (const plan of plans) {
+  for (const plan of normalizedPlans) {
     visit(plan.id);
   }
+}
+
+function buildEffectivePlanVersionRefs(plans: PlanNode[]): Map<string, string | null> {
+  const normalizedPlans = normalizePlanItems(plans);
+  const byId = new Map(normalizedPlans.map((plan) => [plan.id, plan]));
+  const cache = new Map<string, string | null>();
+
+  const resolve = (planId: string): string | null => {
+    if (cache.has(planId)) {
+      return cache.get(planId) ?? null;
+    }
+
+    const plan = byId.get(planId);
+    if (!plan) {
+      return null;
+    }
+
+    const resolved = plan.versionRef ?? (plan.parentPlanId ? resolve(plan.parentPlanId) : null);
+    cache.set(planId, resolved);
+    return resolved;
+  };
+
+  for (const plan of normalizedPlans) {
+    resolve(plan.id);
+  }
+
+  return cache;
 }
 
 export function createPlanId(name: string, siblingCount: number): string {
@@ -109,7 +196,7 @@ function createAvailablePlanId(name: string, siblingCount: number, plans: PlanNo
   return id;
 }
 
-export function buildPlanTree(plans: DerivedPlanNode[]): PlanTreeNode[] {
+export function buildPlanTree(plans: DerivedPlanNode[], allowOrphanRoots = false): PlanTreeNode[] {
   const nodes = new Map<string, PlanTreeNode>();
   const roots: PlanTreeNode[] = [];
 
@@ -126,6 +213,10 @@ export function buildPlanTree(plans: DerivedPlanNode[]): PlanTreeNode[] {
 
     const parent = nodes.get(plan.parentPlanId);
     if (!parent) {
+      if (allowOrphanRoots) {
+        roots.push(node);
+        continue;
+      }
       throw new Error(`Plan ${plan.id} points to missing parent ${plan.parentPlanId}`);
     }
     parent.children.push(node);
@@ -139,6 +230,10 @@ export function renderPlanTreeLines(tree: PlanTreeNode[], depth = 0): string[] {
     const line = `${"  ".repeat(depth)}- ${node.name} (${node.id}) [${node.status}]`;
     return [line, ...renderPlanTreeLines(node.children, depth + 1)];
   });
+}
+
+export function describePlanTreeRoots(tree: PlanTreeNode[]): string[] {
+  return tree.map((plan) => `${plan.name} [${plan.status}]`);
 }
 
 export function getTopLevelPlans(plans: DerivedPlansState): DerivedPlanNode[] {
@@ -178,38 +273,41 @@ function collectDescendantPlanIds(plans: PlanNode[], planId: string): string[] {
 export async function deletePlan(input: {
   id: string;
 }): Promise<{ deletedPlanIds: string[]; deletedTaskIds: string[]; plans: PlansState }> {
-  const paths = getWorkspacePaths();
-  const [plans, tasks] = await Promise.all([
-    loadPlans(),
-    readYamlFile<TasksState>(paths.taskFile)
-  ]);
-  const current = plans.items.find((plan) => plan.id === input.id);
+  return withWorkspaceMutationLock(async () => {
+    const paths = getWorkspacePaths();
+    const [plans, tasks] = await Promise.all([
+      loadPlans(),
+      readYamlFile<TasksState>(paths.taskFile)
+    ]);
+    const current = plans.items.find((plan) => plan.id === input.id);
 
-  if (!current) {
-    throw new Error(`Plan "${input.id}" does not exist.`);
-  }
+    if (!current) {
+      throw new Error(`Plan "${input.id}" does not exist.`);
+    }
 
-  const deletedPlanIds = [input.id, ...collectDescendantPlanIds(plans.items, input.id)];
-  const deletedTaskIds = tasks.items
-    .filter((task) => deletedPlanIds.includes(task.planRef))
-    .map((task) => task.id);
+    const deletedPlanIds = [input.id, ...collectDescendantPlanIds(plans.items, input.id)];
+    const deletedTaskIds = tasks.items
+      .filter((task) => deletedPlanIds.includes(task.planRef))
+      .map((task) => task.id);
 
-  const nextPlans: PlansState = {
-    ...plans,
-    items: plans.items.filter((plan) => !deletedPlanIds.includes(plan.id))
-  };
-  const nextTasks: TasksState = {
-    items: tasks.items.filter((task) => !deletedPlanIds.includes(task.planRef))
-  };
+    const nextPlans: PlansState = {
+      ...plans,
+      items: plans.items.filter((plan) => !deletedPlanIds.includes(plan.id))
+    };
+    const nextTasks: TasksState = {
+      items: tasks.items.filter((task) => !deletedPlanIds.includes(task.planRef))
+    };
 
-  assertValidPlanTree(nextPlans.items);
-  await Promise.all([savePlans(nextPlans), writeYamlFile(paths.taskFile, nextTasks)]);
+    assertValidPlanTree(nextPlans.items);
+    await writeYamlFile(paths.planFile, normalizePlansState(nextPlans));
+    await writeYamlFile(paths.taskFile, nextTasks);
 
-  return {
-    deletedPlanIds,
-    deletedTaskIds,
-    plans: nextPlans
-  };
+    return {
+      deletedPlanIds,
+      deletedTaskIds,
+      plans: nextPlans
+    };
+  });
 }
 
 function derivePlanStatus(tasks: TaskNode[]): TaskStatus {
@@ -240,13 +338,15 @@ function derivePlanStatus(tasks: TaskNode[]): TaskStatus {
 }
 
 export function derivePlanStatuses(plans: PlansState, tasks: TasksState): DerivedPlansState {
+  const effectiveVersionRefs = buildEffectivePlanVersionRefs(plans.items);
   const items = plans.items.map((plan) => {
     const relevantPlanIds = new Set([plan.id, ...collectDescendantPlanIds(plans.items, plan.id)]);
     const planTasks = tasks.items.filter((task) => relevantPlanIds.has(task.planRef));
 
     return {
       ...plan,
-      status: derivePlanStatus(planTasks)
+      status: derivePlanStatus(planTasks),
+      effectiveVersionRef: effectiveVersionRefs.get(plan.id) ?? null
     };
   });
 
@@ -258,42 +358,82 @@ export function derivePlanStatuses(plans: PlansState, tasks: TasksState): Derive
   return nextPlans;
 }
 
+export function filterDerivedPlansByVersion(
+  plans: DerivedPlansState,
+  filter?: VersionScopeFilter
+): DerivedPlanNode[] {
+  if (!filter?.versionRef && !filter?.unversioned) {
+    return plans.items;
+  }
+
+  return plans.items.filter((plan) =>
+    filter.unversioned ? plan.effectiveVersionRef === null : plan.effectiveVersionRef === filter.versionRef
+  );
+}
+
+export function filterTasksByPlanVersion(
+  tasks: TaskNode[],
+  plans: DerivedPlansState,
+  filter?: VersionScopeFilter
+): TaskNode[] {
+  if (!filter?.versionRef && !filter?.unversioned) {
+    return tasks;
+  }
+
+  const planVersionById = new Map(plans.items.map((plan) => [plan.id, plan.effectiveVersionRef]));
+  return tasks.filter((task) =>
+    filter.unversioned
+      ? (planVersionById.get(task.planRef) ?? null) === null
+      : planVersionById.get(task.planRef) === filter.versionRef
+  );
+}
+
 export async function addPlan(input: {
   id?: string;
   name: string;
   parent: string;
   summary?: string;
+  version?: string;
 }): Promise<{ plan: PlanNode; plans: PlansState }> {
-  const plans = await loadPlans();
-  const parentPlanId = input.parent === "root" ? null : input.parent;
+  return withWorkspaceMutationLock(async () => {
+    const paths = getWorkspacePaths();
+    const [plans, versions] = await Promise.all([loadPlans(), loadVersionState()]);
+    const parentPlanId = input.parent === "root" ? null : input.parent;
 
-  if (parentPlanId !== null && !plans.items.some((plan) => plan.id === parentPlanId)) {
-    throw new Error(`Parent plan "${input.parent}" does not exist.`);
-  }
+    if (parentPlanId !== null && !plans.items.some((plan) => plan.id === parentPlanId)) {
+      throw new Error(`Parent plan "${input.parent}" does not exist.`);
+    }
 
-  const siblings = plans.items.filter((plan) => plan.parentPlanId === parentPlanId);
-  const id = input.id ?? createAvailablePlanId(input.name, siblings.length, plans.items);
-  assertControlPlaneId(id, "Plan");
+    const siblings = plans.items.filter((plan) => plan.parentPlanId === parentPlanId);
+    const id = input.id ?? createAvailablePlanId(input.name, siblings.length, plans.items);
+    assertControlPlaneId(id, "Plan");
 
-  if (plans.items.some((plan) => plan.id === id)) {
-    throw new Error(`Plan "${id}" already exists.`);
-  }
+    if (plans.items.some((plan) => plan.id === id)) {
+      throw new Error(`Plan "${id}" already exists.`);
+    }
 
-  const plan: PlanNode = {
-    id,
-    name: input.name,
-    summary: input.summary ?? input.name,
-    parentPlanId
-  };
+    if (input.version && !versions.items.some((record) => record.id === input.version)) {
+      throw new Error(`Version record "${input.version}" does not exist.`);
+    }
 
-  const next: PlansState = {
-    ...plans,
-    items: [...plans.items, plan]
-  };
-  assertValidPlanTree(next.items);
-  await savePlans(next);
+    const plan: PlanNode = {
+      id,
+      name: input.name,
+      summary: input.summary ?? input.name,
+      parentPlanId,
+      versionRef: input.version ?? null
+    };
 
-  return { plan, plans: next };
+    const next: PlansState = {
+      ...plans,
+      items: [...plans.items, plan]
+    };
+    assertValidPlanTree(next.items);
+    assertPlanVersionRefsExist(next.items, new Set(versions.items.map((record) => record.id)));
+    await writeYamlFile(paths.planFile, normalizePlansState(next));
+
+    return { plan, plans: next };
+  });
 }
 
 export async function updatePlan(input: {
@@ -301,50 +441,64 @@ export async function updatePlan(input: {
   name?: string;
   summary?: string;
   parent?: string;
+  version?: string | null;
 }): Promise<{ plan: PlanNode; plans: PlansState }> {
-  const plans = await loadPlans();
-  const index = plans.items.findIndex((plan) => plan.id === input.id);
+  return withWorkspaceMutationLock(async () => {
+    const paths = getWorkspacePaths();
+    const [plans, versions] = await Promise.all([loadPlans(), loadVersionState()]);
+    const index = plans.items.findIndex((plan) => plan.id === input.id);
 
-  if (index === -1) {
-    throw new Error(`Plan "${input.id}" does not exist.`);
-  }
+    if (index === -1) {
+      throw new Error(`Plan "${input.id}" does not exist.`);
+    }
 
-  if (!input.name && input.summary === undefined && input.parent === undefined) {
-    throw new Error("Plan update requires at least one of name, summary, or parent.");
-  }
+    if (!input.name && input.summary === undefined && input.parent === undefined && input.version === undefined) {
+      throw new Error("Plan update requires at least one of name, summary, parent, or version.");
+    }
 
-  const current = plans.items[index];
-  const nextParent =
-    input.parent === undefined
-      ? current.parentPlanId
-      : input.parent === "root"
-        ? null
-        : input.parent;
+    const current = plans.items[index];
+    const nextParent =
+      input.parent === undefined
+        ? current.parentPlanId
+        : input.parent === "root"
+          ? null
+          : input.parent;
 
-  if (nextParent === input.id) {
-    throw new Error("A plan cannot be its own parent.");
-  }
+    if (nextParent === input.id) {
+      throw new Error("A plan cannot be its own parent.");
+    }
 
-  const nextItems = [...plans.items];
-  nextItems[index] = {
-    ...current,
-    ...(input.name ? { name: input.name } : {}),
-    ...(input.summary !== undefined ? { summary: input.summary } : {}),
-    parentPlanId: nextParent
-  };
+    if (
+      input.version !== undefined &&
+      input.version !== null &&
+      !versions.items.some((record) => record.id === input.version)
+    ) {
+      throw new Error(`Version record "${input.version}" does not exist.`);
+    }
 
-  assertValidPlanTree(nextItems);
+    const nextItems = [...plans.items];
+    nextItems[index] = {
+      ...current,
+      ...(input.name ? { name: input.name } : {}),
+      ...(input.summary !== undefined ? { summary: input.summary } : {}),
+      ...(input.version !== undefined ? { versionRef: input.version } : {}),
+      parentPlanId: nextParent
+    };
 
-  const descendants = new Set(collectDescendantPlanIds(nextItems, input.id));
-  if (nextParent !== null && descendants.has(nextParent)) {
-    throw new Error(`Plan "${input.id}" cannot be re-parented under its descendant "${nextParent}".`);
-  }
+    assertValidPlanTree(nextItems);
 
-  const next: PlansState = {
-    ...plans,
-    items: nextItems
-  };
-  await savePlans(next);
+    const descendants = new Set(collectDescendantPlanIds(nextItems, input.id));
+    if (nextParent !== null && descendants.has(nextParent)) {
+      throw new Error(`Plan "${input.id}" cannot be re-parented under its descendant "${nextParent}".`);
+    }
 
-  return { plan: next.items[index], plans: next };
+    const next: PlansState = {
+      ...plans,
+      items: nextItems
+    };
+    assertPlanVersionRefsExist(next.items, new Set(versions.items.map((record) => record.id)));
+    await writeYamlFile(paths.planFile, normalizePlansState(next));
+
+    return { plan: next.items[index], plans: next };
+  });
 }

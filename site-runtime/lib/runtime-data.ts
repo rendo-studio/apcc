@@ -104,8 +104,6 @@ export interface ControlPlaneSnapshot {
     workspaceRoot: string | null;
     docsLanguage: "en" | "zh-CN";
     hasWorkspace: boolean;
-    activeChange: string | null;
-    currentRoundId: string | null;
     stateDigest: string | null;
   };
   project:
@@ -148,6 +146,8 @@ export interface ControlPlaneSnapshot {
           summary: string | null;
           status: "pending" | "in_progress" | "done" | "blocked";
           parentPlanId: string | null;
+          versionRef: string | null;
+          effectiveVersionRef: string | null;
         }>;
       }
     | null;
@@ -262,8 +262,6 @@ export async function loadControlPlaneSnapshot(): Promise<ControlPlaneSnapshot> 
       workspaceRoot: null,
       docsLanguage: "en",
       hasWorkspace: false,
-      activeChange: null,
-      currentRoundId: null,
       stateDigest: null
     },
     project: null,

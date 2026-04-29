@@ -42,6 +42,7 @@ export interface PlanNode {
   name: string;
   summary: string | null;
   parentPlanId: string | null;
+  versionRef: string | null;
 }
 
 export interface PlansState {
@@ -51,6 +52,7 @@ export interface PlansState {
 
 export interface DerivedPlanNode extends PlanNode {
   status: TaskStatus;
+  effectiveVersionRef: string | null;
 }
 
 export interface DerivedPlansState {
@@ -116,11 +118,6 @@ export interface DocRevisionRecord {
 export interface DocsRevisionState {
   generatedAt: string | null;
   items: DocRevisionRecord[];
-}
-
-export interface WorkspaceState {
-  activeChange: string | null;
-  currentRoundId: string | null;
 }
 
 export interface WorkspaceMetaState {

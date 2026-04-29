@@ -5,10 +5,32 @@ import { computeProgress } from "./progress.js";
 import { assertControlPlaneId } from "./ids.js";
 import { TASK_STATUSES, type TaskNode, type TasksState, type TaskStatus, type TaskTreeNode } from "./types.js";
 import { loadPlans } from "./plans.js";
+import { withWorkspaceMutationLock } from "./workspace-mutation.js";
 
 export async function loadTasks(): Promise<TasksState> {
   const paths = getWorkspacePaths();
   return readYamlFile<TasksState>(paths.taskFile);
+}
+
+function assertTaskPlanAlignment(tasks: TaskNode[]): void {
+  const tasksById = new Map(tasks.map((task) => [task.id, task]));
+
+  for (const task of tasks) {
+    if (task.parentTaskId === null) {
+      continue;
+    }
+
+    const parent = tasksById.get(task.parentTaskId);
+    if (!parent) {
+      continue;
+    }
+
+    if (task.planRef !== parent.planRef) {
+      throw new Error(
+        `Task ${task.id} must use the same planRef as its parent ${parent.id}. Expected ${parent.planRef}, received ${task.planRef}`
+      );
+    }
+  }
 }
 
 export function assertValidTaskTree(tasks: TaskNode[]): void {
@@ -39,6 +61,8 @@ export function assertValidTaskTree(tasks: TaskNode[]): void {
       throw new Error(`Task ${task.id} points to missing parent ${task.parentTaskId}`);
     }
   }
+
+  assertTaskPlanAlignment(tasks);
 }
 
 export function createTaskId(name: string, siblingCount: number): string {
@@ -77,54 +101,61 @@ export async function addTask(input: {
   plan?: string;
   summary?: string;
 }): Promise<{ task: TaskNode; progressPercent: number }> {
-  const paths = getWorkspacePaths();
-  const [current, plans] = await Promise.all([loadTasks(), loadPlans()]);
-  const parentTaskId = input.parent === "root" ? null : input.parent;
+  return withWorkspaceMutationLock(async () => {
+    const paths = getWorkspacePaths();
+    const [current, plans] = await Promise.all([loadTasks(), loadPlans()]);
+    const parentTaskId = input.parent === "root" ? null : input.parent;
 
-  if (parentTaskId !== null && !current.items.some((task) => task.id === parentTaskId)) {
-    throw new Error(`Parent task "${input.parent}" does not exist.`);
-  }
+    if (parentTaskId !== null && !current.items.some((task) => task.id === parentTaskId)) {
+      throw new Error(`Parent task "${input.parent}" does not exist.`);
+    }
 
-  const inheritedPlanRef =
-    parentTaskId !== null
-      ? current.items.find((task) => task.id === parentTaskId)?.planRef
-      : undefined;
-  const planRef = input.plan ?? inheritedPlanRef;
+    const inheritedPlanRef =
+      parentTaskId !== null
+        ? current.items.find((task) => task.id === parentTaskId)?.planRef
+        : undefined;
+    if (parentTaskId !== null && input.plan && inheritedPlanRef && input.plan !== inheritedPlanRef) {
+      throw new Error(
+        `Task "${input.name}" cannot override the parent task plan "${inheritedPlanRef}" with "${input.plan}".`
+      );
+    }
+    const planRef = input.plan ?? inheritedPlanRef;
 
-  if (!planRef) {
-    throw new Error(`Task "${input.name}" requires an explicit plan when added at the root level.`);
-  }
+    if (!planRef) {
+      throw new Error(`Task "${input.name}" requires an explicit plan when added at the root level.`);
+    }
 
-  if (!plans.items.some((plan) => plan.id === planRef)) {
-    throw new Error(`Plan "${planRef}" does not exist.`);
-  }
+    if (!plans.items.some((plan) => plan.id === planRef)) {
+      throw new Error(`Plan "${planRef}" does not exist.`);
+    }
 
-  const siblings = current.items.filter((task) => task.parentTaskId === parentTaskId);
-  const id = input.id ?? createAvailableTaskId(input.name, siblings.length, current.items);
-  assertControlPlaneId(id, "Task");
+    const siblings = current.items.filter((task) => task.parentTaskId === parentTaskId);
+    const id = input.id ?? createAvailableTaskId(input.name, siblings.length, current.items);
+    assertControlPlaneId(id, "Task");
 
-  if (current.items.some((task) => task.id === id)) {
-    throw new Error(`Task "${id}" already exists.`);
-  }
+    if (current.items.some((task) => task.id === id)) {
+      throw new Error(`Task "${id}" already exists.`);
+    }
 
-  const task: TaskNode = {
-    id,
-    name: input.name,
-    summary: input.summary ?? input.name,
-    status: "pending",
-    planRef,
-    parentTaskId,
-    countedForProgress: true
-  };
+    const task: TaskNode = {
+      id,
+      name: input.name,
+      summary: input.summary ?? input.name,
+      status: "pending",
+      planRef,
+      parentTaskId,
+      countedForProgress: true
+    };
 
-  const next: TasksState = {
-    items: [...current.items, task]
-  };
-  assertValidTaskTree(next.items);
-  await writeYamlFile(paths.taskFile, next);
-  const progress = computeProgress(next.items);
+    const next: TasksState = {
+      items: [...current.items, task]
+    };
+    assertValidTaskTree(next.items);
+    await writeYamlFile(paths.taskFile, next);
+    const progress = computeProgress(next.items);
 
-  return { task, progressPercent: progress.percent };
+    return { task, progressPercent: progress.percent };
+  });
 }
 
 export async function updateTaskStatus(input: {
@@ -146,89 +177,98 @@ export async function updateTask(input: {
   plan?: string;
   countedForProgress?: boolean;
 }): Promise<{ task: TaskNode; progressPercent: number }> {
-  const paths = getWorkspacePaths();
-  const [current, plans] = await Promise.all([loadTasks(), loadPlans()]);
-  const index = current.items.findIndex((task) => task.id === input.id);
+  return withWorkspaceMutationLock(async () => {
+    const paths = getWorkspacePaths();
+    const [current, plans] = await Promise.all([loadTasks(), loadPlans()]);
+    const index = current.items.findIndex((task) => task.id === input.id);
 
-  if (index === -1) {
-    throw new Error(`Task "${input.id}" does not exist.`);
-  }
+    if (index === -1) {
+      throw new Error(`Task "${input.id}" does not exist.`);
+    }
 
-  const currentTask = current.items[index];
-  const nextParent =
-    input.parent === undefined
-      ? currentTask.parentTaskId
-      : input.parent === "root"
-        ? null
-        : input.parent;
-  const inheritedPlanRef =
-    nextParent !== null
-      ? current.items.find((task) => task.id === nextParent)?.planRef
-      : undefined;
-  const nextPlanRef = input.plan ?? inheritedPlanRef ?? currentTask.planRef;
+    const currentTask = current.items[index];
+    const nextParent =
+      input.parent === undefined
+        ? currentTask.parentTaskId
+        : input.parent === "root"
+          ? null
+          : input.parent;
+    const inheritedPlanRef =
+      nextParent !== null
+        ? current.items.find((task) => task.id === nextParent)?.planRef
+        : undefined;
+    if (nextParent !== null && input.plan && inheritedPlanRef && input.plan !== inheritedPlanRef) {
+      throw new Error(
+        `Task "${input.id}" cannot override the parent task plan "${inheritedPlanRef}" with "${input.plan}".`
+      );
+    }
+    const nextPlanRef = input.plan ?? inheritedPlanRef ?? currentTask.planRef;
 
-  if (nextParent === input.id) {
-    throw new Error("A task cannot be its own parent.");
-  }
+    if (nextParent === input.id) {
+      throw new Error("A task cannot be its own parent.");
+    }
 
-  if (nextParent !== null && !current.items.some((task) => task.id === nextParent)) {
-    throw new Error(`Parent task "${nextParent}" does not exist.`);
-  }
+    if (nextParent !== null && !current.items.some((task) => task.id === nextParent)) {
+      throw new Error(`Parent task "${nextParent}" does not exist.`);
+    }
 
-  if (!plans.items.some((plan) => plan.id === nextPlanRef)) {
-    throw new Error(`Plan "${nextPlanRef}" does not exist.`);
-  }
+    if (!plans.items.some((plan) => plan.id === nextPlanRef)) {
+      throw new Error(`Plan "${nextPlanRef}" does not exist.`);
+    }
 
-  const descendants = new Set(collectDescendantTaskIds(current.items, input.id));
-  if (nextParent !== null && descendants.has(nextParent)) {
-    throw new Error(`Task "${input.id}" cannot be re-parented under its descendant "${nextParent}".`);
-  }
+    const descendants = new Set(collectDescendantTaskIds(current.items, input.id));
+    if (nextParent !== null && descendants.has(nextParent)) {
+      throw new Error(`Task "${input.id}" cannot be re-parented under its descendant "${nextParent}".`);
+    }
 
-  const updatedTask: TaskNode = {
-    ...currentTask,
-    ...(input.name ? { name: input.name } : {}),
-    ...(input.summary !== undefined ? { summary: input.summary } : {}),
-    ...(input.status ? { status: input.status } : {}),
-    ...(input.countedForProgress !== undefined ? { countedForProgress: input.countedForProgress } : {}),
-    parentTaskId: nextParent,
-    planRef: nextPlanRef
-  };
+    const updatedTask: TaskNode = {
+      ...currentTask,
+      ...(input.name ? { name: input.name } : {}),
+      ...(input.summary !== undefined ? { summary: input.summary } : {}),
+      ...(input.status ? { status: input.status } : {}),
+      ...(input.countedForProgress !== undefined ? { countedForProgress: input.countedForProgress } : {}),
+      parentTaskId: nextParent,
+      planRef: nextPlanRef
+    };
 
-  const nextItems = [...current.items];
-  nextItems[index] = updatedTask;
-  const next: TasksState = { items: nextItems };
-  assertValidTaskTree(next.items);
-  await writeYamlFile(paths.taskFile, next);
-  const progress = computeProgress(next.items);
+    const nextItems = [...current.items];
+    nextItems[index] = updatedTask;
+    const next: TasksState = { items: nextItems };
+    assertValidTaskTree(next.items);
+    await writeYamlFile(paths.taskFile, next);
+    const progress = computeProgress(next.items);
 
-  return { task: updatedTask, progressPercent: progress.percent };
+    return { task: updatedTask, progressPercent: progress.percent };
+  });
 }
 
 export async function deleteTask(input: {
   id: string;
 }): Promise<{ deletedTaskIds: string[]; progressPercent: number }> {
-  const paths = getWorkspacePaths();
-  const current = await loadTasks();
+  return withWorkspaceMutationLock(async () => {
+    const paths = getWorkspacePaths();
+    const current = await loadTasks();
 
-  if (!current.items.some((task) => task.id === input.id)) {
-    throw new Error(`Task "${input.id}" does not exist.`);
-  }
+    if (!current.items.some((task) => task.id === input.id)) {
+      throw new Error(`Task "${input.id}" does not exist.`);
+    }
 
-  const deletedTaskIds = [input.id, ...collectDescendantTaskIds(current.items, input.id)];
-  const next: TasksState = {
-    items: current.items.filter((task) => !deletedTaskIds.includes(task.id))
-  };
+    const deletedTaskIds = [input.id, ...collectDescendantTaskIds(current.items, input.id)];
+    const next: TasksState = {
+      items: current.items.filter((task) => !deletedTaskIds.includes(task.id))
+    };
 
-  await writeYamlFile(paths.taskFile, next);
-  const progress = computeProgress(next.items);
+    await writeYamlFile(paths.taskFile, next);
+    const progress = computeProgress(next.items);
 
-  return {
-    deletedTaskIds,
-    progressPercent: progress.percent
-  };
+    return {
+      deletedTaskIds,
+      progressPercent: progress.percent
+    };
+  });
 }
 
-export function buildTaskTree(tasks: TaskNode[]): TaskTreeNode[] {
+export function buildTaskTree(tasks: TaskNode[], allowOrphanRoots = false): TaskTreeNode[] {
   const nodes = new Map<string, TaskTreeNode>();
   const roots: TaskTreeNode[] = [];
 
@@ -245,6 +285,10 @@ export function buildTaskTree(tasks: TaskNode[]): TaskTreeNode[] {
 
     const parent = nodes.get(task.parentTaskId);
     if (!parent) {
+      if (allowOrphanRoots) {
+        roots.push(node);
+        continue;
+      }
       throw new Error(`Task ${task.id} points to missing parent ${task.parentTaskId}`);
     }
     parent.children.push(node);

@@ -145,6 +145,7 @@ export function renderControlPlaneContractMarkdown(): string {
           "names",
           "summaries",
           "parent relationships",
+          "plan version anchors",
           "task status",
           "doc references",
           "decision records",
@@ -194,7 +195,8 @@ export function renderControlPlaneContractMarkdown(): string {
             "  - id: example-plan",
             "    name: Example plan",
             "    summary: Example summary",
-            "    parentPlanId: null"
+            "    parentPlanId: null",
+            "    versionRef: null"
           ].join("\n")
         ),
         "",
@@ -204,9 +206,12 @@ export function renderControlPlaneContractMarkdown(): string {
           `- ${code("endGoalRef")}: string id pointing at ${code(".apcc/goals/end.yaml.goalId")}`,
           `- ${code("items")}: array`,
           "- each plan must define:",
-          nestedFieldList(["id", "name", "summary", "parentPlanId"]),
+          nestedFieldList(["id", "name", "summary", "parentPlanId", "versionRef"]),
           `- ${code("parentPlanId")} is either another plan id or ${code("null")}`,
-          `- ${code("plan.status")} is not stored`
+          `- ${code("versionRef")} is either a version record id from ${code(".apcc/versions/records.yaml")} or ${code("null")}`,
+          `- ${code("plan.status")} is not stored`,
+          `- ${code("effectiveVersionRef")} is derived at read time by inheriting the nearest non-null ${code("versionRef")} from the plan tree`,
+          `- a child plan must not override an inherited non-null ${code("versionRef")} with a different version record id`
         ].join("\n"),
         "",
         "Derived plan status values are:",
@@ -251,7 +256,9 @@ export function renderControlPlaneContractMarkdown(): string {
           nestedFieldList(["id", "name", "summary", "status", "planRef", "parentTaskId", "countedForProgress"]),
           `- ${code("planRef")} must reference an existing plan id`,
           `- ${code("parentTaskId")} is either another task id or ${code("null")}`,
-          `- ${code("countedForProgress")} must be ${code("true")} or ${code("false")}`
+          `- ${code("countedForProgress")} must be ${code("true")} or ${code("false")}`,
+          `- a child task must use the same ${code("planRef")} as its parent task`,
+          `- tasks do not persist a separate ${code("versionRef")}; version scope is derived from the referenced plan`
         ].join("\n"),
         "",
         "Progress rule:",
@@ -387,7 +394,8 @@ export function renderControlPlaneContractMarkdown(): string {
         bulletList([
           `${code("--parent root")} -> stored ${code("null")}`,
           `${code("--docs-language zh")} -> stored ${code("zh-CN")}`,
-          `${code("--docs-language en-US")} -> stored ${code("en")}`
+          `${code("--docs-language en-US")} -> stored ${code("en")}`,
+          `${code("plan add/update --version <record-id-or-version-label>")} -> stored ${code("plan.versionRef")} as the matching version record id`
         ]),
         "",
         "Prefer the normalized persisted values when editing YAML directly.",

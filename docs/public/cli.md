@@ -72,8 +72,10 @@ It creates or repairs the framework-owned surfaces:
 
 - `.apcc/` structured control plane
 - recommended docs anchors under the configured docs root
-- `AGENTS.md` APCC instructions
+- `AGENTS.md` APCC instructions inside an `<!-- APCC:BEGIN --> ... <!-- APCC:END -->` managed block
 - `.agents/skills/apcc-workflow/SKILL.md`
+
+If `AGENTS.md` already contains unrelated repository-specific instructions, APCC should preserve them and only manage its own marked block.
 
 `doctor` checks and repairs the workspace:
 
@@ -110,8 +112,12 @@ Do not treat a current task title as the end goal. If the project identity or en
 
 ```bash
 apcc plan add --name "Ship onboarding" --parent root --summary "Make first-hour usage reliable."
+apcc plan add --name "Cut 0.3.4 scope" --parent root --version 0.3.4
 apcc plan show
+apcc plan show --version 0.3.4
+apcc plan show --unversioned
 apcc plan update --id <plan-id> --summary "Updated summary."
+apcc plan update --id <plan-id> --version 0.3.4
 ```
 
 `task` manages concrete work items attached to plans:
@@ -120,14 +126,20 @@ apcc plan update --id <plan-id> --summary "Updated summary."
 apcc task add --name "Document first-hour loop" --parent root --plan <plan-id> --summary "Write the public first-hour loop."
 apcc task update --id <task-id> --status in_progress
 apcc task list
+apcc task list --version 0.3.4
+apcc task list --unversioned
 ```
 
 Important behavior:
 
 - `plan add` and `task add` accept optional explicit `--id` values
+- plans may carry an optional `--version` anchor that resolves from either a version record id or a version label
 - single-node mutations return concise deltas, not the full tree
 - full context is available through `plan show`, `task list`, and `status`
 - plan status and progress are derived from tasks at read time
+- tasks do not persist their own version anchor; they inherit version scope from their referenced plan
+- child tasks must stay on the same `planRef` as their parent task
+- `plan show` and `task list` accept `--version <record-id-or-version-label>` and `--unversioned` filters
 - the id `root` is reserved as the CLI parent marker
 
 For bulk plan or task restructuring, edit `.apcc/plans/current.yaml` and `.apcc/tasks/current.yaml` directly, then run:

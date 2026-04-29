@@ -5,7 +5,7 @@ import { initWorkspace, WORKSPACE_SCHEMA_VERSION, WORKSPACE_TEMPLATE_VERSION } f
 import { migrateDecisionState } from "./decision.js";
 import { loadEndGoal } from "./end-goal.js";
 import { getApccPackageVersion } from "./package-runtime.js";
-import { assertValidPlanTree } from "./plans.js";
+import { assertPlanVersionRefsExist, assertValidPlanTree } from "./plans.js";
 import { loadProjectOverview } from "./project-overview.js";
 import { isFileNotFoundError, isYamlFileParseError, readText, readYamlFile, writeYamlFile } from "./storage.js";
 import { loadTasks, assertValidTaskTree } from "./tasks.js";
@@ -32,6 +32,7 @@ import {
 } from "./types.js";
 import { normalizeWorkspaceConfig, normalizeWorkspaceMeta } from "./workspace-config.js";
 import { getWorkspacePaths } from "./workspace.js";
+import { withWorkspaceMutationLock } from "./workspace-mutation.js";
 
 async function hasMinimalMetadata(filePath: string): Promise<boolean> {
   const content = await readText(filePath);
@@ -272,12 +273,28 @@ export async function validateWorkspace() {
   } else if (versionItems.length !== rawVersionItems.length) {
     schemaIssues.push("Version state items must all be objects");
   } else {
+    const seenVersions = new Set<string>();
     for (const record of versionItems) {
       if (!isAllowedString(record?.status, VERSION_RECORD_STATUSES)) {
         schemaIssues.push(
           `Version ${typeof record?.id === "string" ? record.id : "unknown"} uses unsupported status "${String(record?.status)}"; allowed values: ${describeAllowedValues(VERSION_RECORD_STATUSES)}`
         );
       }
+      if (typeof record?.version !== "string" || record.version.trim().length === 0) {
+        schemaIssues.push(`Version ${typeof record?.id === "string" ? record.id : "unknown"} is missing version label`);
+      } else if (seenVersions.has(record.version)) {
+        schemaIssues.push(`Version label "${record.version}" is duplicated across version records`);
+      } else {
+        seenVersions.add(record.version);
+      }
+    }
+  }
+
+  if (!plansAttempt.parseIssue && !versionsAttempt.parseIssue) {
+    try {
+      assertPlanVersionRefsExist(planItems, new Set(versionItems.map((record) => record.id)));
+    } catch (error) {
+      schemaIssues.push(error instanceof Error ? error.message : "Plan version refs are invalid");
     }
   }
 
@@ -457,52 +474,54 @@ export async function validateWorkspace() {
 
 export async function repairWorkspace() {
   const paths = getWorkspacePaths();
-  const endGoal = await loadEndGoal();
-  const { meta, config } = await loadMetaAndConfig();
+  return withWorkspaceMutationLock(async () => {
+    const endGoal = await loadEndGoal();
+    const { meta, config } = await loadMetaAndConfig();
 
-  const result = await initWorkspace({
-    targetPath: paths.root,
-    projectName: path.basename(paths.root),
-    endGoalName: endGoal.name,
-    endGoalSummary: endGoal.summary,
-    projectKind: config?.projectKind ?? meta?.projectKind ?? "general",
-    docsMode: config?.docsMode ?? meta?.docsMode ?? "standard",
-    docsLanguage: config?.docsLanguage ?? meta?.docsLanguage ?? "en",
-    force: false,
-    preserveExistingDocs: true
-  });
-  await migrateDecisionState();
-
-  const nextMeta: WorkspaceMetaState = {
-    workspaceSchemaVersion: WORKSPACE_SCHEMA_VERSION,
-    apccVersion: getApccPackageVersion(),
-    workspaceName: meta?.workspaceName ?? path.basename(paths.root),
-    docsRoot: meta?.docsRoot ?? "docs",
-    workspaceRoot: meta?.workspaceRoot ?? ".apcc",
-    bootstrapMode: "init",
-    templateVersion: WORKSPACE_TEMPLATE_VERSION,
-    projectKind: config?.projectKind ?? meta?.projectKind ?? "general",
-    docsMode: config?.docsMode ?? meta?.docsMode ?? "standard",
-    docsLanguage: config?.docsLanguage ?? meta?.docsLanguage ?? "en",
-    createdAt: meta?.createdAt ?? new Date().toISOString(),
-    lastUpgradedAt: new Date().toISOString()
-  };
-  const nextConfig: WorkspaceConfigState = {
-    ...normalizeWorkspaceConfig(config, {
+    const result = await initWorkspace({
+      targetPath: paths.root,
+      projectName: path.basename(paths.root),
+      endGoalName: endGoal.name,
+      endGoalSummary: endGoal.summary,
       projectKind: config?.projectKind ?? meta?.projectKind ?? "general",
       docsMode: config?.docsMode ?? meta?.docsMode ?? "standard",
       docsLanguage: config?.docsLanguage ?? meta?.docsLanguage ?? "en",
+      force: false,
+      preserveExistingDocs: true
+    });
+    await migrateDecisionState();
+
+    const nextMeta: WorkspaceMetaState = {
+      workspaceSchemaVersion: WORKSPACE_SCHEMA_VERSION,
+      apccVersion: getApccPackageVersion(),
+      workspaceName: meta?.workspaceName ?? path.basename(paths.root),
+      docsRoot: meta?.docsRoot ?? "docs",
+      workspaceRoot: meta?.workspaceRoot ?? ".apcc",
+      bootstrapMode: "init",
+      templateVersion: WORKSPACE_TEMPLATE_VERSION,
+      projectKind: config?.projectKind ?? meta?.projectKind ?? "general",
+      docsMode: config?.docsMode ?? meta?.docsMode ?? "standard",
+      docsLanguage: config?.docsLanguage ?? meta?.docsLanguage ?? "en",
+      createdAt: meta?.createdAt ?? new Date().toISOString(),
+      lastUpgradedAt: new Date().toISOString()
+    };
+    const nextConfig: WorkspaceConfigState = {
+      ...normalizeWorkspaceConfig(config, {
+        projectKind: config?.projectKind ?? meta?.projectKind ?? "general",
+        docsMode: config?.docsMode ?? meta?.docsMode ?? "standard",
+        docsLanguage: config?.docsLanguage ?? meta?.docsLanguage ?? "en",
+        workspaceSchemaVersion: WORKSPACE_SCHEMA_VERSION
+      }),
       workspaceSchemaVersion: WORKSPACE_SCHEMA_VERSION
-    }),
-    workspaceSchemaVersion: WORKSPACE_SCHEMA_VERSION
-  };
+    };
 
-  await writeYamlFile(paths.workspaceMetaFile, nextMeta);
-  await writeYamlFile(paths.workspaceConfigFile, nextConfig);
+    await writeYamlFile(paths.workspaceMetaFile, nextMeta);
+    await writeYamlFile(paths.workspaceConfigFile, nextConfig);
 
-  return {
-    repaired: true,
-    workspace: result,
-    validation: await validateWorkspace()
-  };
+    return {
+      repaired: true,
+      workspace: result,
+      validation: await validateWorkspace()
+    };
+  });
 }

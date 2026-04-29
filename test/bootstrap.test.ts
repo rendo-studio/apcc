@@ -311,4 +311,33 @@ describe("init", () => {
     expect(agents).toContain("## APCC");
     expect(agents).toContain("<!-- APCC:BEGIN -->");
   });
+
+  it("uses repo-local maintainer guidance overrides during self-init style runs", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "apcc-init-maintainer-guidance-"));
+    cleanups.push(root);
+
+    await fs.mkdir(path.join(root, ".maintainer-guidance", "skills", "apcc-workflow"), { recursive: true });
+    await fs.writeFile(
+      path.join(root, ".maintainer-guidance", "agents-template.md"),
+      "## APCC Source Repository\n\nMaintainer-first rule.\n",
+      "utf8"
+    );
+    await fs.writeFile(
+      path.join(root, ".maintainer-guidance", "skills", "apcc-workflow", "SKILL.md"),
+      "---\nname: apcc-workflow\ndescription: Maintainer override.\n---\n\n# Maintainer Override\n",
+      "utf8"
+    );
+
+    await initWorkspace({
+      targetPath: root,
+      projectName: "APCC"
+    });
+
+    const agents = await fs.readFile(path.join(root, "AGENTS.md"), "utf8");
+    const skill = await fs.readFile(path.join(root, ".agents", "skills", "apcc-workflow", "SKILL.md"), "utf8");
+
+    expect(agents).toContain("Maintainer-first rule.");
+    expect(agents).toContain("<!-- APCC:BEGIN -->");
+    expect(skill).toContain("# Maintainer Override");
+  });
 });

@@ -27,6 +27,8 @@ This is a recommendation and the default scaffold profile, not a runtime require
 If the repository's primary docs language is not English, the shared anchor filenames may be localized while preserving the same structural roles.
 Directory display labels can also be localized through `meta.json.title` without renaming the structural directories themselves.
 
+The important boundary is that these scaffold directories are examples, not protocol truth. APCC runtime behavior, the docs site, and `doctor` should work from the configured docs root plus explicit control-plane references. They must not require `shared/`, `public/`, `internal/`, or any other scaffold path to exist just because the default scaffold happens to use them.
+
 ## Section Roles
 
 `shared/`
@@ -112,3 +114,5 @@ Do not assume:
 - a specific subdirectory name implies framework meaning
 - the docs site should infer versions or decisions from hardcoded path conventions
 - public docs can rely on internal maintainer pages to explain core behavior
+
+The bootstrap scaffold may recommend names and starter files, but recommendation is not runtime dependency.

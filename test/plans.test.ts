@@ -1,6 +1,15 @@
 import { afterEach, describe, expect, it } from "vitest";
 
-import { addPlan, buildPlanTree, deletePlan, derivePlanStatuses, loadPlans, updatePlan } from "../src/core/plans.js";
+import {
+  addPlan,
+  buildPlanTree,
+  deletePlan,
+  derivePlanStatuses,
+  filterDerivedPlansByVersion,
+  filterTasksByPlanVersion,
+  loadPlans,
+  updatePlan
+} from "../src/core/plans.js";
 import { writeYamlFile } from "../src/core/storage.js";
 import { loadTasks } from "../src/core/tasks.js";
 import { getWorkspacePaths } from "../src/core/workspace.js";
@@ -94,7 +103,8 @@ describe("plan control plane", () => {
             id: "duplicate-name-2",
             name: "Duplicate Name",
             summary: "Existing generated id after a deleted first sibling.",
-            parentPlanId: null
+            parentPlanId: null,
+            versionRef: null
           }
         ]
       }
@@ -119,13 +129,15 @@ describe("plan control plane", () => {
             id: "plan-root",
             name: "Production hardening",
             summary: "Drive the control plane toward a stronger production baseline.",
-            parentPlanId: null
+            parentPlanId: null,
+            versionRef: null
           },
           {
             id: "plan-child",
             name: "Status projection",
             summary: "Keep the control-plane projection aligned with task state.",
-            parentPlanId: "plan-root"
+            parentPlanId: "plan-root",
+            versionRef: null
           }
         ]
       },
@@ -190,5 +202,164 @@ describe("plan control plane", () => {
     expect(deleted.deletedTaskIds).toEqual(["task-plan-delete"]);
     expect(plans.items.some((plan) => plan.id === rootPlan.plan.id)).toBe(false);
     expect(tasks.items.some((task) => task.id === "task-plan-delete")).toBe(false);
+  });
+
+  it("derives effective version scopes and filters plans and tasks by version", async () => {
+    const fixture = await createWorkspaceFixture({
+      plans: {
+        endGoalRef: "goal-test",
+        items: [
+          {
+            id: "plan-unversioned",
+            name: "Unversioned plan",
+            summary: "Work not yet attached to a project version.",
+            parentPlanId: null,
+            versionRef: null
+          },
+          {
+            id: "plan-versioned",
+            name: "Versioned plan",
+            summary: "Work tracked under an explicit release anchor.",
+            parentPlanId: null,
+            versionRef: "release-0-2-0"
+          },
+          {
+            id: "plan-versioned-child",
+            name: "Inherited child plan",
+            summary: "Child work should inherit the parent version scope.",
+            parentPlanId: "plan-versioned",
+            versionRef: null
+          }
+        ]
+      },
+      tasks: {
+        items: [
+          {
+            id: "task-unversioned",
+            name: "Unversioned task",
+            summary: "Backlog work outside a release boundary.",
+            status: "pending",
+            planRef: "plan-unversioned",
+            parentTaskId: null,
+            countedForProgress: true
+          },
+          {
+            id: "task-versioned",
+            name: "Versioned task",
+            summary: "Top-level versioned work.",
+            status: "done",
+            planRef: "plan-versioned",
+            parentTaskId: null,
+            countedForProgress: true
+          },
+          {
+            id: "task-versioned-child",
+            name: "Inherited versioned task",
+            summary: "Child work should stay in the same version scope.",
+            status: "in_progress",
+            planRef: "plan-versioned-child",
+            parentTaskId: null,
+            countedForProgress: true
+          }
+        ]
+      },
+      versions: {
+        items: [
+          {
+            id: "release-0-2-0",
+            version: "0.2.0",
+            title: "Stable baseline",
+            summary: "First stable project version.",
+            docPath: null,
+            status: "recorded",
+            decisionRefs: [],
+            highlights: [],
+            breakingChanges: [],
+            migrationNotes: [],
+            validationSummary: null,
+            createdAt: "2026-04-30T00:00:00Z",
+            recordedAt: "2026-04-30T00:10:00Z"
+          }
+        ]
+      }
+    });
+    restorers.push(fixture.use());
+    cleanups.push(fixture.cleanup);
+
+    const tasks = await loadTasks();
+    const plans = derivePlanStatuses(await loadPlans(), tasks);
+    const versionedPlans = filterDerivedPlansByVersion(plans, { versionRef: "release-0-2-0" });
+    const unversionedPlans = filterDerivedPlansByVersion(plans, { unversioned: true });
+    const versionedTasks = filterTasksByPlanVersion(tasks.items, plans, { versionRef: "release-0-2-0" });
+    const unversionedTasks = filterTasksByPlanVersion(tasks.items, plans, { unversioned: true });
+
+    expect(plans.items.find((plan) => plan.id === "plan-versioned")?.effectiveVersionRef).toBe("release-0-2-0");
+    expect(plans.items.find((plan) => plan.id === "plan-versioned-child")?.effectiveVersionRef).toBe("release-0-2-0");
+    expect(plans.items.find((plan) => plan.id === "plan-unversioned")?.effectiveVersionRef).toBeNull();
+    expect(versionedPlans.map((plan) => plan.id)).toEqual(["plan-versioned", "plan-versioned-child"]);
+    expect(unversionedPlans.map((plan) => plan.id)).toEqual(["plan-unversioned"]);
+    expect(versionedTasks.map((task) => task.id)).toEqual(["task-versioned", "task-versioned-child"]);
+    expect(unversionedTasks.map((task) => task.id)).toEqual(["task-unversioned"]);
+  });
+
+  it("rejects a descendant plan that conflicts with an inherited version scope", async () => {
+    const fixture = await createWorkspaceFixture({
+      plans: {
+        endGoalRef: "goal-test",
+        items: [
+          {
+            id: "plan-versioned",
+            name: "Versioned parent",
+            summary: "Parent plan anchored to a recorded version.",
+            parentPlanId: null,
+            versionRef: "release-0-2-0"
+          }
+        ]
+      },
+      versions: {
+        items: [
+          {
+            id: "release-0-2-0",
+            version: "0.2.0",
+            title: "Stable baseline",
+            summary: "First stable project version.",
+            docPath: null,
+            status: "recorded",
+            decisionRefs: [],
+            highlights: [],
+            breakingChanges: [],
+            migrationNotes: [],
+            validationSummary: null,
+            createdAt: "2026-04-30T00:00:00Z",
+            recordedAt: "2026-04-30T00:10:00Z"
+          },
+          {
+            id: "release-0-3-0",
+            version: "0.3.0",
+            title: "Next baseline",
+            summary: "Next project version.",
+            docPath: null,
+            status: "draft",
+            decisionRefs: [],
+            highlights: [],
+            breakingChanges: [],
+            migrationNotes: [],
+            validationSummary: null,
+            createdAt: "2026-04-30T01:00:00Z",
+            recordedAt: null
+          }
+        ]
+      }
+    });
+    restorers.push(fixture.use());
+    cleanups.push(fixture.cleanup);
+
+    await expect(
+      addPlan({
+        name: "Conflicting child",
+        parent: "plan-versioned",
+        version: "release-0-3-0"
+      })
+    ).rejects.toThrow(/cannot override inherited version scope/i);
   });
 });

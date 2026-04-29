@@ -9,6 +9,7 @@ import { fileURLToPath } from "node:url";
 
 import { getApccPackageFile, getApccPackageRoot, getCurrentModulePath } from "./package-runtime.js";
 import { loadDocsRevisionState, syncDocsRevisionState } from "./docs-revisions.js";
+import { getApccRuntimeBase } from "./runtime-paths.js";
 import { isYamlFileParseError, readText, readYamlFile, writeText } from "./storage.js";
 import { buildSiteControlPlaneSnapshot, type SiteControlPlaneSnapshot } from "./site-data.js";
 import { buildSiteViewerData } from "./site-viewer-data.js";
@@ -67,6 +68,14 @@ interface SiteRuntimeMetadata {
   port: number | null;
   url: string | null;
   updatedAt: string;
+}
+
+interface SiteRuntimeIdentityProbe {
+  updatedAt?: string;
+  siteId?: string;
+  runtimeRoot?: string;
+  sourceDocsRoot?: string | null;
+  mode?: string;
 }
 
 export interface SiteRuntimeStatusEntry {
@@ -409,22 +418,7 @@ function getTemplateRoot(): string {
   return getApccPackageFile("site-runtime");
 }
 
-function getRuntimeBase(): string {
-  const override = process.env.APCC_SITE_RUNTIME_BASE;
-  if (override) {
-    return path.resolve(override);
-  }
-
-  if (process.platform === "win32") {
-    return path.join(process.env.LOCALAPPDATA ?? path.join(os.homedir(), "AppData", "Local"), "APCC", "runtime");
-  }
-
-  if (process.platform === "darwin") {
-    return path.join(os.homedir(), "Library", "Application Support", "APCC", "runtime");
-  }
-
-  return path.join(process.env.XDG_STATE_HOME ?? path.join(os.homedir(), ".local", "state"), "apcc", "runtime");
-}
+const getRuntimeBase = getApccRuntimeBase;
 
 function tryResolveWorkspaceRootFromDocsRoot(sourceDocsRoot: string): string | null {
   try {
@@ -523,11 +517,11 @@ async function readProjectNameForSiteEntry(sourceWorkspaceRoot: string | null): 
 }
 
 async function isSiteRuntimeRegistryHealthy(registry: SiteRuntimeRegistry): Promise<boolean> {
-  if (await waitForPort(registry.port, 500)) {
-    return true;
+  if (!(await waitForPort(registry.port, 500))) {
+    return false;
   }
 
-  return Boolean(registry.pid && processExists(registry.pid));
+  return matchesSiteRuntimeIdentity(registry, await fetchSiteRuntimeIdentity(registry.url));
 }
 
 async function isSiteRegistryEntryHealthy(entry: GlobalSiteRegistryEntry): Promise<boolean> {
@@ -589,10 +583,13 @@ function createNextInvocation(
   };
 }
 
-function createPrebuiltServerInvocation(runtimeRoot: string): { command: string; args: string[] } {
+function createPrebuiltServerInvocation(
+  runtimeRoot: string,
+  registry?: Pick<SiteRuntimeRegistry, "siteId" | "runtimeRoot">
+): { command: string; args: string[] } {
   return {
     command: process.execPath,
-    args: [path.join(runtimeRoot, "server.js")]
+    args: [path.join(runtimeRoot, "server.js"), ...(registry ? buildServerProcessMarkers(registry) : [])]
   };
 }
 
@@ -689,6 +686,246 @@ function processExists(pid: number | null): boolean {
   } catch {
     return false;
   }
+}
+
+function resolvePowerShellPath(): string {
+  return path.join(
+    process.env.SystemRoot ?? "C:\\Windows",
+    "System32",
+    "WindowsPowerShell",
+    "v1.0",
+    "powershell.exe"
+  );
+}
+
+async function readProcessCommandLine(pid: number): Promise<string | null> {
+  if (!processExists(pid)) {
+    return null;
+  }
+
+  if (process.platform === "win32") {
+    const result = spawnSync(
+      resolvePowerShellPath(),
+      [
+        "-NoProfile",
+        "-Command",
+        `(Get-CimInstance Win32_Process -Filter "ProcessId = ${pid}").CommandLine`
+      ],
+      {
+        encoding: "utf8",
+        windowsHide: true
+      }
+    );
+
+    if (result.status !== 0) {
+      return null;
+    }
+
+    const output = result.stdout.trim();
+    return output.length > 0 ? output : null;
+  }
+
+  const result = spawnSync("ps", ["-p", String(pid), "-o", "args="], {
+    encoding: "utf8"
+  });
+  if (result.status !== 0) {
+    return null;
+  }
+
+  const output = result.stdout.trim();
+  return output.length > 0 ? output : null;
+}
+
+function normalizeComparablePath(value: string): string {
+  return path.resolve(value).replace(/\\/g, "/").toLowerCase();
+}
+
+function matchesSiteRuntimeIdentity(
+  registry: Pick<SiteRuntimeRegistry, "siteId" | "runtimeRoot" | "sourceDocsRoot">,
+  identity: SiteRuntimeIdentityProbe | null
+): boolean {
+  if (!identity?.siteId || !identity.runtimeRoot) {
+    return false;
+  }
+
+  if (identity.siteId !== registry.siteId) {
+    return false;
+  }
+
+  if (normalizeComparablePath(identity.runtimeRoot) !== normalizeComparablePath(registry.runtimeRoot)) {
+    return false;
+  }
+
+  if (
+    identity.sourceDocsRoot &&
+    normalizeComparablePath(identity.sourceDocsRoot) !== normalizeComparablePath(registry.sourceDocsRoot)
+  ) {
+    return false;
+  }
+
+  return true;
+}
+
+async function fetchSiteRuntimeIdentity(url: string, timeoutMs = 1500): Promise<SiteRuntimeIdentityProbe | null> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const endpoint = new URL("/api/apcc/version", url).toString();
+    const response = await fetch(endpoint, {
+      cache: "no-store",
+      signal: controller.signal
+    });
+    if (!response.ok) {
+      return null;
+    }
+
+    return (await response.json()) as SiteRuntimeIdentityProbe;
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function waitForSiteRuntimeIdentity(
+  registry: Pick<SiteRuntimeRegistry, "siteId" | "runtimeRoot" | "sourceDocsRoot">,
+  url: string,
+  timeoutMs = 15000
+): Promise<boolean> {
+  const deadline = Date.now() + timeoutMs;
+
+  while (Date.now() < deadline) {
+    const identity = await fetchSiteRuntimeIdentity(url, 1000);
+    if (matchesSiteRuntimeIdentity(registry, identity)) {
+      return true;
+    }
+
+    await delay(250);
+  }
+
+  return false;
+}
+
+function buildServerProcessMarkers(registry: Pick<SiteRuntimeRegistry, "siteId" | "runtimeRoot">): string[] {
+  return [
+    `--apcc-site-id=${registry.siteId}`,
+    `--apcc-runtime-root=${path.resolve(registry.runtimeRoot)}`
+  ];
+}
+
+function buildLegacyServerProcessMarkers(registry: Pick<SiteRuntimeRegistry, "templateRoot">): string[] {
+  return [path.resolve(path.join(registry.templateRoot, "server.js"))];
+}
+
+function buildWatcherProcessMarkers(
+  registry: Pick<SiteRuntimeRegistry, "siteId" | "runtimeRoot" | "sourceDocsRoot">
+): string[] {
+  return [
+    path.resolve(registry.sourceDocsRoot),
+    path.resolve(registry.runtimeRoot),
+    `--apcc-site-id=${registry.siteId}`
+  ];
+}
+
+function buildLegacyWatcherProcessMarkers(
+  registry: Pick<SiteRuntimeRegistry, "runtimeRoot" | "sourceDocsRoot">
+): string[] {
+  return [path.resolve(registry.sourceDocsRoot), path.resolve(registry.runtimeRoot)];
+}
+
+async function processMatchesMarkers(pid: number | null, markers: string[]): Promise<boolean> {
+  if (!pid || !processExists(pid)) {
+    return false;
+  }
+
+  const commandLine = await readProcessCommandLine(pid);
+  if (!commandLine) {
+    return false;
+  }
+
+  return markers.every((marker) => commandLine.includes(marker));
+}
+
+async function findProcessIdsByMarkers(markers: string[]): Promise<number[]> {
+  if (markers.length === 0) {
+    return [];
+  }
+
+  if (process.platform === "win32") {
+    const lowered = markers.map((marker) => marker.toLowerCase());
+    const needles = lowered.map((marker, index) => `$needle${index} = ${escapePowerShellSingleQuoted(marker)}`);
+    const conditions = lowered
+      .map((_, index) => `$_.CommandLine.ToLowerInvariant().Contains($needle${index})`)
+      .join(" -and ");
+    const query = [
+      ...needles,
+      `Get-CimInstance Win32_Process |`,
+      `Where-Object { $_.CommandLine -and ${conditions} } |`,
+      `Select-Object -ExpandProperty ProcessId`
+    ].join(" ");
+    const result = spawnSync(resolvePowerShellPath(), ["-NoProfile", "-Command", query], {
+      encoding: "utf8",
+      windowsHide: true
+    });
+
+    if (result.status !== 0) {
+      return [];
+    }
+
+    return result.stdout
+      .split(/\r?\n/)
+      .map((line) => Number.parseInt(line.trim(), 10))
+      .filter((value) => Number.isFinite(value) && value !== process.pid);
+  }
+
+  const result = spawnSync("ps", ["-ax", "-o", "pid=,args="], {
+    encoding: "utf8"
+  });
+  if (result.status !== 0) {
+    return [];
+  }
+
+  return result.stdout
+    .split(/\r?\n/)
+    .flatMap((line) => {
+      const trimmed = line.trim();
+      if (!trimmed) {
+        return [];
+      }
+
+      const match = trimmed.match(/^(\d+)\s+(.*)$/);
+      if (!match) {
+        return [];
+      }
+
+      const pid = Number.parseInt(match[1], 10);
+      const commandLine = match[2];
+      if (!Number.isFinite(pid) || pid === process.pid) {
+        return [];
+      }
+
+      return markers.every((marker) => commandLine.includes(marker)) ? [pid] : [];
+    });
+}
+
+async function findFirstProcessIdByMarkers(markers: string[]): Promise<number | null> {
+  const pids = await findProcessIdsByMarkers(markers);
+  return pids[0] ?? null;
+}
+
+async function serverProcessMatchesRegistry(registry: SiteRuntimeRegistry): Promise<boolean> {
+  return (
+    (await processMatchesMarkers(registry.pid, buildServerProcessMarkers(registry))) ||
+    (await processMatchesMarkers(registry.pid, buildLegacyServerProcessMarkers(registry)))
+  );
+}
+
+async function watcherProcessMatchesRegistry(registry: SiteRuntimeRegistry): Promise<boolean> {
+  return (
+    (await processMatchesMarkers(registry.watcherPid, buildWatcherProcessMarkers(registry))) ||
+    (await processMatchesMarkers(registry.watcherPid, buildLegacyWatcherProcessMarkers(registry)))
+  );
 }
 
 function delay(ms: number): Promise<void> {
@@ -983,8 +1220,6 @@ function sanitizeSnapshotForDeployment(snapshot: SiteControlPlaneSnapshot): Site
       docsRoot: "content/docs",
       workspaceRoot: null,
       hasWorkspace: false,
-      activeChange: null,
-      currentRoundId: null,
       stateDigest: null
     }
   };
@@ -1181,6 +1416,26 @@ function getPrebuiltShellRoot(): string {
   return getApccPackageFile("dist", "site-runtime-prebuilt");
 }
 
+function getSharedRuntimeShellCacheRoot(runtimeBase = getRuntimeBase()): string {
+  return path.join(runtimeBase, "shared-shells");
+}
+
+function shouldUseSharedRuntimeShellCache(): boolean {
+  return getCurrentModulePath().endsWith(".ts");
+}
+
+function isPackagedPrebuiltShellRoot(root: string): boolean {
+  const packagedRoot = path.resolve(getPrebuiltShellRoot());
+  const resolvedRoot = path.resolve(root);
+  return resolvedRoot === packagedRoot || resolvedRoot.startsWith(`${packagedRoot}${path.sep}`);
+}
+
+function isSharedRuntimeShellRoot(root: string, runtimeBase: string): boolean {
+  const sharedCacheRoot = path.resolve(getSharedRuntimeShellCacheRoot(runtimeBase));
+  const resolvedRoot = path.resolve(root);
+  return resolvedRoot === sharedCacheRoot || resolvedRoot.startsWith(`${sharedCacheRoot}${path.sep}`);
+}
+
 function resolvePrebuiltShellPointerRoot(artifactBase: string, root: string): string {
   return path.isAbsolute(root) ? root : path.join(artifactBase, root);
 }
@@ -1205,6 +1460,45 @@ async function findPackagedPrebuiltShell(artifactBase: string): Promise<string |
     });
 
   return shells[0] ?? null;
+}
+
+async function collectReferencedSharedRuntimeShellRoots(runtimeBase: string): Promise<Set<string>> {
+  const referencedRoots = new Set<string>();
+  const registryEntries = Object.values(await readGlobalRegistry(runtimeBase));
+
+  for (const entry of registryEntries) {
+    const registry = await readRegistry(entry.runtimeRoot);
+    if (!registry?.templateRoot) {
+      continue;
+    }
+    if (!isSharedRuntimeShellRoot(registry.templateRoot, runtimeBase)) {
+      continue;
+    }
+
+    referencedRoots.add(path.resolve(registry.templateRoot));
+  }
+
+  return referencedRoots;
+}
+
+async function pruneSharedRuntimeShellCache(runtimeBase: string, currentShellRoot: string): Promise<void> {
+  const cacheBase = getSharedRuntimeShellCacheRoot(runtimeBase);
+  const entries = await fs.readdir(cacheBase, { withFileTypes: true }).catch(() => []);
+  const preservedRoots = await collectReferencedSharedRuntimeShellRoots(runtimeBase);
+  preservedRoots.add(path.resolve(currentShellRoot));
+
+  for (const entry of entries) {
+    if (!entry.isDirectory() || !entry.name.startsWith("shell-")) {
+      continue;
+    }
+
+    const absolutePath = path.join(cacheBase, entry.name);
+    if (preservedRoots.has(path.resolve(absolutePath))) {
+      continue;
+    }
+
+    await fs.rm(absolutePath, { recursive: true, force: true, maxRetries: 3, retryDelay: 200 }).catch(() => undefined);
+  }
 }
 
 async function getLatestSourceMtime(root: string): Promise<number> {
@@ -1417,7 +1711,7 @@ export async function buildPrebuiltSiteShellArtifact(): Promise<string> {
   const tempRoot = `${artifactRoot}.tmp-${Date.now()}`;
   await fs.rm(tempRoot, { recursive: true, force: true });
   await fs.mkdir(tempRoot, { recursive: true });
-  await fs.cp(standaloneRoot, tempRoot, { recursive: true, force: true });
+  await fs.cp(standaloneRoot, tempRoot, { recursive: true, force: true, dereference: true });
   await fs.mkdir(path.join(tempRoot, ".next"), { recursive: true });
   await fs.cp(staticRoot, path.join(tempRoot, ".next", "static"), { recursive: true, force: true });
   if (nodeFs.existsSync(path.join(sourceRoot, "public"))) {
@@ -1455,6 +1749,40 @@ export async function buildPrebuiltSiteShellArtifact(): Promise<string> {
   return artifactRoot;
 }
 
+export async function ensureRunnablePrebuiltSiteShell(runtimeBase: string): Promise<string> {
+  const sourceShellRoot = await buildPrebuiltSiteShellArtifact();
+  if (!shouldUseSharedRuntimeShellCache()) {
+    return sourceShellRoot;
+  }
+
+  const cacheBase = getSharedRuntimeShellCacheRoot(runtimeBase);
+  const cachedShellRoot = path.join(cacheBase, path.basename(sourceShellRoot));
+
+  if (hasPrebuiltShell(cachedShellRoot)) {
+    await pruneSharedRuntimeShellCache(runtimeBase, cachedShellRoot);
+    return cachedShellRoot;
+  }
+
+  const tempRoot = `${cachedShellRoot}.tmp-${Date.now()}`;
+  await fs.rm(tempRoot, { recursive: true, force: true, maxRetries: 3, retryDelay: 200 }).catch(() => undefined);
+  await fs.mkdir(cacheBase, { recursive: true });
+  await fs.cp(sourceShellRoot, tempRoot, { recursive: true, force: true, dereference: true });
+
+  try {
+    await renameWithRetries(tempRoot, cachedShellRoot);
+  } catch (error) {
+    await fs.rm(tempRoot, { recursive: true, force: true, maxRetries: 3, retryDelay: 200 }).catch(() => undefined);
+    if (hasPrebuiltShell(cachedShellRoot)) {
+      return cachedShellRoot;
+    }
+    throw error;
+  }
+
+  await pruneSharedRuntimeShellCache(runtimeBase, cachedShellRoot);
+
+  return cachedShellRoot;
+}
+
 function watcherWorkerPath(): { command: string; args: string[]; cwd: string } {
   const currentPath = getCurrentModulePath();
   const root = getApccPackageRoot();
@@ -1486,16 +1814,28 @@ function watcherWorkerPath(): { command: string; args: string[]; cwd: string } {
 }
 
 async function ensureWatcher(stage: StageResult, registry: SiteRuntimeRegistry | null): Promise<number | null> {
-  if (registry?.watcherPid && processExists(registry.watcherPid)) {
+  if (registry?.watcherPid && (await watcherProcessMatchesRegistry(registry))) {
     return registry.watcherPid;
+  }
+
+  const discoveredWatcherPid = await findFirstProcessIdByMarkers(
+    buildWatcherProcessMarkers({
+      siteId: stage.siteId,
+      sourceDocsRoot: stage.sourceDocsRoot,
+      runtimeRoot: stage.runtimeRoot
+    })
+  );
+  if (discoveredWatcherPid) {
+    return discoveredWatcherPid;
   }
 
   await fs.rm(path.join(stage.runtimeDataRoot, "site-watch.ready"), { force: true });
   const worker = watcherWorkerPath();
   const watcherLogFile = path.join(stage.runtimeDataRoot, "site-watch.log");
+  const watcherArgs = [...worker.args, stage.sourceDocsRoot, stage.runtimeRoot, `--apcc-site-id=${stage.siteId}`];
   if (process.platform === "win32") {
     const output = openFileForAppendWithRetry(watcherLogFile);
-    const child = spawn(worker.command, [...worker.args, stage.sourceDocsRoot, stage.runtimeRoot], {
+    const child = spawn(worker.command, watcherArgs, {
       cwd: worker.cwd,
       detached: true,
       stdio: output === null ? "ignore" : ["ignore", output, output],
@@ -1507,7 +1847,7 @@ async function ensureWatcher(stage: StageResult, registry: SiteRuntimeRegistry |
     return child.pid ?? null;
   }
 
-  const child = spawn(worker.command, [...worker.args, stage.sourceDocsRoot, stage.runtimeRoot], {
+  const child = spawn(worker.command, watcherArgs, {
     cwd: worker.cwd,
     detached: true,
     stdio: "ignore",
@@ -1538,9 +1878,9 @@ async function ensureSiteRuntimeServer(stage: StageResult, mode: "live") {
   const existing = await readRegistry(stage.runtimeRoot);
   const configuredPort = stage.preferredPort;
   const portLabel = stage.portSource === "explicit" ? "Requested" : "Configured";
-  const existingIsHealthy = Boolean(
-    existing && processExists(existing.pid) && (await waitForPort(existing.port, 500))
-  );
+  const existingIsHealthy = existing ? await isSiteRuntimeRegistryHealthy(existing) : false;
+  const useSharedRuntimeShellCache = shouldUseSharedRuntimeShellCache();
+  const existingUsesPackagedShell = existing?.templateRoot ? isPackagedPrebuiltShellRoot(existing.templateRoot) : false;
 
   if (existingIsHealthy && configuredPort !== null && existing!.port !== configuredPort) {
     throw new Error(
@@ -1548,15 +1888,37 @@ async function ensureSiteRuntimeServer(stage: StageResult, mode: "live") {
     );
   }
 
+  if (useSharedRuntimeShellCache && existingIsHealthy && existing && existingUsesPackagedShell) {
+    await stopSiteRuntimeAtLocation({
+      sourceDocsRoot: existing.sourceDocsRoot,
+      sourceWorkspaceRoot: existing.sourceWorkspaceRoot,
+      siteId: existing.siteId,
+      runtimeBase: existing.runtimeBase,
+      runtimeRoot: existing.runtimeRoot,
+      runtimeDataRoot: path.join(existing.runtimeRoot, "runtime-data"),
+      templateRoot: existing.templateRoot
+    });
+  }
+
   const preferredPort = existing && existing.port > 0 ? existing.port : configuredPort ?? 4310;
-  const reuseExisting = existingIsHealthy;
+  const reuseExisting = existingIsHealthy && (!useSharedRuntimeShellCache || !existingUsesPackagedShell);
   let port = reuseExisting ? existing!.port : preferredPort;
-  let pid = reuseExisting ? existing!.pid : null;
+  let pid =
+    reuseExisting && existing
+      ? ((await findFirstProcessIdByMarkers(buildServerProcessMarkers(existing))) ?? existing.pid)
+      : null;
   let watcherPid = existing?.watcherPid ?? null;
   const startedAt = reuseExisting ? (existing?.startedAt ?? new Date().toISOString()) : new Date().toISOString();
+  const runtimeIdentity = {
+    siteId: stage.siteId,
+    runtimeRoot: stage.runtimeRoot,
+    sourceDocsRoot: stage.sourceDocsRoot
+  };
+  let url = `http://127.0.0.1:${port}/docs`;
+  let shellRoot = existing?.templateRoot ?? null;
 
   if (!reuseExisting) {
-    const shellRoot = await buildPrebuiltSiteShellArtifact();
+    shellRoot = await ensureRunnablePrebuiltSiteShell(stage.runtimeBase);
 
     if (configuredPort !== null) {
       const configuredPortInUse = await waitForPort(configuredPort, 250);
@@ -1566,11 +1928,12 @@ async function ensureSiteRuntimeServer(stage: StageResult, mode: "live") {
         );
       }
       port = configuredPort;
-    } else {
-      port = await findAvailablePort(preferredPort);
-    }
+      } else {
+        port = await findAvailablePort(preferredPort);
+      }
+      url = `http://127.0.0.1:${port}/docs`;
 
-    const invocation = createPrebuiltServerInvocation(shellRoot);
+    const invocation = createPrebuiltServerInvocation(shellRoot, runtimeIdentity);
     const serverEnv = {
       HOSTNAME: "127.0.0.1",
       PORT: String(port),
@@ -1597,15 +1960,13 @@ async function ensureSiteRuntimeServer(stage: StageResult, mode: "live") {
     child.unref();
     pid = child.pid ?? null;
 
-    const ready = await waitForPort(port, 90000);
+    const ready = await waitForSiteRuntimeIdentity(runtimeIdentity, url, 90000);
     if (!ready) {
-      const failedUrl = `http://127.0.0.1:${port}/docs`;
-      throw new Error(`site runtime did not become reachable at ${failedUrl} within the timeout.`);
+      throw new Error(`site runtime did not become reachable at ${url} within the timeout.`);
     }
   }
 
-  const url = `http://127.0.0.1:${port}/docs`;
-  const shellRoot = await buildPrebuiltSiteShellArtifact();
+  shellRoot ??= await ensureRunnablePrebuiltSiteShell(stage.runtimeBase);
 
   if (mode === "live") {
     watcherPid = await ensureWatcher(stage, existing);
@@ -1636,10 +1997,10 @@ async function ensureSiteRuntimeServer(stage: StageResult, mode: "live") {
     runtimeRoot: stage.runtimeRoot,
     templateRoot: shellRoot,
     runtimeDataRoot: stage.runtimeDataRoot,
-      mode,
-      port,
-      url
-    });
+    mode,
+    port,
+    url
+  });
   await updateGlobalRegistry(stage.runtimeBase, {
     siteId: stage.siteId,
     sourceDocsRoot: stage.sourceDocsRoot,
@@ -1835,21 +2196,45 @@ export async function devSiteRuntime(inputPath?: string, options: StartSiteRunti
 
 async function stopSiteRuntimeAtLocation(target: ResolvedSiteRuntimeLocation) {
   const registry = await readRegistry(target.runtimeRoot);
+  let terminatedPid: number | null = null;
+  let terminatedWatcherPid: number | null = null;
 
-  if (registry?.watcherPid && processExists(registry.watcherPid)) {
+  if (registry?.watcherPid && registry && (await watcherProcessMatchesRegistry(registry))) {
     await terminateProcessTree(registry.watcherPid);
+    terminatedWatcherPid = registry.watcherPid;
   }
 
-  if (registry?.pid && processExists(registry.pid)) {
+  if (registry?.pid && registry && (await serverProcessMatchesRegistry(registry))) {
     await terminateProcessTree(registry.pid);
+    terminatedPid = registry.pid;
+  }
+
+  if (registry) {
+    const discoveredWatcherPid = await findFirstProcessIdByMarkers(buildWatcherProcessMarkers(registry));
+    if (discoveredWatcherPid && discoveredWatcherPid !== terminatedWatcherPid) {
+      await terminateProcessTree(discoveredWatcherPid);
+      terminatedWatcherPid ??= discoveredWatcherPid;
+    }
+
+    const discoveredServerPid = await findFirstProcessIdByMarkers(buildServerProcessMarkers(registry));
+    if (discoveredServerPid && discoveredServerPid !== terminatedPid) {
+      await terminateProcessTree(discoveredServerPid);
+      terminatedPid ??= discoveredServerPid;
+    }
   }
 
   if (process.platform === "win32" && nodeFs.existsSync(target.runtimeRoot)) {
     await terminateWindowsRuntimeProcesses(target.runtimeRoot);
-    if ((registry?.port ?? 0) > 0 && (await waitForPort(registry!.port, 500))) {
-      for (const pid of await findWindowsPortProcessIds(registry!.port)) {
-        if (processExists(pid)) {
+    if (registry && (registry.port ?? 0) > 0 && (await waitForPort(registry.port, 500))) {
+      const liveIdentity = await fetchSiteRuntimeIdentity(registry.url);
+      if (matchesSiteRuntimeIdentity(registry, liveIdentity)) {
+        for (const pid of await findWindowsPortProcessIds(registry.port)) {
+          if (!(await processMatchesMarkers(pid, buildServerProcessMarkers(registry)))) {
+            continue;
+          }
+
           await terminateProcessTree(pid);
+          terminatedPid ??= pid;
         }
       }
     }
@@ -1894,8 +2279,8 @@ async function stopSiteRuntimeAtLocation(target: ResolvedSiteRuntimeLocation) {
     siteId: target.siteId,
     stopped: Boolean(registry?.pid || registry?.watcherPid || runtimeExists),
     preservedRuntime: runtimeExists,
-    terminatedPid: registry?.pid ?? null,
-    terminatedWatcherPid: registry?.watcherPid ?? null
+    terminatedPid,
+    terminatedWatcherPid
   };
 }
 

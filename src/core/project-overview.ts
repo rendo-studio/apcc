@@ -1,5 +1,6 @@
 import { readYamlFile, writeYamlFile } from "./storage.js";
 import { getWorkspacePaths } from "./workspace.js";
+import { withWorkspaceMutationLock } from "./workspace-mutation.js";
 import type { ProjectOverviewState } from "./types.js";
 
 export async function loadProjectOverview(): Promise<ProjectOverviewState> {
@@ -8,17 +9,24 @@ export async function loadProjectOverview(): Promise<ProjectOverviewState> {
 }
 
 export async function saveProjectOverview(input: ProjectOverviewState): Promise<ProjectOverviewState> {
-  const paths = getWorkspacePaths();
-  await writeYamlFile(paths.projectOverviewFile, input);
-  return input;
+  return withWorkspaceMutationLock(async () => {
+    const paths = getWorkspacePaths();
+    await writeYamlFile(paths.projectOverviewFile, input);
+    return input;
+  });
 }
 
 export async function updateProjectOverview(
   input: Partial<ProjectOverviewState>
 ): Promise<ProjectOverviewState> {
-  const current = await loadProjectOverview();
-  return saveProjectOverview({
-    ...current,
-    ...input
+  return withWorkspaceMutationLock(async () => {
+    const current = await loadProjectOverview();
+    const next = {
+      ...current,
+      ...input
+    };
+    const paths = getWorkspacePaths();
+    await writeYamlFile(paths.projectOverviewFile, next);
+    return next;
   });
 }

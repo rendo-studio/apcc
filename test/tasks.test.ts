@@ -43,6 +43,70 @@ describe("task control plane", () => {
     expect(childTask.task.planRef).toBe("plan-root");
   });
 
+  it("rejects child tasks that try to diverge from the parent task plan", async () => {
+    const fixture = await createWorkspaceFixture({
+      plans: {
+        endGoalRef: "end-goal-test",
+        items: [
+          {
+            id: "plan-root",
+            name: "Root plan",
+            summary: "Default top-level plan used by workspace fixtures.",
+            parentPlanId: null,
+            versionRef: null
+          },
+          {
+            id: "plan-other",
+            name: "Other plan",
+            summary: "Alternate plan for invalid task reassignment checks.",
+            parentPlanId: null,
+            versionRef: null
+          }
+        ]
+      }
+    });
+    restorers.push(fixture.use());
+    cleanups.push(fixture.cleanup);
+
+    const rootTask = await addTask({
+      name: "Root task",
+      parent: "root",
+      plan: "plan-root"
+    });
+
+    await expect(
+      addTask({
+        name: "Child task",
+        parent: rootTask.task.id,
+        plan: "plan-other"
+      })
+    ).rejects.toThrow(/cannot override the parent task plan/i);
+
+    await expect(
+      updateTask({
+        id: rootTask.task.id,
+        parent: "root",
+        plan: "plan-other"
+      })
+    ).resolves.toMatchObject({
+      task: {
+        planRef: "plan-other"
+      }
+    });
+
+    const childTask = await addTask({
+      name: "Aligned child",
+      parent: rootTask.task.id
+    });
+
+    await expect(
+      updateTask({
+        id: childTask.task.id,
+        plan: "plan-root"
+      })
+    ).rejects.toThrow(/cannot override the parent task plan/i);
+  });
+
   it("allows explicit task ids while rejecting invalid or duplicate ids", async () => {
     const fixture = await createWorkspaceFixture();
     restorers.push(fixture.use());
@@ -137,6 +201,33 @@ describe("task control plane", () => {
     expect(first.progressPercent).toBe(0);
     expect(second.progressPercent).toBe(0);
     expect(updated.progressPercent).toBe(50);
+  });
+
+  it("serializes concurrent task additions so both changes persist", async () => {
+    const fixture = await createWorkspaceFixture();
+    restorers.push(fixture.use());
+    cleanups.push(fixture.cleanup);
+
+    await Promise.all([
+      addTask({
+        name: "Concurrent task A",
+        parent: "root",
+        plan: "plan-root"
+      }),
+      addTask({
+        name: "Concurrent task B",
+        parent: "root",
+        plan: "plan-root"
+      })
+    ]);
+
+    const tasks = await loadTasks();
+
+    expect(tasks.items).toHaveLength(2);
+    expect(tasks.items.map((task) => task.name).sort()).toEqual([
+      "Concurrent task A",
+      "Concurrent task B"
+    ]);
   });
 
   it("updates task fields and deletes task subtrees", async () => {

@@ -27,6 +27,15 @@ Put these in `docs/`:
 
 Authored docs should help a human or Agent understand the project. They should not become the authoritative storage for current execution state.
 
+## Agent Bootstrap Files
+
+`AGENTS.md` and `.agents/skills/apcc-workflow/SKILL.md` are APCC-managed bootstrap artifacts, but they are not part of `.apcc/`.
+
+Important rule:
+
+- APCC may only treat the `<!-- APCC:BEGIN --> ... <!-- APCC:END -->` block in `AGENTS.md` as its managed surface
+- other repository-specific `AGENTS.md` content must be preserved
+
 ## Structured Control Plane
 
 Put these in `.apcc/`:
@@ -67,6 +76,7 @@ The Console and status views are plan-first:
 - plans form the top-level execution tree
 - each plan can show the task tree attached to that plan
 - task status drives derived plan status and progress
+- child tasks stay on the same `planRef` as their parent task
 
 Do not persist a separate `plan.status` field. A stored plan says what stream exists; current status is computed from the task tree.
 
@@ -86,6 +96,7 @@ Persisted explicitly:
 - plan and task ids
 - names and summaries
 - parent relationships
+- optional plan version anchors
 - task status
 - doc references
 - decision and version records
@@ -105,11 +116,24 @@ Examples:
 
 This keeps APCC neutral. The runtime should not infer business meaning from fixed docs subdirectories.
 
+## Version Scoping
+
+Plans may carry an optional `versionRef` that points at a record in `.apcc/versions/records.yaml`.
+
+Rules:
+
+- `plan.versionRef` is persisted explicitly
+- a child plan inherits the nearest non-null ancestor version anchor as its effective version scope
+- tasks do not store `versionRef`; they inherit version scope through `task.planRef`
+- `apcc plan show --version ...` and `apcc task list --version ...` filter by the effective plan scope, not by duplicated task metadata
+
 ## Runtime Artifacts
 
 Runtime artifacts do not belong in authored docs or structured control-plane files.
 
 `apcc site start` stages runtime data for the live local docs site. `apcc site build` creates a deployable read-only artifact. Both are generated outputs, not source-of-truth project context.
+
+Workspace mutation locks also belong to local runtime state, not to `.apcc/`. APCC stores those lock directories under the per-user APCC runtime base so repository workspaces do not accumulate Git-tracked coordination files.
 
 ## Metadata And Provenance
 

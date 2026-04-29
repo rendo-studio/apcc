@@ -937,3 +937,129 @@ items:
     planRef: harden-invalid-yaml-recovery-and-guidance-42
     parentTaskId: null
     countedForProgress: true
+  - id: verify-site-runtime-process-identity-67
+    name: Verify site runtime process identity
+    summary: Upgrade site runtime health, reuse, and stop semantics from plain PID existence to PID plus APCC runtime identity verification, then cover the behavior with regression tests.
+    status: done
+    planRef: harden-docs-structure-decoupling-and-runtime-ide-43
+    parentTaskId: null
+    countedForProgress: true
+  - id: document-docs-structure-decoupling-68
+    name: Document docs-structure decoupling
+    summary: State explicitly that runtime code, docs-site code, and doctor must work from configured docs roots and explicit control-plane references rather than requiring the default scaffold tree.
+    status: done
+    planRef: harden-docs-structure-decoupling-and-runtime-ide-43
+    parentTaskId: null
+    countedForProgress: true
+  - id: restore-rich-markdown-rendering-in-docs-site-69
+    name: Restore rich markdown rendering in docs-site
+    summary: Make authored markdown features such as fenced code blocks and tables render with the expected Fumadocs semantics instead of falling back to plain text or minimally styled HTML.
+    status: done
+    planRef: polish-docs-site-markdown-rendering-fidelity-44
+    parentTaskId: null
+    countedForProgress: true
+  - id: maintainer-guidance-overrides-70
+    name: Add maintainer guidance overrides
+    summary: Keep the APCC source repository on maintainer-first AGENTS and local skills without changing the shipped workspace guidance assets.
+    status: done
+    planRef: separate-maintainer-guidance-from-shipped-worksp-45
+    parentTaskId: null
+    countedForProgress: true
+  - id: fixed-production-smoke-root-71
+    name: Define a fixed production smoke root
+    summary: Require source-repo production-style verification to run under a fixed .tmp scratch root instead of mutating the APCC repository workspace, except for explicit self-migration work.
+    status: done
+    planRef: separate-maintainer-guidance-from-shipped-worksp-45
+    parentTaskId: null
+    countedForProgress: true
+  - id: rename-apcc-agents-marker-to-begin-72
+    name: Rename APCC AGENTS marker to BEGIN
+    summary: Standardize the managed AGENTS marker on BEGIN/END while keeping legacy START blocks readable during migration.
+    status: done
+    planRef: separate-maintainer-guidance-from-shipped-worksp-45
+    parentTaskId: null
+    countedForProgress: true
+  - id: remove-start-marker-compat-73
+    name: Remove START marker compatibility
+    summary: Drop the unused APCC START marker compatibility path and keep AGENTS management on the canonical BEGIN/END block only.
+    status: done
+    planRef: separate-maintainer-guidance-from-shipped-worksp-45
+    parentTaskId: null
+    countedForProgress: true
+  - id: verify-concurrent-mutation-safety-76
+    name: Verify concurrent mutation safety
+    summary: Add regression coverage that proves nested, stale, and concurrent workspace mutations no longer lose or corrupt .apcc state.
+    status: done
+    planRef: harden-workspace-mutation-concurrency-46
+    parentTaskId: null
+    countedForProgress: true
+  - id: make-control-plane-writes-atomic-75
+    name: Make control-plane writes atomic
+    summary: Write text and YAML files through same-directory temp files plus rename so interrupted writes do not leave torn control-plane files.
+    status: done
+    planRef: harden-workspace-mutation-concurrency-46
+    parentTaskId: null
+    countedForProgress: true
+  - id: add-workspace-mutation-lock-74
+    name: Add workspace mutation lock
+    summary: Serialize APCC control-plane mutations across processes and nested mutation flows with a workspace-scoped lock.
+    status: done
+    planRef: harden-workspace-mutation-concurrency-46
+    parentTaskId: null
+    countedForProgress: true
+  - id: move-workspace-lock-to-local-runtime-77
+    name: Move workspace lock to local runtime state
+    summary: Store workspace mutation locks under the per-user APCC runtime base instead of .apcc/state/ so Git-tracked workspaces never carry runtime coordination files.
+    status: done
+    planRef: rationalize-runtime-state-and-version-scoping-47
+    parentTaskId: null
+    countedForProgress: true
+  - id: regenerate-contract-and-reverify-version-scoping-80
+    name: Regenerate contract docs and reverify
+    summary: Refresh the published control-plane contract and rerun release-grade verification for local-runtime locking, active-state removal, and version-scoped planning.
+    status: done
+    planRef: rationalize-runtime-state-and-version-scoping-47
+    parentTaskId: null
+    countedForProgress: true
+  - id: add-plan-versionref-and-cli-filters-79
+    name: Add plan versionRef and CLI filters
+    summary: Let plans carry an optional version anchor, derive version-scoped task views from plan ownership, and expose version filters through CLI inspection commands.
+    status: done
+    planRef: rationalize-runtime-state-and-version-scoping-47
+    parentTaskId: null
+    countedForProgress: true
+  - id: retire-active-workspace-state-78
+    name: Retire active workspace state
+    summary: Remove .apcc/state/active.yaml, its schema surface, and any docs-site or renderer dependency on stale active change metadata.
+    status: done
+    planRef: rationalize-runtime-state-and-version-scoping-47
+    parentTaskId: null
+    countedForProgress: true
+  - id: remove-no-user-legacy-cleanup-and-audit-release--81
+    name: Remove no-user legacy cleanup and audit release quality
+    summary: Drop legacy state cleanup code that does not match the no-user project reality, then review the new runtime-lock and version-scoping changes for production readiness.
+    status: done
+    planRef: rationalize-runtime-state-and-version-scoping-47
+    parentTaskId: null
+    countedForProgress: true
+  - id: task-document-apcc-docs-site-internals
+    name: Document APCC docs-site internals
+    summary: Add an internal technical guide for the APCC docs site and keep the docs package navigation aligned.
+    status: done
+    planRef: document-apcc-docs-site-internals-48
+    parentTaskId: null
+    countedForProgress: true
+  - id: task-define-docs-site-functional-requirements
+    name: Define docs-site functional requirements
+    summary: Write an internal doc for UI designers that defines the required docs-site functions, modules, and acceptance scope without discussing implementation or visual aesthetics.
+    status: done
+    planRef: define-docs-site-functional-requirements-49
+    parentTaskId: null
+    countedForProgress: true
+  - id: harden-maintainer-shared-shell-cache-lifecycle-84
+    name: Harden maintainer shared shell cache lifecycle
+    summary: Keep the source-repo-only shared shell cache bounded, documented, and migration-safe so it only optimizes maintainer build coexistence without changing installed-package runtime semantics.
+    status: done
+    planRef: document-apcc-docs-site-internals-48
+    parentTaskId: null
+    countedForProgress: true

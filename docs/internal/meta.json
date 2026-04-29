@@ -4,6 +4,8 @@
     "maintainer-workflow",
     "verification",
     "architecture",
+    "docs-site-functional-requirements",
+    "docs-site-technical-guide",
     "prebuilt-docs-runtime",
     "versions"
   ]

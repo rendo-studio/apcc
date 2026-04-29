@@ -1,16 +1,18 @@
-import { AclipApp, stringArgument } from "@rendo-studio/aclip";
+import { AclipApp, booleanArgument, stringArgument } from "@rendo-studio/aclip";
 
 import {
   addPlan,
   buildPlanTree,
+  describePlanTreeRoots,
   derivePlanStatuses,
   deletePlan,
-  describeTopLevelPlans,
+  filterDerivedPlansByVersion,
   loadPlans,
   renderPlanTreeLines,
   updatePlan
 } from "../../core/plans.js";
 import { loadTasks } from "../../core/tasks.js";
+import { resolveVersionRecordSelector } from "../../core/version.js";
 import { withGuideHint } from "../guide-hint.js";
 
 async function loadDerivedPlansForView(
@@ -22,6 +24,35 @@ async function loadDerivedPlansForView(
   ]);
 
   return derivePlanStatuses(plans, tasks);
+}
+
+async function resolveVersionFilter(input: {
+  version?: string | null;
+  unversioned?: boolean | null;
+}) {
+  if (input.version && input.unversioned) {
+    throw new Error("Use either --version or --unversioned, not both.");
+  }
+
+  if (input.version) {
+    const record = await resolveVersionRecordSelector(input.version);
+    return {
+      filter: { versionRef: record.id },
+      versionRecord: record
+    };
+  }
+
+  if (input.unversioned) {
+    return {
+      filter: { unversioned: true },
+      versionRecord: null
+    };
+  }
+
+  return {
+    filter: undefined,
+    versionRecord: null
+  };
 }
 
 export function registerPlanGroup(app: AclipApp) {
@@ -53,19 +84,26 @@ export function registerPlanGroup(app: AclipApp) {
         stringArgument("summary", {
           required: false,
           description: "Optional plan summary. Defaults to the plan name."
+        }),
+        stringArgument("version", {
+          required: false,
+          description: "Optional version record id or version label to scope the plan.",
+          flag: "--version"
         })
       ],
       examples: [
         "apcc plan add --name 'Harden workspace refresh' --parent root",
-        "apcc plan add --id harden-workspace-refresh --name 'Harden workspace refresh' --parent root",
+        "apcc plan add --id harden-workspace-refresh --name 'Harden workspace refresh' --parent root --version 0.2.0",
         "apcc plan add --name 'Add console mutation coverage' --parent harden-workspace-refresh"
       ],
-      handler: async ({ id, name, parent, summary }) => {
+      handler: async ({ id, name, parent, summary, version }) => {
+        const versionRecord = version ? await resolveVersionRecordSelector(String(version)) : null;
         const result = await addPlan({
           id: id ? String(id) : undefined,
           name: String(name),
           parent: String(parent),
-          summary: summary ? String(summary) : undefined
+          summary: summary ? String(summary) : undefined,
+          version: versionRecord?.id
         });
         const plans = await loadDerivedPlansForView(result.plans);
 
@@ -95,17 +133,35 @@ export function registerPlanGroup(app: AclipApp) {
         stringArgument("parent", {
           required: false,
           description: "Optional replacement parent id, or root."
+        }),
+        stringArgument("version", {
+          required: false,
+          description: "Optional replacement version record id or version label.",
+          flag: "--version"
+        }),
+        booleanArgument("clear-version", {
+          required: false,
+          description: "Remove the direct version anchor from this plan.",
+          flag: "--clear-version"
         })
       ],
       examples: [
-        "apcc plan update --id harden-workspace-refresh-1 --name 'Harden workspace refresh and console sync'"
+        "apcc plan update --id harden-workspace-refresh-1 --name 'Harden workspace refresh and console sync'",
+        "apcc plan update --id harden-workspace-refresh-1 --version 0.2.0",
+        "apcc plan update --id harden-workspace-refresh-1 --clear-version"
       ],
-      handler: async ({ id, name, summary, parent }) => {
+      handler: async ({ id, name, summary, parent, version, "clear-version": clearVersion }) => {
+        if (version && clearVersion) {
+          throw new Error("Use either --version or --clear-version, not both.");
+        }
+
+        const versionRecord = version ? await resolveVersionRecordSelector(String(version)) : null;
         const result = await updatePlan({
           id: String(id),
           name: name ? String(name) : undefined,
           summary: summary ? String(summary) : undefined,
-          parent: parent ? String(parent) : undefined
+          parent: parent ? String(parent) : undefined,
+          ...(clearVersion ? { version: null } : versionRecord ? { version: versionRecord.id } : {})
         });
         const plans = await loadDerivedPlansForView(result.plans);
 
@@ -117,15 +173,44 @@ export function registerPlanGroup(app: AclipApp) {
     .command("show", {
       summary: "Show the current plan tree.",
       description: withGuideHint("Inspect the current structured plan tree."),
-      examples: ["apcc plan show"],
-      handler: async () => {
+      arguments: [
+        stringArgument("version", {
+          required: false,
+          description: "Optional version record id or version label filter.",
+          flag: "--version"
+        }),
+        booleanArgument("unversioned", {
+          required: false,
+          description: "Only show plans without an effective version anchor.",
+          flag: "--unversioned"
+        })
+      ],
+      examples: ["apcc plan show", "apcc plan show --version 0.2.0", "apcc plan show --unversioned"],
+      handler: async ({ version, unversioned }) => {
+        const resolved = await resolveVersionFilter({
+          version: version ? String(version) : null,
+          unversioned: Boolean(unversioned)
+        });
         const plans = await loadDerivedPlansForView();
-        const tree = buildPlanTree(plans.items);
+        const filteredPlans = filterDerivedPlansByVersion(plans, resolved.filter);
+        const tree = buildPlanTree(filteredPlans, true);
         return {
-          plans,
+          plans: {
+            ...plans,
+            items: filteredPlans
+          },
           planTree: tree,
           lines: renderPlanTreeLines(tree),
-          topLevelPlans: describeTopLevelPlans(plans)
+          topLevelPlans: describePlanTreeRoots(tree),
+          versionFilter: resolved.versionRecord
+            ? {
+                id: resolved.versionRecord.id,
+                version: resolved.versionRecord.version,
+                title: resolved.versionRecord.title
+              }
+            : resolved.filter?.unversioned
+              ? { id: null, version: null, title: "unversioned" }
+              : null
         };
       }
     })

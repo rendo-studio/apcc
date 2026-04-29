@@ -170,3 +170,24 @@ items:
     validationSummary: npm run check, npm run test, npm run build, npm run verify:site-lifecycle, npm run verify:package-install, npm pack --dry-run, node dist/bin/apcc.js site open --help
     createdAt: 2026-04-25T01:17:45.162Z
     recordedAt: 2026-04-25T01:26:16.372Z
+  - id: 0-3-4-docs-site-runtime-and-control-plane-hardening
+    version: 0.3.4
+    title: Docs-site runtime and control-plane hardening
+    summary: Patch release that hardens docs-site runtime semantics, APCC control-plane ergonomics, and maintainer documentation boundaries.
+    docPath: internal/versions/0-3-4-docs-site-runtime-and-control-plane-hardening.md
+    status: recorded
+    decisionRefs: []
+    highlights:
+      - Hardens docs-site runtime identity checks and decouples runtime behavior from scaffold assumptions
+      - Improves prebuilt docs-site markdown fidelity for authored tables and code blocks
+      - Separates maintainer bootstrap guidance from shipped workspace guidance and bounds APCC-managed AGENTS content to explicit markers
+      - Adds workspace mutation locking atomic control-plane writes and version-scoped plan and task filtering
+      - Documents docs-site internals and functional requirements while keeping current-source live runtimes from blocking npm run build
+    breakingChanges: []
+    migrationNotes:
+      - Maintainers should keep using npm run dev -- commands in the APCC source repository
+      - Use apcc plan show --version and apcc task list --version when reviewing release-scoped historical work
+      - Keep APCC-managed AGENTS content bounded by <!-- APCC:BEGIN --> and <!-- APCC:END -->
+    validationSummary: npm run generate:control-plane-contract-doc, npm run check, npm run test, npm run build, npm run dev -- site build, npm run verify:package-install, npm run verify:site-lifecycle, npm run prepare:publish-package -- --out .tmp/apcc-publish-0.3.4, npm run prepare:publish-package -- --out .tmp/apcc-scoped-publish-0.3.4 --name @rendo-studio/apcc, npm pack --dry-run (apcc staged package), npm pack --dry-run (@rendo-studio/apcc staged package), npm run dev -- doctor check, npm run dev -- status, npm run dev -- plan show --version 0.3.4, npm run dev -- task list --version 0.3.4, npm run dev -- task list --unversioned, GitHub release v0.3.4, npm publish apcc@0.3.4, npm publish @rendo-studio/apcc@0.3.4
+    createdAt: 2026-04-29T20:07:21.113Z
+    recordedAt: 2026-04-29T20:15:17.417Z

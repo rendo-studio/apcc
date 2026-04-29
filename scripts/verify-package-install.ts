@@ -2,11 +2,13 @@ import { spawnSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { unlinkSync, writeFileSync } from "node:fs";
 import fs from "node:fs/promises";
+import net from "node:net";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const smokeRoot = path.join(root, ".tmp", "production-smoke", "verify-package-install");
 
 function npmInvocation(args: string[]): { command: string; args: string[] } {
   if (process.platform === "win32") {
@@ -73,11 +75,38 @@ function runInstalledBin(binPath: string, args: string[], options: { cwd?: strin
   return run(binPath, args, options);
 }
 
-const packRoot = await fs.mkdtemp(path.join(os.tmpdir(), "apcc-pack-"));
-const installRoot = await fs.mkdtemp(path.join(os.tmpdir(), "apcc-install-"));
-const workspaceRoot = await fs.mkdtemp(path.join(os.tmpdir(), "apcc-installed-workspace-"));
+async function reserveAvailablePort(): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const server = net.createServer();
+    server.unref();
+    server.once("error", reject);
+    server.listen(0, "127.0.0.1", () => {
+      const address = server.address();
+      if (!address || typeof address === "string") {
+        server.close();
+        reject(new Error("unable to reserve an ephemeral docs-site port"));
+        return;
+      }
+
+      const { port } = address;
+      server.close((error) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        resolve(port);
+      });
+    });
+  });
+}
+
+const packRoot = path.join(smokeRoot, "pack");
+const installRoot = path.join(smokeRoot, "install");
+const workspaceRoot = path.join(smokeRoot, "workspace");
 
 try {
+  await fs.rm(smokeRoot, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+  await fs.mkdir(packRoot, { recursive: true });
   const packInvocation = npmInvocation(["pack", "--pack-destination", packRoot, "--silent"]);
   const packedName = run(packInvocation.command, packInvocation.args).trim();
   const tarballPath = path.join(packRoot, packedName);
@@ -87,6 +116,7 @@ try {
 
   const packageRoot = path.join(installRoot, "node_modules", "apcc");
   const binPath = path.join(installRoot, "node_modules", ".bin", process.platform === "win32" ? "apcc.cmd" : "apcc");
+  const requestedPort = await reserveAvailablePort();
   const packagedCliEntry = path.join(packageRoot, "dist", "bin", "apcc.cjs");
   const packagedCliManifest = path.join(packageRoot, "dist", "bin", "apcc.aclip.json");
   if (
@@ -128,7 +158,11 @@ try {
     throw new Error("installed apcc guide workflow did not render the workflow guide.");
   }
   const contractGuideOutput = runInstalledBin(binPath, ["guide", "control-plane-contract"]);
-  if (!contractGuideOutput.includes("# Control Plane Contract") || !contractGuideOutput.includes("status: pending")) {
+  if (
+    !contractGuideOutput.includes("# Control Plane Contract") ||
+    !contractGuideOutput.includes("status: pending") ||
+    !contractGuideOutput.includes("versionRef: null")
+  ) {
     throw new Error("installed apcc guide control-plane-contract did not render the bundled control-plane contract.");
   }
 
@@ -145,6 +179,24 @@ try {
     "--end-goal-summary",
     "VerifyInstalledCli"
   ]);
+
+  const versionNewOutput = runInstalledBin(
+    binPath,
+    [
+      "version",
+      "new",
+      "--version",
+      "0.3.4",
+      "--title",
+      "Release Scope",
+      "--summary",
+      "ReleaseScope"
+    ],
+    { cwd: workspaceRoot }
+  );
+  if (!versionNewOutput.includes("# Version") || !versionNewOutput.includes("0.3.4")) {
+    throw new Error("installed apcc version new did not create or render the expected version record.");
+  }
 
   const planAddOutput = runInstalledBin(
     binPath,
@@ -188,10 +240,102 @@ try {
     throw new Error("installed apcc task add did not render a concise changed-task delta.");
   }
 
+  runInstalledBin(
+    binPath,
+    [
+      "plan",
+      "add",
+      "--id",
+      "release-0-3-4",
+      "--name",
+      "Release034",
+      "--parent",
+      "root",
+      "--summary",
+      "Release034",
+      "--version",
+      "0.3.4"
+    ],
+    { cwd: workspaceRoot }
+  );
+  runInstalledBin(
+    binPath,
+    [
+      "task",
+      "add",
+      "--id",
+      "release-0-3-4-check",
+      "--name",
+      "Release034Check",
+      "--parent",
+      "root",
+      "--plan",
+      "release-0-3-4",
+      "--summary",
+      "Release034Check"
+    ],
+    { cwd: workspaceRoot }
+  );
+
+  const versionedPlanShowOutput = runInstalledBin(binPath, ["plan", "show", "--version", "0.3.4"], {
+    cwd: workspaceRoot
+  });
+  if (
+    !versionedPlanShowOutput.includes("Version scope: 0.3.4") ||
+    !versionedPlanShowOutput.includes("release-0-3-4") ||
+    versionedPlanShowOutput.includes("release-hardening")
+  ) {
+    throw new Error("installed apcc plan show --version did not filter plans by effective version scope.");
+  }
+
+  const versionedTaskListOutput = runInstalledBin(binPath, ["task", "list", "--version", "0.3.4"], {
+    cwd: workspaceRoot
+  });
+  if (
+    !versionedTaskListOutput.includes("Version scope: 0.3.4") ||
+    !versionedTaskListOutput.includes("release-0-3-4-check") ||
+    versionedTaskListOutput.includes("release-check")
+  ) {
+    throw new Error("installed apcc task list --version did not filter tasks by effective plan version scope.");
+  }
+
+  const unversionedTaskListOutput = runInstalledBin(binPath, ["task", "list", "--unversioned"], {
+    cwd: workspaceRoot
+  });
+  if (
+    !unversionedTaskListOutput.includes("Version scope: unversioned") ||
+    !unversionedTaskListOutput.includes("release-check") ||
+    unversionedTaskListOutput.includes("release-0-3-4-check")
+  ) {
+    throw new Error("installed apcc task list --unversioned did not isolate unversioned task scopes.");
+  }
+
   const doctorCheckOutput = runInstalledBin(binPath, ["doctor", "check"], { cwd: workspaceRoot });
   if (!doctorCheckOutput.includes("# Doctor") || !doctorCheckOutput.includes("- Status: `pass`")) {
     throw new Error("installed apcc doctor check did not report a healthy workspace.");
   }
+
+  const siteStartOutput = runInstalledBin(binPath, ["site", "start", "--port", String(requestedPort)], {
+    cwd: workspaceRoot
+  });
+  if (!siteStartOutput.includes(`Port: \`${requestedPort}\``)) {
+    throw new Error("installed apcc site start did not launch the packaged docs-site runtime on the requested port.");
+  }
+  const siteStatusJson = JSON.parse(runInstalledBin(binPath, ["site", "status", "--json"], { cwd: workspaceRoot })) as {
+    site?: { runtimeRoot?: string; state?: string };
+  };
+  const runtimeRoot = siteStatusJson.site?.runtimeRoot;
+  if (!runtimeRoot || siteStatusJson.site?.state !== "live") {
+    throw new Error("installed apcc site status --json did not expose a live runtime root after site start.");
+  }
+  const siteRegistry = JSON.parse(
+    await fs.readFile(path.join(runtimeRoot, "runtime-data", "registry.json"), "utf8")
+  ) as { templateRoot?: string };
+  if (!siteRegistry.templateRoot?.startsWith(path.join(packageRoot, "dist", "site-runtime-prebuilt"))) {
+    throw new Error("installed apcc site start did not keep using the packaged dist/site-runtime-prebuilt shell.");
+  }
+  runInstalledBin(binPath, ["site", "stop"], { cwd: workspaceRoot });
+
   const doctorCheckJson = JSON.parse(runInstalledBin(binPath, ["doctor", "check", "--json"], { cwd: workspaceRoot })) as {
     doctor?: { checks?: unknown[]; guidance_md?: string; validation?: unknown };
   };

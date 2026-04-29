@@ -1,4 +1,4 @@
-import { AclipApp, stringArgument } from "@rendo-studio/aclip";
+import { AclipApp, booleanArgument, stringArgument } from "@rendo-studio/aclip";
 import {
   addTask,
   buildTaskTree,
@@ -7,8 +7,39 @@ import {
   renderTaskTreeLines,
   updateTask
 } from "../../core/tasks.js";
+import { derivePlanStatuses, filterTasksByPlanVersion, loadPlans } from "../../core/plans.js";
+import { resolveVersionRecordSelector } from "../../core/version.js";
 import { TASK_STATUSES } from "../../core/types.js";
 import { withGuideHint } from "../guide-hint.js";
+
+async function resolveVersionFilter(input: {
+  version?: string | null;
+  unversioned?: boolean | null;
+}) {
+  if (input.version && input.unversioned) {
+    throw new Error("Use either --version or --unversioned, not both.");
+  }
+
+  if (input.version) {
+    const record = await resolveVersionRecordSelector(input.version);
+    return {
+      filter: { versionRef: record.id },
+      versionRecord: record
+    };
+  }
+
+  if (input.unversioned) {
+    return {
+      filter: { unversioned: true },
+      versionRecord: null
+    };
+  }
+
+  return {
+    filter: undefined,
+    versionRecord: null
+  };
+}
 
 export function registerTaskGroup(app: AclipApp) {
   app
@@ -159,14 +190,41 @@ export function registerTaskGroup(app: AclipApp) {
     .command("list", {
       summary: "List the current task tree.",
       description: withGuideHint("Inspect the current tree-shaped task structure."),
-      examples: ["apcc task list"],
-      handler: async () => {
+      arguments: [
+        stringArgument("version", {
+          required: false,
+          description: "Optional version record id or version label filter.",
+          flag: "--version"
+        }),
+        booleanArgument("unversioned", {
+          required: false,
+          description: "Only show tasks under plans without an effective version anchor.",
+          flag: "--unversioned"
+        })
+      ],
+      examples: ["apcc task list", "apcc task list --version 0.2.0", "apcc task list --unversioned"],
+      handler: async ({ version, unversioned }) => {
+        const resolved = await resolveVersionFilter({
+          version: version ? String(version) : null,
+          unversioned: Boolean(unversioned)
+        });
         const tasks = await loadTasks();
-        const tree = buildTaskTree(tasks.items);
+        const derivedPlans = derivePlanStatuses(await loadPlans(), tasks);
+        const filteredTasks = filterTasksByPlanVersion(tasks.items, derivedPlans, resolved.filter);
+        const tree = buildTaskTree(filteredTasks, true);
         return {
-          tasks: tasks.items,
+          tasks: filteredTasks,
           taskTree: tree,
-          lines: renderTaskTreeLines(tree)
+          lines: renderTaskTreeLines(tree),
+          versionFilter: resolved.versionRecord
+            ? {
+                id: resolved.versionRecord.id,
+                version: resolved.versionRecord.version,
+                title: resolved.versionRecord.title
+              }
+            : resolved.filter?.unversioned
+              ? { id: null, version: null, title: "unversioned" }
+              : null
         };
       }
     });

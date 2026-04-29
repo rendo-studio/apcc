@@ -64,7 +64,9 @@ describe("output renderer", () => {
           name: "Release hardening",
           summary: "Prepare release-facing CLI behavior.",
           parentPlanId: null,
-          status: "pending"
+          status: "pending",
+          versionRef: null,
+          effectiveVersionRef: null
         }
       }),
       "stdout"
@@ -72,6 +74,7 @@ describe("output renderer", () => {
 
     expect(rendered).toContain("# Plan");
     expect(rendered).toContain("`release-hardening`");
+    expect(rendered).toContain("Version: Unversioned");
     expect(rendered).not.toContain("Top-level Plans");
   });
 
@@ -96,6 +99,37 @@ describe("output renderer", () => {
     expect(rendered).toContain("`release-check`");
     expect(rendered).toContain("Progress: `80%`");
     expect(rendered).not.toContain("Task Tree");
+  });
+
+  it("renders version-scoped plan and task filters in list views", () => {
+    const planRendered = renderCapturedOutput(
+      JSON.stringify({
+        topLevelPlans: ["Release hardening [in_progress]"],
+        lines: ["- Release hardening (release-hardening) [in_progress]"],
+        versionFilter: {
+          id: "release-0-2-0",
+          version: "0.2.0",
+          title: "Stable baseline"
+        }
+      }),
+      "stdout"
+    );
+    const taskRendered = renderCapturedOutput(
+      JSON.stringify({
+        taskTree: [],
+        lines: ["- Release check (release-check) [pending]"],
+        versionFilter: {
+          id: null,
+          version: null,
+          title: "unversioned"
+        }
+      }),
+      "stdout"
+    );
+
+    expect(planRendered).toContain("## Filter");
+    expect(planRendered).toContain("Version scope: 0.2.0 (release-0-2-0)");
+    expect(taskRendered).toContain("Version scope: unversioned");
   });
 
   it("renders error envelopes as markdown", () => {
@@ -224,7 +258,6 @@ describe("output renderer", () => {
           workspace: {
             mode: "init",
             root: "D:/project/VibeCoding",
-            activeChangeId: "bootstrap-apcc",
             createdFiles: ["AGENTS.md"],
             updatedFiles: [".apcc/config/workspace.yaml"],
             skippedFiles: ["docs/shared/overview.md"]

@@ -194,7 +194,11 @@ The docs site uses the workspace `docsLanguage` value as its default locale when
 The docs site should not depend on:
 
 - a fixed `docs/` root if the workspace config points somewhere else
+- hardcoded scaffold sections such as `shared/`, `public/`, or `internal/`
 - hardcoded `project/changes` style conventions
 - implicit version or decision directories
+- a requirement that any default scaffold file must exist unless the control plane explicitly references it
 
 It should render authored docs from the configured package root and structured runtime state from `.apcc`.
+
+The same rule applies to APCC implementation work: runtime code, docs-site code, and `doctor` must not quietly promote the default scaffold tree into a required protocol contract.

@@ -13,7 +13,6 @@ export interface WorkspacePaths {
   planFile: string;
   taskFile: string;
   taskArchiveFile: string;
-  activeStateFile: string;
   decisionFile: string;
   versionFile: string;
 }
@@ -92,7 +91,6 @@ export function getWorkspacePaths(start = process.cwd()): WorkspacePaths {
     planFile: path.join(workspaceRoot, "plans", "current.yaml"),
     taskFile: path.join(workspaceRoot, "tasks", "current.yaml"),
     taskArchiveFile: path.join(workspaceRoot, "tasks", "archive.yaml"),
-    activeStateFile: path.join(workspaceRoot, "state", "active.yaml"),
     decisionFile: path.join(workspaceRoot, "decisions", "records.yaml"),
     versionFile: path.join(workspaceRoot, "versions", "records.yaml")
   };

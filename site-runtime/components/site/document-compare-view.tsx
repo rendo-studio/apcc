@@ -4,6 +4,7 @@ import type { ComponentProps } from "react";
 import type { SiteLocale } from "../../lib/i18n";
 import type { RuntimeDocRevisionEntry } from "../../lib/runtime-data";
 import { formatSiteDate, getSiteCopy } from "../../lib/site-copy";
+import { RenderedMarkdown } from "./rendered-markdown";
 
 function stripFrontmatter(content: string): string {
   const match = content.match(/^---\r?\n[\s\S]*?\r?\n---\r?\n?([\s\S]*)$/);
@@ -129,7 +130,7 @@ function renderLineNumber(value: number | null): string {
   return value === null ? "" : String(value);
 }
 
-export function DocumentRevisionPreview({
+export async function DocumentRevisionPreview({
   locale,
   revision,
   components
@@ -145,11 +146,11 @@ export function DocumentRevisionPreview({
         <div className="font-mono text-[11px] font-medium uppercase tracking-[0.08em] text-[color:var(--muted-foreground)]">
           {copy.revisions.historicalRevision}
         </div>
-        <div className="mt-1 text-sm text-[color:var(--muted-foreground)]">
+      <div className="mt-1 text-sm text-[color:var(--muted-foreground)]">
           {copy.revisions.versionTime(formatTimestamp(locale, revision.createdAt))}
         </div>
       </div>
-      <Markdown components={components}>{stripFrontmatter(revision.content)}</Markdown>
+      <RenderedMarkdown components={components}>{stripFrontmatter(revision.content)}</RenderedMarkdown>
     </>
   );
 }

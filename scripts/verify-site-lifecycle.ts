@@ -131,6 +131,29 @@ async function main() {
       docsLanguage: "zh-CN"
     });
 
+    await fs.writeFile(
+      path.join(workspaceRoot, "docs", "public", "rendering-fixture.md"),
+      [
+        "---",
+        "name: Rendering Fixture",
+        "description: Markdown rendering fixture for docs-site verification.",
+        "---",
+        "",
+        "# Rendering Fixture",
+        "",
+        "| 列 | 值 |",
+        "| --- | --- |",
+        "| One | Two |",
+        "",
+        "```bash",
+        "npm install -g apcc",
+        "apcc guide",
+        "```",
+        ""
+      ].join("\n"),
+      "utf8"
+    );
+
     const statusBeforeStart = await getSiteRuntimeStatus(workspaceRoot);
     assert.equal(statusBeforeStart.state, "absent", "site status should report absent before the first start");
 
@@ -140,13 +163,21 @@ async function main() {
     const bareRootResponse = await fetch(siteOrigin, { redirect: "manual" });
     const firstHomeResponse = await fetch(first.url);
     const overviewUrl = `${siteOrigin}/zh-CN/docs/shared/${encodeURIComponent("概览")}`;
+    const renderingFixtureUrl = `${siteOrigin}/zh-CN/docs/public/rendering-fixture`;
     const firstResponse = await fetch(overviewUrl);
+    const renderingFixtureResponse = await fetch(renderingFixtureUrl);
+    const renderingFixtureHtml = await renderingFixtureResponse.text();
 
     assert.equal(first.alreadyRunning, false, "first site start should start a fresh runtime");
     assert.equal(first.port, requestedPort, "site start should honor an explicit requested port");
     assert.equal(firstRegistry.pid, first.pid, "registry pid should match the started runtime pid");
     assert.equal(firstRegistry.port, first.port, "registry port should match the started runtime port");
     assert.equal(firstRegistry.url, first.url, "registry url should match the started runtime url");
+    assert.match(
+      firstRegistry.templateRoot ?? "",
+      /[\\/]shared-shells[\\/]/,
+      "source-repo live runtimes should launch from the local shared shell cache rather than dist"
+    );
     assert.equal(
       bareRootResponse.headers.get("location"),
       "/zh-CN/docs/console",
@@ -158,6 +189,13 @@ async function main() {
       "the docs-site root should land on the localized console overview"
     );
     assert.equal(firstResponse.status, 200, "prebuilt runtime should serve the localized overview page");
+    assert.equal(renderingFixtureResponse.status, 200, "prebuilt runtime should serve the markdown rendering fixture page");
+    assert.match(renderingFixtureHtml, /<table/i, "markdown tables should render as HTML tables");
+    assert.match(
+      renderingFixtureHtml,
+      /<pre[^>]*>[\s\S]*shiki/i,
+      "fenced code blocks should render through the Fumadocs code-block pipeline"
+    );
     assert.equal(nodeFs.existsSync(path.join(first.runtimeRoot, "server.js")), false, "runtime root should not carry a copied shell server");
     assert.equal(nodeFs.existsSync(path.join(first.runtimeRoot, "node_modules")), false, "runtime root should not install shell dependencies per project");
 

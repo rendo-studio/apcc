@@ -8,6 +8,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { initWorkspace } from "../src/core/bootstrap.js";
 import {
+  ensureRunnablePrebuiltSiteShell,
   getSiteRuntimeStatus,
   listSiteRuntimes,
   stageDocsForSiteRuntime,
@@ -20,6 +21,82 @@ import { createWorkspaceFixture } from "./helpers/workspace.js";
 
 const restorers: Array<() => void> = [];
 const cleanups: Array<() => Promise<void>> = [];
+
+function waitForPortOpen(port: number, timeoutMs = 10000): Promise<boolean> {
+  const startedAt = Date.now();
+
+  return new Promise((resolve) => {
+    const attempt = () => {
+      const socket = net.createConnection({ port, host: "127.0.0.1" });
+      socket.once("connect", () => {
+        socket.destroy();
+        resolve(true);
+      });
+      socket.once("error", () => {
+        socket.destroy();
+        if (Date.now() - startedAt >= timeoutMs) {
+          resolve(false);
+          return;
+        }
+        setTimeout(attempt, 100);
+      });
+    };
+
+    attempt();
+  });
+}
+
+async function spawnFakeSiteRuntimeProcess(options: {
+  port: number;
+  siteId: string;
+  runtimeRoot: string;
+  payload?: Record<string, unknown> | null;
+  includeMarkers?: boolean;
+}): Promise<number> {
+  const includeMarkers = options.includeMarkers ?? true;
+  const child = spawn(
+    process.execPath,
+    [
+      "-e",
+      [
+        "const http=require('node:http');",
+        `const payload=${JSON.stringify(options.payload ?? null)};`,
+        "const server=http.createServer((req,res)=>{",
+        "if (payload && req.url==='/api/apcc/version') {",
+        "res.setHeader('content-type','application/json');",
+        "res.end(JSON.stringify(payload));",
+        "return;",
+        "}",
+        "res.statusCode=200;",
+        "res.end('ok');",
+        "});",
+        `server.listen(${options.port},'127.0.0.1');`,
+        "setInterval(()=>{},1000);"
+      ].join(" "),
+      "--",
+      ...(includeMarkers
+        ? [`--apcc-site-id=${options.siteId}`, `--apcc-runtime-root=${path.resolve(options.runtimeRoot)}`]
+        : [])
+    ],
+    {
+      detached: true,
+      stdio: "ignore"
+    }
+  );
+  child.unref();
+
+  const ready = await waitForPortOpen(options.port, 10000);
+  if (!ready || !child.pid) {
+    throw new Error(`expected fake site runtime to start on port ${options.port}`);
+  }
+
+  return child.pid;
+}
+
+async function writeFakeShell(root: string) {
+  await fs.mkdir(path.join(root, ".next", "static"), { recursive: true });
+  await fs.writeFile(path.join(root, "server.js"), "console.log('fake shell');\n", "utf8");
+}
 
 afterEach(async () => {
   while (restorers.length > 0) {
@@ -266,6 +343,86 @@ describe("site runtime staging", () => {
     expect(stagedFirst.runtimeRoot.startsWith(runtimeBase)).toBe(true);
     expect(stagedSecond.runtimeRoot.startsWith(runtimeBase)).toBe(true);
   });
+
+  it("prunes unreferenced source-only shared shell caches while preserving referenced ones", async () => {
+    const runtimeBase = await fs.mkdtemp(path.join(os.tmpdir(), "apcc-runtime-base-"));
+    const previousRuntimeBase = process.env.APCC_SITE_RUNTIME_BASE;
+    process.env.APCC_SITE_RUNTIME_BASE = runtimeBase;
+    restorers.push(() => {
+      if (previousRuntimeBase === undefined) {
+        delete process.env.APCC_SITE_RUNTIME_BASE;
+        return;
+      }
+      process.env.APCC_SITE_RUNTIME_BASE = previousRuntimeBase;
+    });
+    cleanups.push(async () => {
+      await fs.rm(runtimeBase, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 });
+    });
+
+    const sharedShellsRoot = path.join(runtimeBase, "shared-shells");
+    const unusedShell = path.join(sharedShellsRoot, "shell-unused");
+    const referencedShell = path.join(sharedShellsRoot, "shell-referenced");
+    await writeFakeShell(unusedShell);
+    await writeFakeShell(referencedShell);
+
+    const fakeRuntimeRoot = path.join(runtimeBase, "sites", "referenced-site");
+    await fs.mkdir(path.join(runtimeBase, "registry"), { recursive: true });
+    await fs.mkdir(path.join(fakeRuntimeRoot, "runtime-data"), { recursive: true });
+    await fs.writeFile(
+      path.join(runtimeBase, "registry", "sites.json"),
+      JSON.stringify(
+        {
+          referencedSite: {
+            siteId: "referencedSite",
+            sourceDocsRoot: "D:/fake/docs",
+            sourceWorkspaceRoot: "D:/fake/workspace",
+            runtimeRoot: fakeRuntimeRoot,
+            port: 4310,
+            url: "http://127.0.0.1:4310/docs",
+            startedAt: "2026-04-30T00:00:00.000Z",
+            mode: "live"
+          }
+        },
+        null,
+        2
+      ) + "\n",
+      "utf8"
+    );
+    await fs.writeFile(
+      path.join(fakeRuntimeRoot, "runtime-data", "registry.json"),
+      JSON.stringify(
+        {
+          siteId: "referencedSite",
+          pid: 99999,
+          watcherPid: null,
+          port: 4310,
+          url: "http://127.0.0.1:4310/docs",
+          runtimeBase,
+          runtimeRoot: fakeRuntimeRoot,
+          templateRoot: referencedShell,
+          sourceDocsRoot: "D:/fake/docs",
+          sourceWorkspaceRoot: "D:/fake/workspace",
+          stagedDocsRoot: path.join(fakeRuntimeRoot, "content", "docs"),
+          logFile: path.join(fakeRuntimeRoot, "runtime-data", "site.log"),
+          startedAt: "2026-04-30T00:00:00.000Z",
+          mode: "live"
+        },
+        null,
+        2
+      ) + "\n",
+      "utf8"
+    );
+
+    const preparedShell = await ensureRunnablePrebuiltSiteShell(runtimeBase);
+
+    const unusedStillExists = await fs.stat(unusedShell).then(() => true).catch(() => false);
+    const referencedStillExists = await fs.stat(referencedShell).then(() => true).catch(() => false);
+    const preparedShellExists = await fs.stat(preparedShell).then(() => true).catch(() => false);
+
+    expect(unusedStillExists).toBe(false);
+    expect(referencedStillExists).toBe(true);
+    expect(preparedShellExists).toBe(true);
+  }, 30000);
 
   it("uses the persisted docs-site source path and preferred port when path is omitted", async () => {
     const fixture = await createWorkspaceFixture({
@@ -527,18 +684,31 @@ describe("site runtime staging", () => {
     cleanups.push(fixture.cleanup);
 
     const staged = await stageDocsForSiteRuntime(fixture.root);
-    const server = net.createServer((socket) => {
-      socket.on("error", () => undefined);
-      socket.end();
-    });
-    await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", () => resolve()));
-    const address = server.address();
+    const probe = net.createServer();
+    await new Promise<void>((resolve) => probe.listen(0, "127.0.0.1", () => resolve()));
+    const address = probe.address();
     if (!address || typeof address === "string") {
       throw new Error("expected a TCP address for the health-check server");
     }
     const port = address.port;
+    await new Promise<void>((resolve) => probe.close(() => resolve()));
+
+    const childPid = await spawnFakeSiteRuntimeProcess({
+      port,
+      siteId: staged.siteId,
+      runtimeRoot: staged.runtimeRoot,
+      payload: {
+        updatedAt: "2026-04-25T00:00:00.000Z",
+        siteId: staged.siteId,
+        runtimeRoot: staged.runtimeRoot,
+        sourceDocsRoot: staged.sourceDocsRoot,
+        mode: "live"
+      }
+    });
     cleanups.push(async () => {
-      await new Promise<void>((resolve) => server.close(() => resolve()));
+      try {
+        process.kill(childPid, "SIGTERM");
+      } catch {}
     });
 
     await fs.mkdir(path.join(runtimeBase, "registry"), { recursive: true });
@@ -547,7 +717,7 @@ describe("site runtime staging", () => {
       JSON.stringify(
         {
           siteId: staged.siteId,
-          pid: process.pid,
+          pid: childPid,
           watcherPid: null,
           port,
           url: `http://127.0.0.1:${port}/docs`,
@@ -601,7 +771,7 @@ describe("site runtime staging", () => {
         mode: "live"
       })
     ]);
-  });
+  }, 15000);
 
   it("can stop all active site runtimes in one call", async () => {
     const runtimeBase = await fs.mkdtemp(path.join(os.tmpdir(), "apcc-runtime-base-"));
@@ -631,17 +801,21 @@ describe("site runtime staging", () => {
     const port = address.port;
     await new Promise<void>((resolve) => probe.close(() => resolve()));
 
-    const child = spawn(process.execPath, [
-      "-e",
-      `const http=require('node:http'); const server=http.createServer((req,res)=>res.end('ok')); server.listen(${port},'127.0.0.1'); setInterval(()=>{},1000);`
-    ], {
-      detached: true,
-      stdio: "ignore"
+    const childPid = await spawnFakeSiteRuntimeProcess({
+      port,
+      siteId: staged.siteId,
+      runtimeRoot: staged.runtimeRoot,
+      payload: {
+        updatedAt: "2026-04-25T00:00:00.000Z",
+        siteId: staged.siteId,
+        runtimeRoot: staged.runtimeRoot,
+        sourceDocsRoot: staged.sourceDocsRoot,
+        mode: "live"
+      }
     });
-    child.unref();
     cleanups.push(async () => {
       try {
-        process.kill(child.pid!, "SIGTERM");
+        process.kill(childPid, "SIGTERM");
       } catch {}
     });
 
@@ -651,7 +825,7 @@ describe("site runtime staging", () => {
       JSON.stringify(
         {
           siteId: staged.siteId,
-          pid: child.pid,
+          pid: childPid,
           watcherPid: null,
           port,
           url: `http://127.0.0.1:${port}/docs`,
@@ -705,12 +879,119 @@ describe("site runtime staging", () => {
         siteId: staged.siteId,
         projectName: "Test Workspace",
         stopped: true,
-        preservedRuntime: true
+        preservedRuntime: true,
+        terminatedPid: childPid
       })
     );
     expect(JSON.parse(globalRegistry)).toEqual({});
     expect(runtimeMetadata.mode).toBe("staged");
     expect(runtimeMetadata.port).toBeNull();
     expect(runtimeMetadata.url).toBeNull();
-  });
+  }, 15000);
+
+  it("does not treat a non-APCC listener as healthy or kill it during bulk stop", async () => {
+    const runtimeBase = await fs.mkdtemp(path.join(os.tmpdir(), "apcc-runtime-base-"));
+    const previousRuntimeBase = process.env.APCC_SITE_RUNTIME_BASE;
+    process.env.APCC_SITE_RUNTIME_BASE = runtimeBase;
+    restorers.push(() => {
+      if (previousRuntimeBase === undefined) {
+        delete process.env.APCC_SITE_RUNTIME_BASE;
+        return;
+      }
+      process.env.APCC_SITE_RUNTIME_BASE = previousRuntimeBase;
+    });
+    cleanups.push(async () => {
+      await fs.rm(runtimeBase, { recursive: true, force: true });
+    });
+
+    const fixture = await createWorkspaceFixture();
+    restorers.push(fixture.use());
+    cleanups.push(fixture.cleanup);
+
+    const staged = await stageDocsForSiteRuntime(fixture.root);
+    const probe = net.createServer();
+    await new Promise<void>((resolve) => probe.listen(0, "127.0.0.1", () => resolve()));
+    const address = probe.address();
+    if (!address || typeof address === "string") {
+      throw new Error("expected a TCP address for the non-APCC runtime probe");
+    }
+    const port = address.port;
+    await new Promise<void>((resolve) => probe.close(() => resolve()));
+
+    const childPid = await spawnFakeSiteRuntimeProcess({
+      port,
+      siteId: staged.siteId,
+      runtimeRoot: staged.runtimeRoot,
+      payload: null,
+      includeMarkers: false
+    });
+    cleanups.push(async () => {
+      try {
+        process.kill(childPid, "SIGTERM");
+      } catch {}
+    });
+
+    await fs.mkdir(path.join(runtimeBase, "registry"), { recursive: true });
+    await fs.writeFile(
+      staged.registryFile,
+      JSON.stringify(
+        {
+          siteId: staged.siteId,
+          pid: childPid,
+          watcherPid: null,
+          port,
+          url: `http://127.0.0.1:${port}/docs`,
+          runtimeBase,
+          runtimeRoot: staged.runtimeRoot,
+          templateRoot: staged.templateRoot,
+          sourceDocsRoot: staged.sourceDocsRoot,
+          sourceWorkspaceRoot: staged.sourceWorkspaceRoot,
+          stagedDocsRoot: staged.stagedDocsRoot,
+          logFile: staged.logFile,
+          startedAt: "2026-04-25T00:00:00.000Z",
+          mode: "live"
+        },
+        null,
+        2
+      ) + "\n",
+      "utf8"
+    );
+    await fs.writeFile(
+      path.join(runtimeBase, "registry", "sites.json"),
+      JSON.stringify(
+        {
+          [staged.siteId]: {
+            siteId: staged.siteId,
+            sourceDocsRoot: staged.sourceDocsRoot,
+            sourceWorkspaceRoot: staged.sourceWorkspaceRoot,
+            runtimeRoot: staged.runtimeRoot,
+            port,
+            url: `http://127.0.0.1:${port}/docs`,
+            startedAt: "2026-04-25T00:00:00.000Z",
+            mode: "live"
+          }
+        },
+        null,
+        2
+      ) + "\n",
+      "utf8"
+    );
+
+    const statusBeforeStop = await getSiteRuntimeStatus(fixture.root);
+    const listedBeforeStop = await listSiteRuntimes(runtimeBase);
+    const stopResult = await stopAllSiteRuntimes(runtimeBase);
+    const stillOpen = await waitForPortOpen(port, 1500);
+
+    expect(statusBeforeStop.state).toBe("staged");
+    expect(statusBeforeStop.healthy).toBe(false);
+    expect(listedBeforeStop).toEqual([]);
+    expect(stopResult.items[0]).toEqual(
+      expect.objectContaining({
+        siteId: staged.siteId,
+        terminatedPid: null,
+        terminatedWatcherPid: null
+      })
+    );
+    expect(stillOpen).toBe(true);
+  }, 15000);
 });

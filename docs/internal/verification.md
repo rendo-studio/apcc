@@ -23,6 +23,11 @@ npm run verify:package-install
 npm run verify:site-lifecycle
 ```
 
+Source-repo rule:
+
+- keep production-style verification under `.tmp/production-smoke/`
+- do not use a globally installed or packaged `apcc` directly against the APCC repository root unless you are intentionally testing self-migration behavior
+
 ## Site Changes
 
 If the change affects the docs site, also verify:
@@ -56,6 +61,8 @@ Expected result:
 - editing an authored doc updates the rendered page without restarting the shell
 - repeated authored doc edits continue to advance runtime version data instead of only reacting to the first change
 - stale runtime registry metadata does not force a manual clean; the next `site start` still starts a fresh healthy runtime
+- current-source live runtimes do not block `npm run build` from replacing `dist/site-runtime-prebuilt/`
+- current-source live runtimes may use a local shared shell cache, but installed-package runtimes still launch from packaged `dist/site-runtime-prebuilt/`
 
 CI should also run the same verification on Windows, Linux, and macOS.
 
@@ -73,7 +80,16 @@ npm run build
 npm run verify:package-install
 ```
 
-The package install smoke check must pack the current repository, install the tarball into a temporary project, execute the package-manager generated `apcc` binary, initialize a temporary workspace, run `apcc doctor check` and `apcc doctor fix` on that workspace, and build a deployable docs-site artifact from the installed package.
+The package install smoke check must:
+
+- pack the current repository
+- install the tarball into a scratch project under `.tmp/production-smoke/`
+- execute the package-manager generated `apcc` binary
+- initialize a scratch workspace under `.tmp/production-smoke/`
+- run `apcc doctor check` and `apcc doctor fix` on that workspace
+- build a deployable docs-site artifact from the installed package
+
+This is the maintainer path for validating production-style behavior without mutating the APCC repository workspace itself.
 
 ## Control-Plane Changes
 

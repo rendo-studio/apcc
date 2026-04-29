@@ -4,7 +4,7 @@ workspaceName: apcc
 docsRoot: docs
 workspaceRoot: .apcc
 bootstrapMode: init
-templateVersion: 2026-04-29.workspace-schema-provenance-1
+templateVersion: 2026-04-30.runtime-state-and-version-scoping-1
 projectKind: general
 docsMode: standard
 docsLanguage: en

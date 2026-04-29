@@ -7,6 +7,7 @@ import {
   createVersionRecord,
   getVersionRecord,
   listVersionRecords,
+  resolveVersionRecordSelector,
   updateVersionRecord
 } from "../src/core/version.js";
 import { createWorkspaceFixture } from "./helpers/workspace.js";
@@ -67,5 +68,30 @@ describe("version control plane", () => {
     expect(listed).toHaveLength(1);
     expect(loaded.docPath).toBe(docPath);
     expect(loaded.highlights).toContain("Removed persisted derived state");
+  });
+
+  it("resolves version selectors by version label and rejects duplicate labels", async () => {
+    const fixture = await createWorkspaceFixture();
+    restorers.push(fixture.use());
+    cleanups.push(fixture.cleanup);
+
+    const created = await createVersionRecord({
+      version: "0.2.0",
+      title: "Stable control-plane baseline",
+      summary: "First stable project version."
+    });
+
+    const resolvedByLabel = await resolveVersionRecordSelector("0.2.0");
+    const resolvedById = await resolveVersionRecordSelector(created.id);
+
+    expect(resolvedByLabel.id).toBe(created.id);
+    expect(resolvedById.id).toBe(created.id);
+    await expect(
+      createVersionRecord({
+        version: "0.2.0",
+        title: "Duplicate baseline",
+        summary: "Should fail because version labels must stay unique."
+      })
+    ).rejects.toThrow(/already exists/i);
   });
 });

@@ -30,7 +30,7 @@ export const i18nUI = defineI18nUI(i18n, {
   },
   en: {
     displayName: "English",
-    search: "Search documentation",
+    search: "Search",
     searchNoResult: "No results found",
     toc: "On this page",
     tocNoHeadings: "No headings",

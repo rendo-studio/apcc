@@ -19,6 +19,50 @@ It is not part of the public usage model.
 - update `.apcc/` before implementation drifts too far from the control plane
 - keep generated local artifacts and private publishing credentials out of the release tree
 - keep `README.md` developer-facing for GitHub and stage `assets/npm-readme.md` into published npm packages
+- do not hardcode default docs-package scaffold sections such as `shared/`, `public/`, or `internal/` into runtime or `doctor` behavior unless the control plane explicitly references them
+
+## Source-Repo Bootstrap
+
+The APCC source repository does not use the same bootstrap guidance that APCC ships into consumer workspaces.
+
+Rules:
+
+- use `npm run dev -- <command>` for APCC commands against current source
+- do not default to a globally installed `apcc` when developing APCC itself
+- use `npm run dev -- guide workflow` only when you are validating the shipped consumer guidance under `assets/`
+- treat `docs/internal/maintainer-workflow.md` and `docs/internal/verification.md` as the maintainer-first entrypoints
+- keep `assets/agents-template.md` and `assets/skills/apcc-workflow/SKILL.md` product-facing
+- keep the source-repo-local `AGENTS.md` and `.agents/skills/apcc-workflow/SKILL.md` maintainer-facing
+
+The repo-local guidance overrides live under `.maintainer-guidance/` so self-`init` or repair does not overwrite the source repository back to consumer-facing bootstrap text.
+
+APCC-managed `AGENTS.md` instructions must stay inside:
+
+```text
+<!-- APCC:BEGIN -->
+...
+<!-- APCC:END -->
+```
+
+Do not expand the merge logic back to heading-based heuristics. If the markers are absent, sync may append a managed block, but it must not assume unrelated `AGENTS.md` text is safe to replace.
+
+Workspace runtime coordination files such as mutation locks are local runtime artifacts. Keep them under the per-user APCC runtime base beside docs-site runtimes, not under `.apcc/state/`.
+
+## Production Smoke Root
+
+Production-style verification must run under the fixed scratch root:
+
+```text
+.tmp/production-smoke/
+```
+
+Use that root for:
+
+- staged publish-package directories
+- installed-tarball smoke workspaces
+- manual checks that intentionally exercise the packaged or published CLI instead of current source
+
+Do not point installed-package or global-CLI checks at the APCC repository root just to simulate production behavior. The only exception is explicit self-migration testing, such as validating `init`, repair, or schema upgrades against this repository's own workspace.
 
 ## Change Workflow
 
@@ -43,6 +87,16 @@ npm run verify:site-lifecycle
 ```
 
 `npm run build` is the maintainer path that builds the APCC CLI artifact through ACLIP's standard build helper and packages the shared prebuilt docs viewer shell under `dist/site-runtime-prebuilt/`.
+
+When APCC is running from current source during maintainer workflows, live docs-site runtimes should execute from a per-user shared shell cache under the local runtime base instead of holding open `dist/site-runtime-prebuilt/` directly. That keeps `npm run build` free to replace `dist/` without forcing a live-runtime shutdown.
+
+Shared-cache rules:
+
+- this cache exists only for current-source maintainer flows
+- installed-package user flows should not depend on it
+- keep the current shell plus any shell roots still referenced by live runtime registries
+- prune unreferenced older `shared-shells/shell-*` directories so the local runtime base stays bounded
+- if an older current-source live runtime still points at packaged `dist/site-runtime-prebuilt/`, the next `site start` may recycle it onto the shared cache automatically
 
 `npm run dev -- site build` verifies the public user-facing build command by producing a deployable read-only docs-site artifact. It must not be used as the internal shell prebuild step, and it must not stop a healthy live runtime.
 
@@ -79,6 +133,12 @@ Current rule:
 - build the shared shell from `site-runtime/`
 - package the resulting artifact under `dist/site-runtime-prebuilt/`
 - let `site start` reuse that shared shell while each project only contributes runtime data
+
+Source-repo maintainer exception:
+
+- current-source `npm run dev -- site start` may first mirror the packaged shell into the local runtime base shared cache before launching it
+- installed-package user flows should continue to run directly from the packaged `dist/site-runtime-prebuilt/` artifact
+- current-source shared-cache cleanup should only remove unreferenced old shell copies; it must not change the packaged artifact consumed by installed users
 
 `npm` remains the build-time package manager for the shell source for now.
 

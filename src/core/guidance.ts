@@ -25,19 +25,41 @@ export function getAgentsTemplateAssetPath(): string {
   return getApccPackageFile("assets", "agents-template.md");
 }
 
-async function loadAgentsTemplate(): Promise<string> {
-  return readText(getAgentsTemplateAssetPath());
+function getMaintainerGuidanceRoot(root = process.cwd()): string {
+  return path.join(root, ".maintainer-guidance");
 }
 
-function renderStandaloneAgentsMd(template: string): string {
-  return `# AGENTS.md
+function getMaintainerAgentsTemplatePath(root = process.cwd()): string {
+  return path.join(getMaintainerGuidanceRoot(root), "agents-template.md");
+}
 
-${template.trim()}
-`;
+function getMaintainerWorkflowSkillPath(root = process.cwd()): string {
+  return path.join(getMaintainerGuidanceRoot(root), "skills", "apcc-workflow", "SKILL.md");
+}
+
+function resolveAgentsTemplatePath(root = process.cwd()): string {
+  const overridePath = getMaintainerAgentsTemplatePath(root);
+  return existsSync(overridePath) ? overridePath : getAgentsTemplateAssetPath();
+}
+
+function resolveWorkflowSkillSourceDir(root = process.cwd()): string {
+  const overridePath = getMaintainerWorkflowSkillPath(root);
+  return existsSync(overridePath) ? path.dirname(overridePath) : getWorkflowSkillPackageDir();
+}
+
+async function loadAgentsTemplate(root = process.cwd()): Promise<string> {
+  return readText(resolveAgentsTemplatePath(root));
 }
 
 function renderWrappedAgentsSection(template: string): string {
   return `${APCC_AGENTS_BEGIN}\n${template.trim()}\n${APCC_AGENTS_END}`;
+}
+
+function renderManagedAgentsMd(template: string): string {
+  return `# AGENTS.md
+
+${renderWrappedAgentsSection(template)}
+`;
 }
 
 function normalizeLineEndings(value: string): string {
@@ -45,40 +67,36 @@ function normalizeLineEndings(value: string): string {
 }
 
 function mergeAgentsMd(current: string, template: string): string {
-  const standalone = renderStandaloneAgentsMd(template).trim();
+  const managed = renderManagedAgentsMd(template).trim();
   const wrapped = renderWrappedAgentsSection(template);
+  const legacyStandalone = `# AGENTS.md
+
+${template.trim()}
+`.trim();
   const normalizedCurrent = normalizeLineEndings(current).trim();
-  const normalizedStandalone = normalizeLineEndings(standalone).trim();
+  const normalizedManaged = normalizeLineEndings(managed).trim();
+  const normalizedLegacyStandalone = normalizeLineEndings(legacyStandalone).trim();
   const normalizedWrapped = normalizeLineEndings(wrapped).trim();
-  if (normalizedCurrent === normalizedStandalone) {
-    return `${standalone}\n`;
-  }
-
   if (
-    normalizedCurrent.startsWith("# AGENTS.md") &&
-    normalizedCurrent.includes("## APCC") &&
-    !normalizedCurrent.includes(APCC_AGENTS_BEGIN) &&
-    !normalizedCurrent.includes(APCC_AGENTS_END)
+    normalizedCurrent === normalizedManaged ||
+    normalizedCurrent === normalizedLegacyStandalone ||
+    normalizedCurrent === normalizedWrapped
   ) {
-    return `${standalone}\n`;
-  }
-
-  if (normalizedCurrent === `${normalizedStandalone}\n\n${normalizedWrapped}`.trim()) {
-    return `${standalone}\n`;
+    return `${managed}\n`;
   }
 
   if (current.includes(APCC_AGENTS_BEGIN) && current.includes(APCC_AGENTS_END)) {
     const next = current.replace(
-      new RegExp(`${APCC_AGENTS_BEGIN}[\\s\\S]*?${APCC_AGENTS_END}`, "m"),
+      new RegExp(`${APCC_AGENTS_BEGIN.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}[\\s\\S]*?${APCC_AGENTS_END.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`, "m"),
       wrapped
     );
-    if (next.trim() === `${standalone}\n\n${wrapped}`.trim()) {
-      return `${standalone}\n`;
-    }
     return next.endsWith("\n") ? next : `${next}\n`;
   }
 
   const trimmedCurrent = current.trimEnd();
+  if (trimmedCurrent.length === 0) {
+    return `${managed}\n`;
+  }
   return `${trimmedCurrent}\n\n${wrapped}\n`;
 }
 
@@ -92,15 +110,15 @@ export async function inspectGuidanceArtifacts(root = process.cwd()) {
 }
 
 export async function syncGuidanceArtifacts(root = process.cwd()) {
-  const agentsTemplate = await loadAgentsTemplate();
+  const agentsTemplate = await loadAgentsTemplate(root);
 
-  const sourceSkillDir = getWorkflowSkillPackageDir();
+  const sourceSkillDir = resolveWorkflowSkillSourceDir(root);
   const workflowPath = workflowSkillPath(root);
   const workflowDir = workflowSkillDir(root);
   const agentsPath = agentsMdPath(root);
   const agentsContent = existsSync(agentsPath)
     ? mergeAgentsMd(await readText(agentsPath), agentsTemplate)
-    : renderStandaloneAgentsMd(agentsTemplate);
+    : renderManagedAgentsMd(agentsTemplate);
 
   await fs.rm(workflowDir, { recursive: true, force: true });
   await fs.mkdir(path.dirname(workflowDir), { recursive: true });

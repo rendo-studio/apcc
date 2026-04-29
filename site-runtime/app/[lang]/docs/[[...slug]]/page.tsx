@@ -9,6 +9,7 @@ import { ConsoleOverviewView } from "../../../../components/site/console-overvie
 import { ConsoleTasksView } from "../../../../components/site/console-tasks-view";
 import { DocumentCompareView, DocumentRevisionPreview } from "../../../../components/site/document-compare-view";
 import { DocumentRevisionSidebar } from "../../../../components/site/document-revision-bar";
+import { RenderedMarkdown } from "../../../../components/site/rendered-markdown";
 import { createDocsViewerSource, resolveDocsHref } from "../../../../lib/docs-viewer";
 import { decodeRouteSlug, docsSlugToUrl } from "../../../../lib/docs-path";
 import { i18n, isSiteLocale, type SiteLocale } from "../../../../lib/i18n";
@@ -148,7 +149,7 @@ export default async function Page(props: {
             ) : effectiveSelectedRevision ? (
               <DocumentRevisionPreview locale={lang} revision={effectiveSelectedRevision} components={components} />
             ) : resolvedPage ? (
-              <Markdown components={components}>{resolvedPage.body}</Markdown>
+              <RenderedMarkdown components={components}>{resolvedPage.body}</RenderedMarkdown>
             ) : null}
           </>
         )}
