@@ -18,9 +18,9 @@ items:
       - If `apcc site start`, `apcc site build`, or `apcc site status` now reports a YAML parse error, fix the named `.apcc` file first and rerun `apcc doctor check` before retrying.
       - Prefer `apcc task update --parent/--plan` and `apcc plan update --parent` for single-node moves; reserve direct `.apcc` edits for bulk restructuring.
       - When editing `.apcc` directly, replace existing fields structurally instead of appending a second copy of keys such as `planRef`, `parentTaskId`, `status`, or `countedForProgress`.
-    validationSummary: npm run check, npm run test, npm run build, npm run verify:package-install, npm run verify:site-lifecycle, npm run prepare:publish-package -- --out .tmp/apcc-publish-0.3.3, npm run prepare:publish-package -- --out .tmp/apcc-scoped-publish-0.3.3 --name @rendo-studio/apcc, npm pack --dry-run (apcc), npm pack --dry-run (@rendo-studio/apcc), npm run dev -- doctor check, npm run dev -- status
+    validationSummary: npm run check, npm run test, npm run build, npm run verify:package-install, npm run verify:site-lifecycle, npm run prepare:publish-package -- --out .tmp/apcc-publish-0.3.3, npm run prepare:publish-package -- --out .tmp/apcc-scoped-publish-0.3.3 --name @rendo-studio/apcc, npm pack --dry-run (apcc), npm pack --dry-run (@rendo-studio/apcc), npm run dev -- doctor check, npm run dev -- status, GitHub release v0.3.3, npm publish apcc@0.3.3, npm publish @rendo-studio/apcc@0.3.3
     createdAt: 2026-04-29T00:00:00.000Z
-    recordedAt: 2026-04-29T13:35:00Z
+    recordedAt: 2026-04-29T12:08:31Z
   - id: 0-3-2-workspace-schema-provenance-and-docs-site-localization
     version: 0.3.2
     title: Workspace schema provenance and docs-site localization

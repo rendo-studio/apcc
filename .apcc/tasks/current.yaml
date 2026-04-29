@@ -933,7 +933,7 @@ items:
   - id: verify-and-publish-invalid-yaml-hardening-patch-66
     name: Verify and publish invalid-YAML hardening patch
     summary: Run release-grade verification on the new diagnostics and guidance, then publish the next APCC patch release.
-    status: in_progress
+    status: done
     planRef: harden-invalid-yaml-recovery-and-guidance-42
     parentTaskId: null
     countedForProgress: true

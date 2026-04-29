@@ -40,3 +40,6 @@ This patch release makes malformed `.apcc` YAML failures file-aware and actionab
 - `npm pack --dry-run` for the scoped staged package
 - `npm run dev -- doctor check`
 - `npm run dev -- status`
+- GitHub release `v0.3.3`
+- npm publish `apcc@0.3.3`
+- npm publish `@rendo-studio/apcc@0.3.3`
