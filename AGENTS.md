@@ -17,7 +17,8 @@ Mandatory:
 7. Treat `docs/` as authored context and `.apcc/` as the structured control plane.
 8. When initializing or reinitializing APCC, prefer setting the primary docs language to match the current human conversation unless the repository already has an established docs language.
 9. When a new task, plan change, or execution boundary is confirmed, update `.apcc` first and only then start implementation work.
-10. For bulk plan or task restructuring, edit `.apcc/` directly against `apcc guide control-plane-contract`, then run `apcc doctor check` and an explicit inspection command.
-11. Use `apcc guide` to discover public APCC docs topics when command behavior or workspace semantics are unclear.
-12. After `apcc site start`, tell the human the returned docs-site URL. Prefer a stable unique port on first start with `apcc site start --port <port>` or `.apcc/config/workspace.yaml`.
-13. Do not run `apcc site stop` as an end-of-task ritual. Leave the docs site running unless the human explicitly asks to stop or clean it.
+10. For targeted task or plan mutations, prefer CLI commands such as `apcc task update --parent/--plan` or `apcc plan update --parent` instead of hand-editing a single node in YAML.
+11. For bulk plan or task restructuring, edit `.apcc/` directly against `apcc guide control-plane-contract`, replace fields structurally instead of appending duplicate keys, then run `apcc doctor check` and an explicit inspection command.
+12. Use `apcc guide` to discover public APCC docs topics when command behavior or workspace semantics are unclear.
+13. After `apcc site start`, tell the human the returned docs-site URL. Prefer a stable unique port on first start with `apcc site start --port <port>` or `.apcc/config/workspace.yaml`.
+14. Do not run `apcc site stop` as an end-of-task ritual. Leave the docs site running unless the human explicitly asks to stop or clean it.

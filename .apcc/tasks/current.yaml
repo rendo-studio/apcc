@@ -916,3 +916,24 @@ items:
     planRef: publish-the-schema-provenance-and-localization-patch-release-41
     parentTaskId: null
     countedForProgress: true
+  - id: harden-file-aware-yaml-parse-diagnostics-64
+    name: Harden file-aware YAML parse diagnostics
+    summary: Wrap YAML parser failures with file-path context and surface actionable doctor-first recovery guidance on runtime commands.
+    status: done
+    planRef: harden-invalid-yaml-recovery-and-guidance-42
+    parentTaskId: null
+    countedForProgress: true
+  - id: tighten-cli-vs-direct-edit-guidance-65
+    name: Tighten CLI versus direct-edit guidance
+    summary: Clarify that targeted task and plan mutations should prefer CLI commands, and that direct YAML edits must replace fields structurally rather than append duplicate mappings.
+    status: done
+    planRef: harden-invalid-yaml-recovery-and-guidance-42
+    parentTaskId: null
+    countedForProgress: true
+  - id: verify-and-publish-invalid-yaml-hardening-patch-66
+    name: Verify and publish invalid-YAML hardening patch
+    summary: Run release-grade verification on the new diagnostics and guidance, then publish the next APCC patch release.
+    status: in_progress
+    planRef: harden-invalid-yaml-recovery-and-guidance-42
+    parentTaskId: null
+    countedForProgress: true

@@ -118,4 +118,74 @@ describe("workspace validation and repair", () => {
       ])
     );
   });
+
+  it("reports file-aware YAML parse issues instead of collapsing them into generic schema noise", async () => {
+    const root = path.join(process.env.TEMP ?? process.cwd(), `apcc-validate-yaml-parse-${Date.now()}`);
+    cleanups.push(root);
+
+    await initWorkspace({
+      targetPath: root,
+      projectName: "Broken Workspace",
+      endGoalName: "Handle broken control-plane YAML",
+      endGoalSummary: "Ensure doctor points directly at invalid YAML files."
+    });
+
+    await fs.writeFile(
+      path.join(root, ".apcc", "tasks", "current.yaml"),
+      [
+        "items:",
+        "  - id: broken-task",
+        "    name: Broken task",
+        "    summary: Broken task",
+        "    status: pending",
+        "    planRef: establish-shared-project-context-1",
+        "    parentTaskId: null",
+        "    countedForProgress: true",
+        "    planRef: support-next-round-estimation-1",
+        ""
+      ].join("\n"),
+      "utf8"
+    );
+
+    const validation = await withWorkspaceRoot(root, async () => validateWorkspace());
+
+    expect(validation.ok).toBe(false);
+    expect(validation.schemaIssues).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining("Failed to parse YAML file"),
+        expect.stringContaining(".apcc")
+      ])
+    );
+    expect(validation.schemaIssues).not.toEqual(
+      expect.arrayContaining([expect.stringContaining("Task state must define an items array")])
+    );
+  });
+
+  it("repairs a workspace when the managed config file is missing entirely", async () => {
+    const root = path.join(process.env.TEMP ?? process.cwd(), `apcc-validate-missing-config-${Date.now()}`);
+    cleanups.push(root);
+
+    await initWorkspace({
+      targetPath: root,
+      projectName: "Missing Config Workspace",
+      endGoalName: "Repair missing config",
+      endGoalSummary: "Ensure doctor fix restores a deleted workspace config file."
+    });
+
+    await fs.rm(path.join(root, ".apcc", "config", "workspace.yaml"), { force: true });
+
+    const before = await withWorkspaceRoot(root, async () => validateWorkspace());
+    expect(before.ok).toBe(false);
+    expect(before.schemaIssues).toEqual(
+      expect.arrayContaining([expect.stringContaining("Missing .apcc/config/workspace.yaml")])
+    );
+
+    const repaired = await withWorkspaceRoot(root, async () => repairWorkspace());
+    expect(repaired.repaired).toBe(true);
+    expect(repaired.validation.ok).toBe(true);
+
+    const repairedConfig = await fs.readFile(path.join(root, ".apcc", "config", "workspace.yaml"), "utf8");
+    expect(repairedConfig).toContain("workspaceSchemaVersion: 10");
+    expect(repairedConfig).toContain("docsLanguage: en");
+  });
 });

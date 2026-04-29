@@ -96,6 +96,39 @@ describe("site runtime staging", () => {
     );
   });
 
+  it("surfaces file-aware YAML recovery guidance when the workspace control plane is invalid", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "apcc-site-invalid-yaml-"));
+    cleanups.push(async () => {
+      await fs.rm(root, { recursive: true, force: true });
+    });
+
+    await initWorkspace({
+      targetPath: root,
+      projectName: "Broken Site Workspace"
+    });
+
+    await fs.writeFile(
+      path.join(root, ".apcc", "tasks", "current.yaml"),
+      [
+        "items:",
+        "  - id: broken-task",
+        "    name: Broken task",
+        "    summary: Broken task",
+        "    status: pending",
+        "    planRef: establish-shared-project-context-1",
+        "    parentTaskId: null",
+        "    countedForProgress: true",
+        "    planRef: support-next-round-estimation-1",
+        ""
+      ].join("\n"),
+      "utf8"
+    );
+
+    await expect(stageDocsForSiteRuntime(root)).rejects.toThrow(
+      /Failed to parse YAML file[\s\S]*\.apcc[\\/]+tasks[\\/]+current\.yaml[\s\S]*apcc doctor check[\s\S]*apcc site start/
+    );
+  });
+
   it("preserves APCC authored frontmatter in the staged docs tree", async () => {
     const fixture = await createWorkspaceFixture();
     restorers.push(fixture.use());

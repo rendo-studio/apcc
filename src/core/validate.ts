@@ -7,9 +7,18 @@ import { loadEndGoal } from "./end-goal.js";
 import { getApccPackageVersion } from "./package-runtime.js";
 import { assertValidPlanTree } from "./plans.js";
 import { loadProjectOverview } from "./project-overview.js";
-import { readText, readYamlFile, writeYamlFile } from "./storage.js";
+import { isFileNotFoundError, isYamlFileParseError, readText, readYamlFile, writeYamlFile } from "./storage.js";
 import { loadTasks, assertValidTaskTree } from "./tasks.js";
-import type { DecisionState, PlansState, TasksState, VersionState, WorkspaceConfigState, WorkspaceMetaState } from "./types.js";
+import type {
+  DecisionState,
+  GoalState,
+  PlansState,
+  ProjectOverviewState,
+  TasksState,
+  VersionState,
+  WorkspaceConfigState,
+  WorkspaceMetaState
+} from "./types.js";
 import {
   BOOTSTRAP_MODES,
   DECISION_CATEGORIES,
@@ -59,47 +68,92 @@ function resolveDocPath(docsRoot: string, docPath: string | null | undefined): s
   return path.join(docsRoot, docPath);
 }
 
+interface YamlReadAttempt<T> {
+  value: T;
+  parseIssue: string | null;
+}
+
+async function tryReadYamlFile<T>(filePath: string, fallback: T): Promise<YamlReadAttempt<T>> {
+  try {
+    return {
+      value: await readYamlFile<T>(filePath),
+      parseIssue: null
+    };
+  } catch (error) {
+    if (isFileNotFoundError(error)) {
+      return {
+        value: fallback,
+        parseIssue: null
+      };
+    }
+
+    if (isYamlFileParseError(error)) {
+      return {
+        value: fallback,
+        parseIssue: error.message
+      };
+    }
+
+    throw error;
+  }
+}
+
+const DEFAULT_END_GOAL: GoalState = {
+  goalId: "unknown-end-goal",
+  name: "Unknown end goal",
+  summary: "",
+  docPath: "",
+  successCriteria: [],
+  nonGoals: []
+};
+
 async function loadMetaAndConfig() {
   const paths = getWorkspacePaths();
   let meta: WorkspaceMetaState | null = null;
   let config: WorkspaceConfigState | null = null;
   let rawMeta: Record<string, unknown> | null = null;
   let rawConfig: Record<string, unknown> | null = null;
+  let metaParseIssue: string | null = null;
+  let configParseIssue: string | null = null;
 
-  try {
-    rawMeta = await readYamlFile<Record<string, unknown>>(paths.workspaceMetaFile);
-    meta = normalizeWorkspaceMeta(rawMeta);
-  } catch {
-    rawMeta = null;
-    meta = null;
-  }
+  const metaAttempt = await tryReadYamlFile<Record<string, unknown> | null>(paths.workspaceMetaFile, null);
+  rawMeta = metaAttempt.value;
+  metaParseIssue = metaAttempt.parseIssue;
+  meta = rawMeta ? normalizeWorkspaceMeta(rawMeta) : null;
 
-  try {
-    rawConfig = await readYamlFile<Record<string, unknown>>(paths.workspaceConfigFile);
+  const configAttempt = await tryReadYamlFile<Record<string, unknown> | null>(paths.workspaceConfigFile, null);
+  rawConfig = configAttempt.value;
+  configParseIssue = configAttempt.parseIssue;
+  if (rawConfig) {
     config = normalizeWorkspaceConfig(rawConfig as unknown as WorkspaceConfigState, {
       projectKind: meta?.projectKind ?? "general",
       docsMode: meta?.docsMode ?? "standard",
       docsLanguage: meta?.docsLanguage ?? "en",
       workspaceSchemaVersion: meta?.workspaceSchemaVersion ?? WORKSPACE_SCHEMA_VERSION
     });
-  } catch {
-    rawConfig = null;
+  } else {
     config = null;
   }
 
-  return { meta, config, rawMeta, rawConfig };
+  return { meta, config, rawMeta, rawConfig, metaParseIssue, configParseIssue };
 }
 
 export async function validateWorkspace() {
   const paths = getWorkspacePaths();
-  const [endGoal, projectOverview, decisions, versions, rawPlans, rawTasks] = await Promise.all([
-    loadEndGoal(),
-    loadProjectOverview().catch(() => null),
-    readYamlFile<DecisionState>(paths.decisionFile).catch(() => ({ items: [] })),
-    readYamlFile<VersionState>(paths.versionFile).catch(() => ({ items: [] })),
-    readYamlFile<PlansState>(paths.planFile).catch(() => ({ endGoalRef: "", items: [] })),
-    readYamlFile<TasksState>(paths.taskFile).catch(() => ({ items: [] }))
+  const [endGoalAttempt, projectOverviewAttempt, decisionsAttempt, versionsAttempt, plansAttempt, tasksAttempt] = await Promise.all([
+    tryReadYamlFile<GoalState>(paths.endGoalFile, DEFAULT_END_GOAL),
+    tryReadYamlFile<ProjectOverviewState | null>(paths.projectOverviewFile, null),
+    tryReadYamlFile<DecisionState>(paths.decisionFile, { items: [] }),
+    tryReadYamlFile<VersionState>(paths.versionFile, { items: [] }),
+    tryReadYamlFile<PlansState>(paths.planFile, { endGoalRef: "", items: [] }),
+    tryReadYamlFile<TasksState>(paths.taskFile, { items: [] })
   ]);
+  const endGoal = endGoalAttempt.value;
+  const projectOverview = projectOverviewAttempt.value;
+  const decisions = decisionsAttempt.value;
+  const versions = versionsAttempt.value;
+  const rawPlans = plansAttempt.value;
+  const rawTasks = tasksAttempt.value;
   const requiredFiles = [
     paths.projectOverviewFile,
     paths.endGoalFile,
@@ -127,7 +181,7 @@ export async function validateWorkspace() {
       : true,
     goal: endGoal.docPath ? await hasMinimalMetadata(path.join(paths.docsRoot, endGoal.docPath)).catch(() => false) : true
   };
-  const { meta, config, rawMeta, rawConfig } = await loadMetaAndConfig();
+  const { meta, config, rawMeta, rawConfig, metaParseIssue, configParseIssue } = await loadMetaAndConfig();
   const schemaIssues: string[] = [];
   const repairableIssues: string[] = [];
   const warnings: string[] = [];
@@ -140,7 +194,22 @@ export async function validateWorkspace() {
   const decisionItems = rawDecisionItems.filter((item): item is DecisionState["items"][number] => Boolean(item) && typeof item === "object");
   const versionItems = rawVersionItems.filter((item): item is VersionState["items"][number] => Boolean(item) && typeof item === "object");
 
-  if (!Array.isArray(rawPlans.items)) {
+  if (projectOverviewAttempt.parseIssue) {
+    schemaIssues.push(projectOverviewAttempt.parseIssue);
+  }
+  if (endGoalAttempt.parseIssue) {
+    schemaIssues.push(endGoalAttempt.parseIssue);
+  }
+  if (metaParseIssue) {
+    schemaIssues.push(metaParseIssue);
+  }
+  if (configParseIssue) {
+    schemaIssues.push(configParseIssue);
+  }
+
+  if (plansAttempt.parseIssue) {
+    schemaIssues.push(plansAttempt.parseIssue);
+  } else if (!Array.isArray(rawPlans.items)) {
     schemaIssues.push("Plan state must define an items array");
   } else if (planItems.length !== rawPlanItems.length) {
     schemaIssues.push("Plan state items must all be objects");
@@ -152,7 +221,9 @@ export async function validateWorkspace() {
     }
   }
 
-  if (!Array.isArray(rawTasks.items)) {
+  if (tasksAttempt.parseIssue) {
+    schemaIssues.push(tasksAttempt.parseIssue);
+  } else if (!Array.isArray(rawTasks.items)) {
     schemaIssues.push("Task state must define an items array");
   } else if (taskItems.length !== rawTaskItems.length) {
     schemaIssues.push("Task state items must all be objects");
@@ -164,14 +235,18 @@ export async function validateWorkspace() {
     }
   }
 
-  const planIds = new Set(planItems.map((plan) => plan.id));
-  for (const task of taskItems) {
-    if (!planIds.has(task.planRef)) {
-      schemaIssues.push(`Task ${task.id} points to missing plan ${task.planRef}`);
+  if (!plansAttempt.parseIssue && !tasksAttempt.parseIssue) {
+    const planIds = new Set(planItems.map((plan) => plan.id));
+    for (const task of taskItems) {
+      if (!planIds.has(task.planRef)) {
+        schemaIssues.push(`Task ${task.id} points to missing plan ${task.planRef}`);
+      }
     }
   }
 
-  if (!Array.isArray(decisions.items)) {
+  if (decisionsAttempt.parseIssue) {
+    schemaIssues.push(decisionsAttempt.parseIssue);
+  } else if (!Array.isArray(decisions.items)) {
     schemaIssues.push("Decision state must define an items array");
   } else if (decisionItems.length !== rawDecisionItems.length) {
     schemaIssues.push("Decision state items must all be objects");
@@ -190,7 +265,9 @@ export async function validateWorkspace() {
     }
   }
 
-  if (!Array.isArray(versions.items)) {
+  if (versionsAttempt.parseIssue) {
+    schemaIssues.push(versionsAttempt.parseIssue);
+  } else if (!Array.isArray(versions.items)) {
     schemaIssues.push("Version state must define an items array");
   } else if (versionItems.length !== rawVersionItems.length) {
     schemaIssues.push("Version state items must all be objects");
@@ -205,8 +282,10 @@ export async function validateWorkspace() {
   }
 
   if (!meta) {
-    schemaIssues.push("Missing .apcc/meta/workspace.yaml");
-    repairableIssues.push("Backfill workspace metadata");
+    if (!metaParseIssue) {
+      schemaIssues.push("Missing .apcc/meta/workspace.yaml");
+      repairableIssues.push("Backfill workspace metadata");
+    }
   } else {
     const rawMetaWorkspaceSchemaVersion = rawMeta?.workspaceSchemaVersion;
     const rawMetaLegacySchemaVersion = rawMeta?.schemaVersion;
@@ -276,8 +355,10 @@ export async function validateWorkspace() {
   }
 
   if (!config) {
-    schemaIssues.push("Missing .apcc/config/workspace.yaml");
-    repairableIssues.push("Backfill workspace config");
+    if (!configParseIssue) {
+      schemaIssues.push("Missing .apcc/config/workspace.yaml");
+      repairableIssues.push("Backfill workspace config");
+    }
   } else {
     if (rawConfig?.workspaceSchemaVersion === undefined) {
       schemaIssues.push("Workspace config is missing workspaceSchemaVersion");

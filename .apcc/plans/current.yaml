@@ -164,3 +164,7 @@ items:
     name: Publish the schema provenance and localization patch release
     summary: Cut, verify, and publish the next APCC patch release for workspace schema provenance unification and docs-site localization completion.
     parentPlanId: null
+  - id: harden-invalid-yaml-recovery-and-guidance-42
+    name: Harden invalid YAML recovery and guidance
+    summary: Make APCC surface file-aware YAML parse errors, steer operators toward doctor-first recovery, and tighten CLI-versus-direct-edit guidance before releasing the next patch.
+    parentPlanId: null

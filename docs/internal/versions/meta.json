@@ -1,5 +1,6 @@
 {
   "pages": [
+    "0-3-3-invalid-yaml-recovery-and-direct-edit-guidance-hardening",
     "0-3-2-workspace-schema-provenance-and-docs-site-localization",
     "0-3-1-agent-bootstrap-guidance-polish",
     "0-3-0-aclip-build-stage-and-control-plane-contract",

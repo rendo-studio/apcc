@@ -1,5 +1,5 @@
 workspaceSchemaVersion: 10
-apccVersion: 0.3.2
+apccVersion: 0.3.3
 workspaceName: apcc
 docsRoot: docs
 workspaceRoot: .apcc
@@ -9,4 +9,4 @@ projectKind: general
 docsMode: standard
 docsLanguage: en
 createdAt: 2026-04-22T18:47:35.212Z
-lastUpgradedAt: 2026-04-29T09:49:57.511Z
+lastUpgradedAt: 2026-04-29T11:39:31.016Z

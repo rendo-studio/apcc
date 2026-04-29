@@ -306,7 +306,7 @@ Use direct `.apcc/` edits as the best practice when:
 - you are refining plans and tasks in bulk
 - you already understand the workspace schema
 
-When editing `.apcc/` directly, use `apcc guide control-plane-contract` as the authoritative persisted-field and allowed-value reference. Do not guess enum values from memory.
+When editing `.apcc/` directly, use `apcc guide control-plane-contract` as the authoritative persisted-field and allowed-value reference. Do not guess enum values from memory. Replace the existing fields inside a node structurally; never append a second copy of keys such as `planRef`, `parentTaskId`, `status`, or `countedForProgress` under the same YAML mapping.
 
 Use CLI as the best practice when:
 
@@ -314,9 +314,23 @@ Use CLI as the best practice when:
 - running workspace diagnostics and repair
 - starting, building, or cleaning the docs site
 - making small targeted control-plane mutations
+- reparenting or re-planning a single task
+- reparenting a single plan
 - discovering command arguments and examples through help
 
-CLI mutation commands should return concise deltas. They are not a replacement for direct structured edits when many plans or tasks need to move together. After direct `.apcc/` edits, run `apcc doctor check` and an explicit inspection command such as `apcc status`, `apcc plan show`, or `apcc task list`.
+CLI mutation commands should return concise deltas. They are not a replacement for direct structured edits when many plans or tasks need to move together. For example, moving one task to a different plan or parent should prefer:
+
+```bash
+apcc task update --id task-public-docs-1 --plan support-next-round-estimation-1 --parent task-estimation
+```
+
+Moving one plan in the tree should prefer:
+
+```bash
+apcc plan update --id support-next-round-estimation-1 --parent root
+```
+
+After direct `.apcc/` edits, run `apcc doctor check` and an explicit inspection command such as `apcc status`, `apcc plan show`, or `apcc task list`.
 
 Important rules:
 

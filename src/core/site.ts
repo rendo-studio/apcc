@@ -9,7 +9,7 @@ import { fileURLToPath } from "node:url";
 
 import { getApccPackageFile, getApccPackageRoot, getCurrentModulePath } from "./package-runtime.js";
 import { loadDocsRevisionState, syncDocsRevisionState } from "./docs-revisions.js";
-import { readText, readYamlFile, writeText } from "./storage.js";
+import { isYamlFileParseError, readText, readYamlFile, writeText } from "./storage.js";
 import { buildSiteControlPlaneSnapshot, type SiteControlPlaneSnapshot } from "./site-data.js";
 import { buildSiteViewerData } from "./site-viewer-data.js";
 import { loadWorkspaceConfig } from "./workspace-config.js";
@@ -157,6 +157,14 @@ interface SiteSourceContext {
   docsLanguage: "en" | "zh-CN";
   siteId: string;
   workspaceConfig: Awaited<ReturnType<typeof loadWorkspaceConfig>> | null;
+}
+
+function rethrowSiteYamlError(error: unknown, command: string): never {
+  if (isYamlFileParseError(error)) {
+    throw new Error(`${error.message} Fix the file, run \`apcc doctor check\`, then retry \`${command}\`.`);
+  }
+
+  throw error;
 }
 
 function isMarkdownFile(filePath: string): boolean {
@@ -1136,33 +1144,37 @@ export async function stageDocsForSiteRuntime(
   inputPath?: string,
   options: StageSiteRuntimeOptions = {}
 ): Promise<StageResult> {
-  const context = await resolveSiteSourceContext(inputPath);
-  const runtimeBase = getRuntimeBase();
-  const runtimeRoot = getRuntimeRoot(context.siteId, runtimeBase);
-  const existingRegistry = await readRegistry(runtimeRoot);
-  const explicitPort = "preferredPort" in options ? normalizeSitePort(options.preferredPort) : null;
-  const activeRegistry =
-    existingRegistry &&
-    existingRegistry.pid !== null &&
-    existingRegistry.port > 0 &&
-    existingRegistry.url.length > 0 &&
-    existingRegistry.mode !== "build"
-      ? existingRegistry
-      : null;
-  const staged = await stageSiteData(context, runtimeRoot, {
-    ...options,
-    mode: activeRegistry?.mode ?? "staged",
-    port: activeRegistry?.port,
-    url: activeRegistry?.url,
-    templateRoot: activeRegistry?.templateRoot ?? getPrebuiltShellRoot()
-  });
+  try {
+    const context = await resolveSiteSourceContext(inputPath);
+    const runtimeBase = getRuntimeBase();
+    const runtimeRoot = getRuntimeRoot(context.siteId, runtimeBase);
+    const existingRegistry = await readRegistry(runtimeRoot);
+    const explicitPort = "preferredPort" in options ? normalizeSitePort(options.preferredPort) : null;
+    const activeRegistry =
+      existingRegistry &&
+      existingRegistry.pid !== null &&
+      existingRegistry.port > 0 &&
+      existingRegistry.url.length > 0 &&
+      existingRegistry.mode !== "build"
+        ? existingRegistry
+        : null;
+    const staged = await stageSiteData(context, runtimeRoot, {
+      ...options,
+      mode: activeRegistry?.mode ?? "staged",
+      port: activeRegistry?.port,
+      url: activeRegistry?.url,
+      templateRoot: activeRegistry?.templateRoot ?? getPrebuiltShellRoot()
+    });
 
-  return {
-    ...staged,
-    runtimeBase,
-    preferredPort: explicitPort ?? context.workspaceConfig?.docsSite.preferredPort ?? null,
-    portSource: explicitPort === null ? "workspace" : "explicit"
-  };
+    return {
+      ...staged,
+      runtimeBase,
+      preferredPort: explicitPort ?? context.workspaceConfig?.docsSite.preferredPort ?? null,
+      portSource: explicitPort === null ? "workspace" : "explicit"
+    };
+  } catch (error) {
+    rethrowSiteYamlError(error, "apcc site start");
+  }
 }
 
 function getPrebuiltShellRoot(): string {
@@ -1650,94 +1662,142 @@ async function ensureSiteRuntimeServer(stage: StageResult, mode: "live") {
 }
 
 export async function buildSiteRuntime(inputPath?: string, options: SiteBuildOptions = {}) {
-  const context = await resolveSiteSourceContext(inputPath);
-  const outputRoot = resolveBuildOutputRoot(context, options.outputPath);
-  assertSafeBuildOutputRoot(outputRoot, context);
-  const shellRoot = await buildPrebuiltSiteShellArtifact();
-  const tempRoot = `${outputRoot}.tmp-${Date.now()}`;
-  let finalized = false;
-
   try {
-    await fs.rm(tempRoot, { recursive: true, force: true, maxRetries: 3, retryDelay: 200 });
-    await fs.mkdir(path.dirname(tempRoot), { recursive: true });
-    await fs.cp(shellRoot, tempRoot, { recursive: true, force: true });
+    const context = await resolveSiteSourceContext(inputPath);
+    const outputRoot = resolveBuildOutputRoot(context, options.outputPath);
+    assertSafeBuildOutputRoot(outputRoot, context);
+    const shellRoot = await buildPrebuiltSiteShellArtifact();
+    const tempRoot = `${outputRoot}.tmp-${Date.now()}`;
+    let finalized = false;
 
-    const previousDocsRevisionFile = path.join(outputRoot, "runtime-data", "docs-revisions.json");
-    if (nodeFs.existsSync(previousDocsRevisionFile)) {
-      const nextDocsRevisionFile = path.join(tempRoot, "runtime-data", "docs-revisions.json");
-      await fs.mkdir(path.dirname(nextDocsRevisionFile), { recursive: true });
-      await fs.copyFile(previousDocsRevisionFile, nextDocsRevisionFile);
+    try {
+      await fs.rm(tempRoot, { recursive: true, force: true, maxRetries: 3, retryDelay: 200 });
+      await fs.mkdir(path.dirname(tempRoot), { recursive: true });
+      await fs.cp(shellRoot, tempRoot, { recursive: true, force: true });
+
+      const previousDocsRevisionFile = path.join(outputRoot, "runtime-data", "docs-revisions.json");
+      if (nodeFs.existsSync(previousDocsRevisionFile)) {
+        const nextDocsRevisionFile = path.join(tempRoot, "runtime-data", "docs-revisions.json");
+        await fs.mkdir(path.dirname(nextDocsRevisionFile), { recursive: true });
+        await fs.copyFile(previousDocsRevisionFile, nextDocsRevisionFile);
+      }
+
+      const staged = await stageSiteData(context, tempRoot, {
+        mode: "build",
+        sanitizeForDeployment: true,
+        templateRoot: "."
+      });
+      await writeDeployableSiteSupportFiles(tempRoot);
+      await writeText(
+        path.join(tempRoot, "apcc-site-manifest.json"),
+        `${JSON.stringify(
+          {
+            builtAt: new Date().toISOString(),
+            framework: "fumadocs",
+            sourceDocsRoot: "content/docs",
+            sourceWorkspaceRoot: null,
+            docsLanguage: context.docsLanguage,
+            fileCount: staged.fileCount,
+            pageCount: staged.pageCount
+          },
+          null,
+          2
+        )}\n`
+      );
+
+      await fs.rm(outputRoot, { recursive: true, force: true, maxRetries: 3, retryDelay: 200 });
+      await fs.mkdir(path.dirname(outputRoot), { recursive: true });
+      await renameWithRetries(tempRoot, outputRoot);
+      finalized = true;
+
+      return {
+        siteId: context.siteId,
+        sourceDocsRoot: context.sourceDocsRoot,
+        sourceWorkspaceRoot: context.sourceWorkspaceRoot,
+        docsLanguage: context.docsLanguage,
+        runtimeMode: "build",
+        framework: "fumadocs",
+        buildOutput: outputRoot,
+        serverFile: path.join(outputRoot, "server.js"),
+        startFile: path.join(outputRoot, "start.mjs"),
+        startCommand: "node start.mjs",
+        stagedDocsRoot: toFinalOutputPath(staged.stagedDocsRoot, tempRoot, outputRoot),
+        runtimeDataRoot: toFinalOutputPath(staged.runtimeDataRoot, tempRoot, outputRoot),
+        fileCount: staged.fileCount,
+        pageCount: staged.pageCount,
+        dataFile: toFinalOutputPath(staged.dataFile, tempRoot, outputRoot),
+        docsRevisionDataFile: toFinalOutputPath(staged.docsRevisionDataFile, tempRoot, outputRoot),
+        viewerDataFile: toFinalOutputPath(staged.viewerDataFile, tempRoot, outputRoot),
+        versionFile: toFinalOutputPath(staged.versionFile, tempRoot, outputRoot),
+        runtimeFile: toFinalOutputPath(staged.runtimeFile, tempRoot, outputRoot)
+      };
+    } finally {
+      if (!finalized) {
+        await fs.rm(tempRoot, { recursive: true, force: true, maxRetries: 3, retryDelay: 200 }).catch(() => undefined);
+      }
     }
-
-    const staged = await stageSiteData(context, tempRoot, {
-      mode: "build",
-      sanitizeForDeployment: true,
-      templateRoot: "."
-    });
-    await writeDeployableSiteSupportFiles(tempRoot);
-    await writeText(
-      path.join(tempRoot, "apcc-site-manifest.json"),
-      `${JSON.stringify(
-        {
-          builtAt: new Date().toISOString(),
-          framework: "fumadocs",
-          sourceDocsRoot: "content/docs",
-          sourceWorkspaceRoot: null,
-          docsLanguage: context.docsLanguage,
-          fileCount: staged.fileCount,
-          pageCount: staged.pageCount
-        },
-        null,
-        2
-      )}\n`
-    );
-
-    await fs.rm(outputRoot, { recursive: true, force: true, maxRetries: 3, retryDelay: 200 });
-    await fs.mkdir(path.dirname(outputRoot), { recursive: true });
-    await renameWithRetries(tempRoot, outputRoot);
-    finalized = true;
-
-    return {
-      siteId: context.siteId,
-      sourceDocsRoot: context.sourceDocsRoot,
-      sourceWorkspaceRoot: context.sourceWorkspaceRoot,
-      docsLanguage: context.docsLanguage,
-      runtimeMode: "build",
-      framework: "fumadocs",
-      buildOutput: outputRoot,
-      serverFile: path.join(outputRoot, "server.js"),
-      startFile: path.join(outputRoot, "start.mjs"),
-      startCommand: "node start.mjs",
-      stagedDocsRoot: toFinalOutputPath(staged.stagedDocsRoot, tempRoot, outputRoot),
-      runtimeDataRoot: toFinalOutputPath(staged.runtimeDataRoot, tempRoot, outputRoot),
-      fileCount: staged.fileCount,
-      pageCount: staged.pageCount,
-      dataFile: toFinalOutputPath(staged.dataFile, tempRoot, outputRoot),
-      docsRevisionDataFile: toFinalOutputPath(staged.docsRevisionDataFile, tempRoot, outputRoot),
-      viewerDataFile: toFinalOutputPath(staged.viewerDataFile, tempRoot, outputRoot),
-      versionFile: toFinalOutputPath(staged.versionFile, tempRoot, outputRoot),
-      runtimeFile: toFinalOutputPath(staged.runtimeFile, tempRoot, outputRoot)
-    };
-  } finally {
-    if (!finalized) {
-      await fs.rm(tempRoot, { recursive: true, force: true, maxRetries: 3, retryDelay: 200 }).catch(() => undefined);
-    }
+  } catch (error) {
+    rethrowSiteYamlError(error, "apcc site build");
   }
 }
 
 export async function getSiteRuntimeStatus(inputPath?: string): Promise<SiteRuntimeStatusEntry> {
-  const context = await resolveSiteSourceContext(inputPath);
-  const runtimeBase = getRuntimeBase();
-  const runtimeRoot = getRuntimeRoot(context.siteId, runtimeBase);
-  const runtimeDataRoot = path.join(runtimeRoot, "runtime-data");
-  const [registry, metadata] = await Promise.all([
-    readRegistry(runtimeRoot),
-    readRuntimeMetadata(runtimeDataRoot)
-  ]);
-  const runtimePresent = nodeFs.existsSync(runtimeRoot);
-  const healthy = registry ? await isSiteRuntimeRegistryHealthy(registry) : false;
+  try {
+    const context = await resolveSiteSourceContext(inputPath);
+    const runtimeBase = getRuntimeBase();
+    const runtimeRoot = getRuntimeRoot(context.siteId, runtimeBase);
+    const runtimeDataRoot = path.join(runtimeRoot, "runtime-data");
+    const [registry, metadata] = await Promise.all([
+      readRegistry(runtimeRoot),
+      readRuntimeMetadata(runtimeDataRoot)
+    ]);
+    const runtimePresent = nodeFs.existsSync(runtimeRoot);
+    const healthy = registry ? await isSiteRuntimeRegistryHealthy(registry) : false;
 
-  if (healthy && registry) {
+    if (healthy && registry) {
+      return {
+        siteId: context.siteId,
+        sourceDocsRoot: context.sourceDocsRoot,
+        sourceWorkspaceRoot: context.sourceWorkspaceRoot,
+        runtimeRoot,
+        runtimeDataRoot,
+        docsLanguage: context.docsLanguage,
+        preferredPort: context.workspaceConfig?.docsSite.preferredPort ?? null,
+        state: "live",
+        runtimePresent,
+        healthy: true,
+        stagedDocsRoot: registry.stagedDocsRoot,
+        port: registry.port,
+        url: registry.url,
+        startedAt: registry.startedAt,
+        pid: registry.pid,
+        watcherPid: registry.watcherPid,
+        logFile: registry.logFile
+      };
+    }
+
+    if (runtimePresent || registry || metadata) {
+      return {
+        siteId: context.siteId,
+        sourceDocsRoot: context.sourceDocsRoot,
+        sourceWorkspaceRoot: context.sourceWorkspaceRoot,
+        runtimeRoot,
+        runtimeDataRoot,
+        docsLanguage: context.docsLanguage,
+        preferredPort: context.workspaceConfig?.docsSite.preferredPort ?? null,
+        state: "staged",
+        runtimePresent,
+        healthy: false,
+        stagedDocsRoot: registry?.stagedDocsRoot ?? path.join(runtimeRoot, "content", "docs"),
+        port: null,
+        url: null,
+        startedAt: registry?.startedAt ?? metadata?.updatedAt ?? null,
+        pid: null,
+        watcherPid: null,
+        logFile: registry?.logFile ?? path.join(runtimeDataRoot, "site.log")
+      };
+    }
+
     return {
       siteId: context.siteId,
       sourceDocsRoot: context.sourceDocsRoot,
@@ -1746,60 +1806,20 @@ export async function getSiteRuntimeStatus(inputPath?: string): Promise<SiteRunt
       runtimeDataRoot,
       docsLanguage: context.docsLanguage,
       preferredPort: context.workspaceConfig?.docsSite.preferredPort ?? null,
-      state: "live",
-      runtimePresent,
-      healthy: true,
-      stagedDocsRoot: registry.stagedDocsRoot,
-      port: registry.port,
-      url: registry.url,
-      startedAt: registry.startedAt,
-      pid: registry.pid,
-      watcherPid: registry.watcherPid,
-      logFile: registry.logFile
-    };
-  }
-
-  if (runtimePresent || registry || metadata) {
-    return {
-      siteId: context.siteId,
-      sourceDocsRoot: context.sourceDocsRoot,
-      sourceWorkspaceRoot: context.sourceWorkspaceRoot,
-      runtimeRoot,
-      runtimeDataRoot,
-      docsLanguage: context.docsLanguage,
-      preferredPort: context.workspaceConfig?.docsSite.preferredPort ?? null,
-      state: "staged",
-      runtimePresent,
+      state: "absent",
+      runtimePresent: false,
       healthy: false,
-      stagedDocsRoot: registry?.stagedDocsRoot ?? path.join(runtimeRoot, "content", "docs"),
+      stagedDocsRoot: null,
       port: null,
       url: null,
-      startedAt: registry?.startedAt ?? metadata?.updatedAt ?? null,
+      startedAt: null,
       pid: null,
       watcherPid: null,
-      logFile: registry?.logFile ?? path.join(runtimeDataRoot, "site.log")
+      logFile: null
     };
+  } catch (error) {
+    rethrowSiteYamlError(error, "apcc site status");
   }
-
-  return {
-    siteId: context.siteId,
-    sourceDocsRoot: context.sourceDocsRoot,
-    sourceWorkspaceRoot: context.sourceWorkspaceRoot,
-    runtimeRoot,
-    runtimeDataRoot,
-    docsLanguage: context.docsLanguage,
-    preferredPort: context.workspaceConfig?.docsSite.preferredPort ?? null,
-    state: "absent",
-    runtimePresent: false,
-    healthy: false,
-    stagedDocsRoot: null,
-    port: null,
-    url: null,
-    startedAt: null,
-    pid: null,
-    watcherPid: null,
-    logFile: null
-  };
 }
 
 export async function startSiteRuntime(inputPath?: string, options: StartSiteRuntimeOptions = {}) {

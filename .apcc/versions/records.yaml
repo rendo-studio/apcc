@@ -1,4 +1,26 @@
 items:
+  - id: 0-3-3-invalid-yaml-recovery-and-direct-edit-guidance-hardening
+    version: 0.3.3
+    title: Invalid YAML recovery and direct-edit guidance hardening
+    summary: Patch release that makes malformed `.apcc` YAML failures file-aware and actionable, while tightening APCC guidance around targeted CLI mutations versus bulk direct edits.
+    docPath: internal/versions/0-3-3-invalid-yaml-recovery-and-direct-edit-guidance-hardening.md
+    status: recorded
+    decisionRefs: []
+    highlights:
+      - Wraps YAML parser failures with file-path context so APCC commands identify the exact broken `.apcc` file instead of surfacing generic parse noise.
+      - Promotes malformed control-plane YAML into a dedicated doctor failure with doctor-first remediation guidance before other APCC commands are retried.
+      - Makes docs-site runtime commands steer operators toward `apcc doctor check` when a control-plane file cannot be parsed.
+      - Tightens the canonical workflow guidance, agents template, and generated control-plane contract so targeted plan and task mutations prefer CLI commands over ad hoc YAML patching.
+      - Adds regression tests that cover duplicate-key failures in `.apcc/tasks/current.yaml` and assert file-aware recovery messaging.
+    breakingChanges:
+      - None.
+    migrationNotes:
+      - If `apcc site start`, `apcc site build`, or `apcc site status` now reports a YAML parse error, fix the named `.apcc` file first and rerun `apcc doctor check` before retrying.
+      - Prefer `apcc task update --parent/--plan` and `apcc plan update --parent` for single-node moves; reserve direct `.apcc` edits for bulk restructuring.
+      - When editing `.apcc` directly, replace existing fields structurally instead of appending a second copy of keys such as `planRef`, `parentTaskId`, `status`, or `countedForProgress`.
+    validationSummary: npm run check, npm run test, npm run build, npm run verify:package-install, npm run verify:site-lifecycle, npm run prepare:publish-package -- --out .tmp/apcc-publish-0.3.3, npm run prepare:publish-package -- --out .tmp/apcc-scoped-publish-0.3.3 --name @rendo-studio/apcc, npm pack --dry-run (apcc), npm pack --dry-run (@rendo-studio/apcc), npm run dev -- doctor check, npm run dev -- status
+    createdAt: 2026-04-29T00:00:00.000Z
+    recordedAt: 2026-04-29T13:35:00Z
   - id: 0-3-2-workspace-schema-provenance-and-docs-site-localization
     version: 0.3.2
     title: Workspace schema provenance and docs-site localization
@@ -97,8 +119,8 @@ items:
       - Uses `meta.json` rather than `.gitkeep` for scaffolded docs package placeholders and reading-order metadata across the repository docs directories.
       - Verifies the installed-package binary, deployable docs-site build, and lifecycle flows against the current command surface before release.
     breakingChanges:
-      - `apcc validate` has been removed; use `apcc doctor check` and `apcc doctor fix`.
-      - `apcc site open` has been removed; use `apcc site start`.
+      - "`apcc validate` has been removed; use `apcc doctor check` and `apcc doctor fix`."
+      - "`apcc site open` has been removed; use `apcc site start`."
     migrationNotes:
       - Update any automation or documentation that still shells out to `apcc validate` so it calls the doctor surface instead.
       - Update any scripts or habits using `apcc site open` to `apcc site start`.

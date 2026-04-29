@@ -20,8 +20,13 @@ const LOW_SEVERITY: DoctorCheckSeverity = "low";
 const MEDIUM_SEVERITY: DoctorCheckSeverity = "medium";
 const HIGH_SEVERITY: DoctorCheckSeverity = "high";
 
+function getYamlParseIssues(validation: ValidationResult): string[] {
+  return validation.schemaIssues.filter((issue) => issue.startsWith("Failed to parse YAML file "));
+}
+
 function createValidationChecks(validation: ValidationResult): DoctorCheck[] {
   const checks: DoctorCheck[] = [];
+  const yamlParseIssues = getYamlParseIssues(validation);
 
   if (validation.missingFiles.length > 0) {
     checks.push({
@@ -64,13 +69,25 @@ function createValidationChecks(validation: ValidationResult): DoctorCheck[] {
     });
   }
 
-  if (validation.schemaIssues.length > 0) {
+  if (yamlParseIssues.length > 0) {
+    checks.push({
+      id: "workspace-yaml-parse",
+      status: FAIL_STATUS,
+      severity: HIGH_SEVERITY,
+      category: "schema",
+      summary: `${yamlParseIssues.length} workspace YAML parse issue(s) detected.`,
+      hint: yamlParseIssues.join("\n")
+    });
+  }
+
+  const remainingSchemaIssues = validation.schemaIssues.filter((issue) => !yamlParseIssues.includes(issue));
+  if (remainingSchemaIssues.length > 0) {
     checks.push({
       id: "workspace-schema",
       status: FAIL_STATUS,
       severity: HIGH_SEVERITY,
       category: "schema",
-      summary: `${validation.schemaIssues.length} workspace schema issue(s) detected.`,
+      summary: `${remainingSchemaIssues.length} workspace schema issue(s) detected.`,
       hint: "The workspace metadata or config is stale or incomplete.",
       remediation: [
         {
@@ -107,6 +124,10 @@ function createValidationChecks(validation: ValidationResult): DoctorCheck[] {
 }
 
 function createCheckGuidance(validation: ValidationResult): string {
+  if (getYamlParseIssues(validation).length > 0) {
+    return "Fix the reported YAML file paths first, then run `apcc doctor check` again before retrying other APCC commands.";
+  }
+
   if (validation.ok && validation.warnings.length === 0) {
     return "Workspace is healthy. No APCC repair action is required.";
   }
