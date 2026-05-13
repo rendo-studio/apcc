@@ -191,3 +191,26 @@ items:
     validationSummary: npm run generate:control-plane-contract-doc, npm run check, npm run test, npm run build, npm run dev -- site build, npm run verify:package-install, npm run verify:site-lifecycle, npm run prepare:publish-package -- --out .tmp/apcc-publish-0.3.4, npm run prepare:publish-package -- --out .tmp/apcc-scoped-publish-0.3.4 --name @rendo-studio/apcc, npm pack --dry-run (apcc staged package), npm pack --dry-run (@rendo-studio/apcc staged package), npm run dev -- doctor check, npm run dev -- status, npm run dev -- plan show --version 0.3.4, npm run dev -- task list --version 0.3.4, npm run dev -- task list --unversioned, GitHub release v0.3.4, npm publish apcc@0.3.4, npm publish @rendo-studio/apcc@0.3.4
     createdAt: 2026-04-29T20:07:21.113Z
     recordedAt: 2026-04-29T20:15:17.417Z
+  - id: 0-3-5-docs-site-ui-and-task-ergonomics
+    version: 0.3.5
+    title: Docs-site UI and task ergonomics
+    summary: Patch release that refactors the prebuilt docs-site UI, restores Fumadocs-standard docs rendering routes, and adds optional initial task status support.
+    docPath: internal/versions/0-3-5-docs-site-ui-and-task-ergonomics.md
+    status: recorded
+    decisionRefs:
+      - adopt-tmp-ui-as-docs-site-ui-target
+    highlights:
+      - Adds the localized APCC home overview as the docs-site landing surface
+      - Rebuilds Console overview and subpages around a sidebar-driven control-plane workspace
+      - Restores explicit index route handling and Fumadocs-style markdown rendering for package-manager code tabs
+      - Adds task add --status so agents can create tasks directly in pending in_progress done or blocked states
+      - Hardens source-repo docs-site work with Fumadocs preread guidance and shared shell build locking
+    breakingChanges:
+      - None.
+    migrationNotes:
+      - Existing docs-site users should expect the root URL and /docs to land on the APCC home overview instead of the Console
+      - Use /<docsLanguage>/docs/console for the Console entrypoint
+      - Agents may now pass --status to apcc task add when a task should start outside pending
+    validationSummary: npm run generate:control-plane-contract-doc, npm run check, npm run test, npm run build, npm run dev -- site build, npm run verify:package-install, npm run verify:site-lifecycle, npm run dev -- doctor check, npm run dev -- status, npm run dev -- plan show --version 0.3.5, npm run dev -- task list --version 0.3.5, agent-browser smoke for /docs /en/docs/console and explicit Fumadocs /index route, npm run prepare:publish-package -- --out .tmp/apcc-publish-0.3.5, npm run prepare:publish-package -- --out .tmp/apcc-scoped-publish-0.3.5 --name @rendo-studio/apcc, npm pack --dry-run (apcc staged package), npm pack --dry-run (@rendo-studio/apcc staged package), GitHub release v0.3.5, npm publish apcc@0.3.5, npm publish @rendo-studio/apcc@0.3.5
+    createdAt: 2026-05-13T09:04:34.966Z
+    recordedAt: 2026-05-13T09:34:42.788Z

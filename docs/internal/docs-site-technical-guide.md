@@ -205,6 +205,18 @@ It must not stop or downgrade a healthy live runtime.
 
 Use different loops depending on what changed.
 
+Before changing the docs-site viewer shell or any Fumadocs-based behavior, first read the relevant local framework references under `docs/internal/fumadocs/`.
+
+Start from the top-level groups listed in `docs/internal/fumadocs/meta.json`:
+
+- `(framework)`
+- `ui`
+- `headless`
+- `mdx`
+- `cli`
+
+Then read the pages that match the surface you are changing. This preread is part of the maintainer workflow, not optional background reading.
+
 ### Authored docs or `.apcc` changes
 
 Use this when changing docs content, navigation metadata, or control-plane state:
@@ -220,10 +232,11 @@ This is the fastest loop for docs-package work.
 
 Use this when changing `site-runtime/` or `src/core/site*.ts`:
 
-1. edit the shell or staging code
-2. run `npm run build` to rebuild the shared shell artifact
-3. restart the live site if the shell process must pick up a new artifact
-4. run `npm run dev -- site status` and re-check the rendered behavior
+1. read the relevant pages under `docs/internal/fumadocs/` for the surface you are about to change
+2. edit the shell or staging code
+3. run `npm run build` to rebuild the shared shell artifact
+4. restart the live site if the shell process must pick up a new artifact
+5. run `npm run dev -- site status` and re-check the rendered behavior
 
 Authored-doc live refresh does not replace shell rebuilds.
 

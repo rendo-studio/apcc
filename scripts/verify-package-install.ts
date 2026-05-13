@@ -9,6 +9,12 @@ import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const smokeRoot = path.join(root, ".tmp", "production-smoke", "verify-package-install");
+const packageJson = JSON.parse(await fs.readFile(path.join(root, "package.json"), "utf8")) as { version: string };
+const smokeVersion = packageJson.version;
+const smokeVersionSlug = smokeVersion.replace(/[^a-zA-Z0-9]+/g, "-").replace(/^-|-$/g, "");
+const smokeVersionLabel = smokeVersion.replace(/[^a-zA-Z0-9]+/g, "");
+const versionedPlanId = `release-${smokeVersionSlug}`;
+const versionedTaskId = `release-${smokeVersionSlug}-check`;
 
 function npmInvocation(args: string[]): { command: string; args: string[] } {
   if (process.platform === "win32") {
@@ -186,7 +192,7 @@ try {
       "version",
       "new",
       "--version",
-      "0.3.4",
+      smokeVersion,
       "--title",
       "Release Scope",
       "--summary",
@@ -194,7 +200,7 @@ try {
     ],
     { cwd: workspaceRoot }
   );
-  if (!versionNewOutput.includes("# Version") || !versionNewOutput.includes("0.3.4")) {
+  if (!versionNewOutput.includes("# Version") || !versionNewOutput.includes(smokeVersion)) {
     throw new Error("installed apcc version new did not create or render the expected version record.");
   }
 
@@ -231,12 +237,18 @@ try {
       "root",
       "--plan",
       "release-hardening",
+      "--status",
+      "in_progress",
       "--summary",
       "ReleaseCheck"
     ],
     { cwd: workspaceRoot }
   );
-  if (!taskAddOutput.includes("release-check") || taskAddOutput.includes("Task Tree")) {
+  if (
+    !taskAddOutput.includes("release-check") ||
+    !taskAddOutput.includes("Status: `in progress`") ||
+    taskAddOutput.includes("Task Tree")
+  ) {
     throw new Error("installed apcc task add did not render a concise changed-task delta.");
   }
 
@@ -246,15 +258,15 @@ try {
       "plan",
       "add",
       "--id",
-      "release-0-3-4",
+      versionedPlanId,
       "--name",
-      "Release034",
+      `Release${smokeVersionLabel}`,
       "--parent",
       "root",
       "--summary",
-      "Release034",
+      `Release${smokeVersionLabel}`,
       "--version",
-      "0.3.4"
+      smokeVersion
     ],
     { cwd: workspaceRoot }
   );
@@ -264,36 +276,36 @@ try {
       "task",
       "add",
       "--id",
-      "release-0-3-4-check",
+      versionedTaskId,
       "--name",
-      "Release034Check",
+      `Release${smokeVersionLabel}Check`,
       "--parent",
       "root",
       "--plan",
-      "release-0-3-4",
+      versionedPlanId,
       "--summary",
-      "Release034Check"
+      `Release${smokeVersionLabel}Check`
     ],
     { cwd: workspaceRoot }
   );
 
-  const versionedPlanShowOutput = runInstalledBin(binPath, ["plan", "show", "--version", "0.3.4"], {
+  const versionedPlanShowOutput = runInstalledBin(binPath, ["plan", "show", "--version", smokeVersion], {
     cwd: workspaceRoot
   });
   if (
-    !versionedPlanShowOutput.includes("Version scope: 0.3.4") ||
-    !versionedPlanShowOutput.includes("release-0-3-4") ||
+    !versionedPlanShowOutput.includes(`Version scope: ${smokeVersion}`) ||
+    !versionedPlanShowOutput.includes(versionedPlanId) ||
     versionedPlanShowOutput.includes("release-hardening")
   ) {
     throw new Error("installed apcc plan show --version did not filter plans by effective version scope.");
   }
 
-  const versionedTaskListOutput = runInstalledBin(binPath, ["task", "list", "--version", "0.3.4"], {
+  const versionedTaskListOutput = runInstalledBin(binPath, ["task", "list", "--version", smokeVersion], {
     cwd: workspaceRoot
   });
   if (
-    !versionedTaskListOutput.includes("Version scope: 0.3.4") ||
-    !versionedTaskListOutput.includes("release-0-3-4-check") ||
+    !versionedTaskListOutput.includes(`Version scope: ${smokeVersion}`) ||
+    !versionedTaskListOutput.includes(versionedTaskId) ||
     versionedTaskListOutput.includes("release-check")
   ) {
     throw new Error("installed apcc task list --version did not filter tasks by effective plan version scope.");
@@ -305,7 +317,7 @@ try {
   if (
     !unversionedTaskListOutput.includes("Version scope: unversioned") ||
     !unversionedTaskListOutput.includes("release-check") ||
-    unversionedTaskListOutput.includes("release-0-3-4-check")
+    unversionedTaskListOutput.includes(versionedTaskId)
   ) {
     throw new Error("installed apcc task list --unversioned did not isolate unversioned task scopes.");
   }

@@ -7,7 +7,7 @@ import type {
   RuntimeDocsViewerTreeNode
 } from "./runtime-data";
 import type { SiteLocale } from "./i18n";
-import { docsPathToSlug, docsSlugToUrl } from "./docs-path";
+import { docsPathToSlug, docsSlugToUrl, normalizeDocsSlug } from "./docs-path";
 
 export interface DocsViewerPage {
   path: string;
@@ -90,7 +90,7 @@ export function createDocsViewerSource(data: RuntimeDocsViewerData, locale: Site
       return pages;
     },
     getPage(slug: string[]) {
-      return pagesBySlug.get(slug.join("/"));
+      return pagesBySlug.get(normalizeDocsSlug(slug).join("/"));
     },
     generateParams() {
       return pages.map((page) => ({ slug: page.slug }));

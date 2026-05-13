@@ -4,6 +4,14 @@ function normalizeDocsPath(relativePath: string): string {
   return relativePath.replace(/\\/g, "/");
 }
 
+export function normalizeDocsSlug(slug: string[]): string[] {
+  if (slug.at(-1) === "index") {
+    return slug.slice(0, -1);
+  }
+
+  return slug;
+}
+
 export function docsPathToSlug(relativePath: string): string[] {
   const normalized = normalizeDocsPath(relativePath);
   const parts = normalized.split("/");
@@ -27,11 +35,13 @@ export function decodeRouteSegment(segment: string): string {
 }
 
 export function decodeRouteSlug(slug: string[] | undefined): string[] {
-  return (slug ?? []).map((segment) => decodeRouteSegment(segment));
+  return normalizeDocsSlug((slug ?? []).map((segment) => decodeRouteSegment(segment)));
 }
 
 export function docsSlugToUrl(locale: SiteLocale, slug: string[]): string {
-  const encodedPath = slug.map((segment) => encodeURIComponent(segment)).join("/");
+  const encodedPath = normalizeDocsSlug(slug)
+    .map((segment) => encodeURIComponent(segment))
+    .join("/");
   return encodedPath.length > 0 ? `/${locale}/docs/${encodedPath}` : `/${locale}/docs`;
 }
 

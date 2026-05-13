@@ -1063,3 +1063,66 @@ items:
     planRef: document-apcc-docs-site-internals-48
     parentTaskId: null
     countedForProgress: true
+  - id: task-require-fumadocs-preread-for-docs-site-dev
+    name: Require Fumadocs preread for docs-site development
+    summary: Make the docs-site maintainer workflow explicitly require reading docs/internal/fumadocs before changing the docs-site viewer or Fumadocs-based surfaces.
+    status: done
+    planRef: require-fumadocs-preread-for-docs-site-dev
+    parentTaskId: null
+    countedForProgress: true
+  - id: task-fix-index-doc-route-access
+    name: Fix index doc route access
+    summary: Normalize explicit /index docs routes to the same page identity as the parent folder URL and cover the behavior with tests.
+    status: done
+    planRef: fix-index-doc-route-access-50
+    parentTaskId: null
+    countedForProgress: true
+  - id: restore-fumadocs-index-route-rendering-85
+    name: Restore explicit index route rendering
+    summary: Fix pages such as docs/internal/fumadocs/(framework)/index.mdx so direct browser routes render normally in the APCC prebuilt runtime without losing live refresh.
+    status: done
+    planRef: restore-fumadocs-standard-docs-rendering-51
+    parentTaskId: null
+    countedForProgress: true
+  - id: add-optional-status-to-task-add-88
+    name: Add optional --status to task add
+    summary: Extend task add so callers can set an initial task status in one mutation while preserving pending as the default.
+    status: done
+    planRef: refine-task-add-status-ergonomics-52
+    parentTaskId: null
+    countedForProgress: true
+  - id: implement-docs-site-ui-design-refactor
+    name: Implement docs-site UI design refactor
+    summary: Build the homepage, console overview, and docs page chrome to match .tmp/ui, then verify with Playwright screenshots and production-style APCC site checks.
+    status: done
+    planRef: refactor-docs-site-ui-from-tmp-ui-design
+    parentTaskId: null
+    countedForProgress: true
+  - id: complete-console-subpage-ui
+    name: Complete console subpage UI
+    summary: Finished the console-related subpages for plans/tasks, blockers, change history, decisions, and versions against the .tmp/ui target, with Playwright screenshots and production-style APCC site/package verification.
+    status: done
+    planRef: refactor-docs-site-ui-from-tmp-ui-design
+    parentTaskId: null
+    countedForProgress: true
+  - id: unify-console-overview-navigation
+    name: Unify console overview navigation
+    summary: Console Overview now uses the shared ConsoleSectionNav tag navigation used by console subpages, so the control-console content header stays consistent across overview, plans, blockers, changes, decisions, and versions.
+    status: done
+    planRef: refactor-docs-site-ui-from-tmp-ui-design
+    parentTaskId: null
+    countedForProgress: true
+  - id: optimize-console-overview-dashboard
+    name: Optimize Console Overview dashboard
+    summary: Refined Console Overview into a compact project-state dashboard with ring charts, active/recent plan focus, risk and governance tiles, and concise recent signal lists that link into dedicated console subpages.
+    status: done
+    planRef: refactor-docs-site-ui-from-tmp-ui-design
+    parentTaskId: null
+    countedForProgress: true
+  - id: console-sidebar-tree-navigation
+    name: Replace console tag nav with sidebar tree navigation
+    summary: Replaced the console tag navigation with a shared shadcn-style sidebar tree across Overview and console subpages, keeping navigation scalable for future modules while preserving the docs-site runtime data contract.
+    status: done
+    planRef: refactor-docs-site-ui-from-tmp-ui-design
+    parentTaskId: null
+    countedForProgress: true

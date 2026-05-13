@@ -6,6 +6,8 @@ import { spawn } from "node:child_process";
 
 import { afterEach, describe, expect, it } from "vitest";
 
+import { createDocsViewerSource } from "../site-runtime/lib/docs-viewer.js";
+import { decodeRouteSlug, docsSlugToUrl } from "../site-runtime/lib/docs-path.js";
 import { initWorkspace } from "../src/core/bootstrap.js";
 import {
   ensureRunnablePrebuiltSiteShell,
@@ -109,6 +111,41 @@ afterEach(async () => {
 });
 
 describe("site runtime staging", () => {
+  it("treats explicit /index docs slugs as aliases of the canonical parent-folder page", () => {
+    const viewer = createDocsViewerSource(
+      {
+        generatedAt: "2026-04-30T00:00:00.000Z",
+        navigation: [],
+        pages: [
+          {
+            path: "internal/fumadocs/headless/index.mdx",
+            slug: ["internal", "fumadocs", "headless"],
+            title: "Headless",
+            description: "Headless overview",
+            body: "# Headless",
+            headings: [{ depth: 1, text: "Headless", id: "headless" }]
+          }
+        ]
+      },
+      "en"
+    );
+
+    expect(decodeRouteSlug(["internal", "fumadocs", "headless", "index"])).toEqual([
+      "internal",
+      "fumadocs",
+      "headless"
+    ]);
+    expect(docsSlugToUrl("en", ["internal", "fumadocs", "headless", "index"])).toBe(
+      "/en/docs/internal/fumadocs/headless"
+    );
+    expect(viewer.getPage(["internal", "fumadocs", "headless"])?.path).toBe(
+      "internal/fumadocs/headless/index.mdx"
+    );
+    expect(viewer.getPage(["internal", "fumadocs", "headless", "index"])?.path).toBe(
+      "internal/fumadocs/headless/index.mdx"
+    );
+  });
+
   it("stages a freshly initialized minimal docs package without requiring docs/index.md", async () => {
     const root = await fs.mkdtemp(path.join(os.tmpdir(), "apcc-site-init-"));
     cleanups.push(async () => {
@@ -150,8 +187,7 @@ describe("site runtime staging", () => {
     });
 
     const staged = await stageDocsForSiteRuntime(root);
-    const stagedConsoleMeta = await fs.readFile(path.join(staged.stagedDocsRoot, "console", "meta.json"), "utf8");
-    const stagedConsoleIndex = await fs.readFile(path.join(staged.stagedDocsRoot, "console", "index.md"), "utf8");
+    const stagedConsolePage = await fs.readFile(path.join(staged.stagedDocsRoot, "console.md"), "utf8");
     const stagedSharedMeta = await fs.readFile(path.join(staged.stagedDocsRoot, "shared", "meta.json"), "utf8");
     const viewerData = JSON.parse(
       await fs.readFile(path.join(staged.runtimeDataRoot, "docs-viewer.json"), "utf8")
@@ -159,11 +195,7 @@ describe("site runtime staging", () => {
       navigation: Array<{ title: string }>;
     };
 
-    expect(JSON.parse(stagedConsoleMeta)).toEqual({
-      title: "控制台",
-      pages: ["index", "plans"]
-    });
-    expect(stagedConsoleIndex).toContain("name: 概览");
+    expect(stagedConsolePage).toContain("name: 控制台");
     expect(JSON.parse(stagedSharedMeta)).toEqual({
       title: "共享",
       pages: ["概览", "目标"]
@@ -240,17 +272,12 @@ describe("site runtime staging", () => {
     const staged = await stageDocsForSiteRuntime();
     const stagedMeta = await fs.readFile(path.join(staged.stagedDocsRoot, "meta.json"), "utf8");
     const stagedAsset = await fs.readFile(path.join(staged.stagedDocsRoot, "logo.txt"), "utf8");
-    const stagedConsoleMeta = await fs.readFile(path.join(staged.stagedDocsRoot, "console", "meta.json"), "utf8");
-    const stagedConsoleIndex = await fs.readFile(path.join(staged.stagedDocsRoot, "console", "index.md"), "utf8");
+    const stagedConsolePage = await fs.readFile(path.join(staged.stagedDocsRoot, "console.md"), "utf8");
 
     expect(JSON.parse(stagedMeta)).toEqual({
       pages: ["console", "project", "engineering"]
     });
-    expect(JSON.parse(stagedConsoleMeta)).toEqual({
-      title: "Console",
-      pages: ["index", "plans"]
-    });
-    expect(stagedConsoleIndex).toContain("name: Overview");
+    expect(stagedConsolePage).toContain("name: Console");
     expect(stagedAsset).toBe("site-asset\n");
   });
 
@@ -422,7 +449,7 @@ describe("site runtime staging", () => {
     expect(unusedStillExists).toBe(false);
     expect(referencedStillExists).toBe(true);
     expect(preparedShellExists).toBe(true);
-  }, 30000);
+  }, 90000);
 
   it("uses the persisted docs-site source path and preferred port when path is omitted", async () => {
     const fixture = await createWorkspaceFixture({
@@ -652,7 +679,7 @@ describe("site runtime staging", () => {
     expect(registry.pid).toBeNull();
     expect(registry.watcherPid).toBeNull();
     expect(registry.port).toBe(4310);
-  });
+  }, 30000);
 
   it("watches the whole control-plane root so project/config changes can restage the runtime", async () => {
     const fixture = await createWorkspaceFixture();

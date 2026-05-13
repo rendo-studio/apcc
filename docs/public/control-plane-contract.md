@@ -249,7 +249,7 @@ Current default shape:
 
 ```yaml
 workspaceSchemaVersion: 10
-apccVersion: 0.3.4
+apccVersion: 0.3.5
 workspaceName: apcc-project
 docsRoot: docs
 workspaceRoot: .apcc

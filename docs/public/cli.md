@@ -123,8 +123,7 @@ apcc plan update --id <plan-id> --version 0.3.4
 `task` manages concrete work items attached to plans:
 
 ```bash
-apcc task add --name "Document first-hour loop" --parent root --plan <plan-id> --summary "Write the public first-hour loop."
-apcc task update --id <task-id> --status in_progress
+apcc task add --name "Document first-hour loop" --parent root --plan <plan-id> --summary "Write the public first-hour loop." --status in_progress
 apcc task list
 apcc task list --version 0.3.4
 apcc task list --unversioned
@@ -133,6 +132,7 @@ apcc task list --unversioned
 Important behavior:
 
 - `plan add` and `task add` accept optional explicit `--id` values
+- `task add` accepts an optional `--status`; if omitted, the initial task status stays `pending`
 - plans may carry an optional `--version` anchor that resolves from either a version record id or a version label
 - single-node mutations return concise deltas, not the full tree
 - full context is available through `plan show`, `task list`, and `status`
@@ -179,7 +179,7 @@ apcc site clean
 apcc site build
 ```
 
-`site start` starts or reuses the local live docs site. It uses the APCC-packaged prebuilt viewer shell automatically, keeps runtime data refreshed from the configured docs root plus `.apcc`, and lands the root docs URL on the localized Console Overview page.
+`site start` starts or reuses the local live docs site. It uses the APCC-packaged prebuilt viewer shell automatically, keeps runtime data refreshed from the configured docs root plus `.apcc`, and lands the root docs URL on the localized APCC home overview page.
 
 `site status` is the low-cost probe for agents and humans. It tells you whether the targeted runtime is `absent`, `staged`, or `live`, and only reports a URL when a healthy live instance exists.
 

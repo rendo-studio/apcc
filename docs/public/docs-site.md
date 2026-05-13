@@ -15,11 +15,9 @@ It exists so a human can inspect:
 - the current control-plane state
 - the live console views derived from `.apcc/`
 
-The Console is plan-first: it shows the current plan tree with derived plan status and progress, and each plan expands into the task tree attached to that plan.
+The Console is plan-first: it summarizes the current execution state and provides the primary runtime control-plane view under `/console`.
 
-The canonical Console execution view is `/console/plans`. Older `/console/tasks` links redirect there for compatibility.
-
-The bare site root and `/docs` should both land on the localized Console Overview page, not a shared overview doc.
+The bare site root and `/docs` should both land on the localized APCC home overview page. The Console remains available as a first-class section under `/<docsLanguage>/docs/console`.
 
 ## Runtime Commands
 
@@ -104,7 +102,7 @@ Expected behavior:
 - `apcc site start` starts the live runtime if it is not running yet
 - a second `apcc site start` reuses the healthy runtime instead of restarting it
 - `apcc site status` reports whether the targeted runtime is `absent`, `staged`, or `live`
-- the bare site root and `/docs` should land on `/<docsLanguage>/docs/console`
+- the bare site root and `/docs` should land on `/<docsLanguage>`
 - `apcc site start --port <port>` should honor that port or fail clearly if another healthy runtime is already using a different port for the same workspace
 - `apcc site list` shows the healthy runtimes APCC currently sees as active
 - `apcc site build` creates a deployable read-only site artifact and does not stop a healthy live runtime

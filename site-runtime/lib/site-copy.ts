@@ -120,7 +120,7 @@ const copy: Record<SiteLocale, SiteCopy> = {
       noRecentCompletion: "尚未记录已完成工作。",
       blockers: "阻塞项",
       noActiveBlockers: "当前没有活跃阻塞项。",
-      noExplicitBlocker: "No explicit blocker",
+      noExplicitBlocker: "暂无明确 blocker",
       projectVersions: "项目版本",
       noProjectVersions: "当前还没有项目级版本记录。",
       versionEmptyHint: "当项目进入新的整体成熟状态并值得长期保留时，再创建版本记录。",
@@ -133,7 +133,7 @@ const copy: Record<SiteLocale, SiteCopy> = {
       categoryLabel: "类别"
     },
     revisions: {
-      title: "Revision Line",
+      title: "历史修订",
       updatedSummary: (updatedAt, count) => `最近更新于 ${updatedAt}，共 ${count} 个版本。`,
       currentVersion: "当前版本",
       viewRevision: "查看版本",
@@ -201,7 +201,7 @@ const copy: Record<SiteLocale, SiteCopy> = {
       noRecentCompletion: "No completed work has been recorded yet.",
       blockers: "Blockers",
       noActiveBlockers: "No active blockers.",
-      noExplicitBlocker: "暂无明确 blocker",
+      noExplicitBlocker: "No explicit blocker",
       projectVersions: "Project versions",
       noProjectVersions: "No project-level version records yet.",
       versionEmptyHint: "Record a version only when the project reaches a new overall state worth preserving.",
@@ -214,7 +214,7 @@ const copy: Record<SiteLocale, SiteCopy> = {
       categoryLabel: "Category"
     },
     revisions: {
-      title: "Revision Line",
+      title: "Revision History",
       updatedSummary: (updatedAt, count) => `Updated ${updatedAt}, ${count} versions in total.`,
       currentVersion: "Current version",
       viewRevision: "View revision",

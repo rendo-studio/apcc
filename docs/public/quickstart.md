@@ -105,7 +105,7 @@ If you only need to know whether a runtime is already available, run:
 apcc site status
 ```
 
-The root docs URL lands on the localized Console Overview page. If you are opening the site on behalf of a human, tell them the returned URL and leave it running until they explicitly ask to stop it.
+The root docs URL lands on the localized APCC home overview page. If you are opening the site on behalf of a human, tell them the returned URL and leave it running until they explicitly ask to stop it.
 
 Use `site build` only when you want a deployable read-only docs-site artifact:
 

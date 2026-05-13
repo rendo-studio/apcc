@@ -16,6 +16,7 @@ It is not part of the public usage model.
 - use APCC in this repository
 - keep `docs/public/` focused on external users of the framework
 - keep repository-specific development details in `docs/internal/`
+- before changing docs-site viewer behavior or any Fumadocs-based docs-site surface, read the relevant references under `docs/internal/fumadocs/`
 - update `.apcc/` before implementation drifts too far from the control plane
 - keep generated local artifacts and private publishing credentials out of the release tree
 - keep `README.md` developer-facing for GitHub and stage `assets/npm-readme.md` into published npm packages
@@ -35,6 +36,8 @@ Rules:
 - keep the source-repo-local `AGENTS.md` and `.agents/skills/apcc-workflow/SKILL.md` maintainer-facing
 
 The repo-local guidance overrides live under `.maintainer-guidance/` so self-`init` or repair does not overwrite the source repository back to consumer-facing bootstrap text.
+
+For docs-site development specifically, treat `docs/internal/fumadocs/` as the local framework reference set. Start from its top-level topic groups such as `(framework)`, `ui`, `headless`, `mdx`, and `cli`, then read the relevant pages before changing layouts, navigation, search, markdown rendering, or other Fumadocs-based docs-site behavior.
 
 APCC-managed `AGENTS.md` instructions must stay inside:
 

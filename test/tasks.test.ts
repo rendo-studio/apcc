@@ -1,3 +1,7 @@
+import { spawnSync } from "node:child_process";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
 import { afterEach, describe, expect, it } from "vitest";
 
 import { addTask, deleteTask, loadTasks, updateTask, updateTaskStatus } from "../src/core/tasks.js";
@@ -5,6 +9,24 @@ import { createWorkspaceFixture } from "./helpers/workspace.js";
 
 const restorers: Array<() => void> = [];
 const cleanups: Array<() => Promise<void>> = [];
+const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+
+function runTaskCli(args: string[], workspaceRoot: string) {
+  const result = spawnSync(process.execPath, ["--import", "tsx", path.join(repoRoot, "src", "bin", "apcc.ts"), ...args], {
+    cwd: repoRoot,
+    encoding: "utf8",
+    env: {
+      ...process.env,
+      APCC_WORKSPACE_ROOT: workspaceRoot
+    }
+  });
+
+  return {
+    status: result.status,
+    stdout: result.stdout,
+    stderr: result.stderr
+  };
+}
 
 afterEach(async () => {
   while (restorers.length > 0) {
@@ -41,6 +63,36 @@ describe("task control plane", () => {
 
     expect(rootTask.task.planRef).toBe("plan-root");
     expect(childTask.task.planRef).toBe("plan-root");
+  });
+
+  it("accepts an optional initial status while keeping pending as the default", async () => {
+    const fixture = await createWorkspaceFixture();
+    restorers.push(fixture.use());
+    cleanups.push(fixture.cleanup);
+
+    const inProgressTask = await addTask({
+      name: "Started task",
+      parent: "root",
+      plan: "plan-root",
+      status: "in_progress"
+    });
+    const defaultTask = await addTask({
+      name: "Default task",
+      parent: "root",
+      plan: "plan-root"
+    });
+
+    expect(inProgressTask.task.status).toBe("in_progress");
+    expect(defaultTask.task.status).toBe("pending");
+
+    await expect(
+      addTask({
+        name: "Invalid task",
+        parent: "root",
+        plan: "plan-root",
+        status: "todo" as never
+      })
+    ).rejects.toThrow(/unsupported status/i);
   });
 
   it("rejects child tasks that try to diverge from the parent task plan", async () => {
@@ -228,6 +280,54 @@ describe("task control plane", () => {
       "Concurrent task A",
       "Concurrent task B"
     ]);
+  });
+
+  it("supports the optional --status flag through the CLI and rejects unsupported values", async () => {
+    const fixture = await createWorkspaceFixture();
+    restorers.push(fixture.use());
+    cleanups.push(fixture.cleanup);
+
+    const added = runTaskCli(
+      [
+        "task",
+        "add",
+        "--id",
+        "cli-started-task",
+        "--name",
+        "CLI Started Task",
+        "--parent",
+        "root",
+        "--plan",
+        "plan-root",
+        "--status",
+        "in_progress"
+      ],
+      fixture.root
+    );
+
+    expect(added.status).toBe(0);
+    expect(added.stdout).toContain("# Task");
+    expect(added.stdout).toContain("`cli-started-task`");
+    expect(added.stdout).toContain("Status: `in progress`");
+
+    const invalid = runTaskCli(
+      [
+        "task",
+        "add",
+        "--name",
+        "CLI Invalid Task",
+        "--parent",
+        "root",
+        "--plan",
+        "plan-root",
+        "--status",
+        "todo"
+      ],
+      fixture.root
+    );
+
+    expect(invalid.status).not.toBe(0);
+    expect(invalid.stderr).toContain("Unsupported task status");
   });
 
   it("updates task fields and deletes task subtrees", async () => {

@@ -1,1 +1,16 @@
-items: []
+items:
+  - id: adopt-tmp-ui-as-docs-site-ui-target
+    name: Adopt .tmp/ui as docs-site UI target
+    description: Use the three .tmp/ui design references as the delivery target for the APCC docs center homepage, console, and docs reading surfaces.
+    docPath: null
+    category: change
+    proposedBy: agent
+    context: The docs-site UI work has shifted from isolated rendering fixes to a product-level interface refactor covering all three primary APCC docs center surfaces.
+    impactOfNoAction: Implementation would drift between default Fumadocs UI, existing console panels, and the provided design references without a recorded scope boundary.
+    expectedOutcome: The implementation treats homepage, console, and docs as equal top-level product surfaces and verifies them against the provided UI designs.
+    boundary: Visual and interaction refactor of the prebuilt viewer shell only; do not change APCC runtime-data semantics, docs staging, package install behavior, or live-refresh contracts.
+    status: approved
+    decisionSummary: The provided .tmp/ui references are now the accepted UI target for this refactor, with the implementation bounded to the prebuilt viewer shell and no runtime-data or live-refresh contract changes.
+    revisitCondition: Revisit if the design target changes or if matching it requires changing APCC runtime-data, staging, packaging, or live-refresh semantics.
+    createdAt: 2026-04-29T23:18:51.118Z
+    decidedAt: 2026-04-29T23:19:09.333Z

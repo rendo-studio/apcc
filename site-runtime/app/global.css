@@ -4,6 +4,9 @@
 
 :root {
   color-scheme: light;
+  --fd-sidebar-width: 280px;
+  --fd-toc-width: 280px;
+  --fd-layout-width: 1480px;
   --background: #ffffff;
   --foreground: #171717;
   --card: #ffffff;
@@ -46,6 +49,14 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-border: var(--border);
   --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
 }
 
 .dark {
@@ -92,6 +103,14 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-border: var(--border);
   --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
 }
 
 html {
@@ -100,7 +119,7 @@ html {
 
 body {
   min-height: 100vh;
-  background: var(--background);
+  background: #f8fafc;
   color: var(--foreground);
   font-family:
     "Geist Sans",
@@ -168,6 +187,97 @@ pre {
   border-radius: 999px;
   background: #00a35c;
   box-shadow: 0 0 0 3px rgba(0, 163, 92, 0.16);
+}
+
+#nd-docs-layout {
+  --fd-nav-height: 0px;
+  background: #f8fafc;
+}
+
+#nd-sidebar {
+  border-inline-end: 1px solid rgb(226 232 240);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(12px);
+}
+
+#nd-toc {
+  padding-inline: 1.5rem;
+}
+
+#nd-page {
+  gap: 0 !important;
+  padding-bottom: 1.5rem !important;
+}
+
+#nd-toc a[data-active="true"],
+[data-toc-popover] a[data-active="true"] {
+  color: #2563eb;
+}
+
+#nd-toc a[data-active="true"] {
+  border-inline-start-color: #2563eb;
+}
+
+.prose {
+  max-width: 860px;
+  color: #1e293b;
+}
+
+.prose h1 {
+  margin-bottom: 1rem;
+  color: #0f172a;
+  font-size: 2.35rem;
+  line-height: 1.2;
+  letter-spacing: 0;
+}
+
+.prose h2 {
+  margin-top: 2rem;
+  color: #0f172a;
+  letter-spacing: 0;
+}
+
+.prose p,
+.prose li {
+  line-height: 1.75;
+}
+
+.prose table {
+  overflow: hidden;
+  border-radius: 0.75rem;
+  border: 1px solid rgb(226 232 240);
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.04);
+}
+
+.prose th {
+  background: #f8fafc;
+}
+
+.prose blockquote {
+  border-inline-start-color: #2563eb;
+  border-radius: 0.75rem;
+  background: #eff6ff;
+  padding: 1rem 1.25rem;
+  color: #1e3a8a;
+}
+
+.dark #nd-docs-layout,
+.dark body {
+  background: #09090b;
+}
+
+.dark #nd-sidebar {
+  border-inline-end-color: rgba(255, 255, 255, 0.1);
+  background: rgba(9, 9, 11, 0.92);
+}
+
+.dark .prose {
+  color: #d4d4d8;
+}
+
+.dark .prose h1,
+.dark .prose h2 {
+  color: #f8fafc;
 }
 
 .dark .prose,

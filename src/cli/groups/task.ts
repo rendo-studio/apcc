@@ -41,6 +41,14 @@ async function resolveVersionFilter(input: {
   };
 }
 
+function parseTaskStatus(value: string): "pending" | "in_progress" | "done" | "blocked" {
+  if (!(TASK_STATUSES as readonly string[]).includes(value)) {
+    throw new Error(`Unsupported task status "${value}".`);
+  }
+
+  return value as "pending" | "in_progress" | "done" | "blocked";
+}
+
 export function registerTaskGroup(app: AclipApp) {
   app
     .group("task", {
@@ -52,7 +60,7 @@ export function registerTaskGroup(app: AclipApp) {
     .command("add", {
       summary: "Add a task node.",
       description: withGuideHint(
-        "Create a task node in the task tree and require an explicit parent marker or root."
+        "Create a task node in the task tree, require an explicit parent marker or root, and optionally set its initial status."
       ),
       arguments: [
         stringArgument("name", {
@@ -75,20 +83,26 @@ export function registerTaskGroup(app: AclipApp) {
         stringArgument("summary", {
           required: false,
           description: "Optional task summary. Defaults to the task name."
+        }),
+        stringArgument("status", {
+          required: false,
+          description: "Optional initial status: pending, in_progress, done, or blocked."
         })
       ],
       examples: [
         "apcc task add --name 'Wire local site runtime' --parent root --plan implement-local-docs-site-runtime-4",
+        "apcc task add --name 'Wire local site runtime' --parent root --plan implement-local-docs-site-runtime-4 --status in_progress",
         "apcc task add --id wire-local-site-runtime --name 'Wire local site runtime' --parent root --plan implement-local-docs-site-runtime-4",
         "apcc task add --name 'Add baseline registry' --parent task-site-runtime"
       ],
-      handler: async ({ id, name, parent, plan, summary }) => {
+      handler: async ({ id, name, parent, plan, summary, status }) => {
         return addTask({
           id: id ? String(id) : undefined,
           name: String(name),
           parent: String(parent),
           plan: plan ? String(plan) : undefined,
-          summary: summary ? String(summary) : undefined
+          summary: summary ? String(summary) : undefined,
+          status: status ? parseTaskStatus(String(status)) : undefined
         });
       }
     })
@@ -146,10 +160,7 @@ export function registerTaskGroup(app: AclipApp) {
           );
         }
 
-        const nextStatus = input.status ? String(input.status) : undefined;
-        if (nextStatus && !(TASK_STATUSES as readonly string[]).includes(nextStatus)) {
-          throw new Error(`Unsupported task status "${nextStatus}".`);
-        }
+        const nextStatus = input.status ? parseTaskStatus(String(input.status)) : undefined;
 
         let countedForProgress: boolean | undefined;
         if (input["counted-for-progress"] !== undefined) {
@@ -164,7 +175,7 @@ export function registerTaskGroup(app: AclipApp) {
           id: String(input.id),
           ...(input.name ? { name: String(input.name) } : {}),
           ...(input.summary ? { summary: String(input.summary) } : {}),
-          ...(nextStatus ? { status: nextStatus as "pending" | "in_progress" | "done" | "blocked" } : {}),
+          ...(nextStatus ? { status: nextStatus } : {}),
           ...(input.parent ? { parent: String(input.parent) } : {}),
           ...(input.plan ? { plan: String(input.plan) } : {}),
           ...(countedForProgress !== undefined ? { countedForProgress } : {})

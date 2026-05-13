@@ -100,6 +100,7 @@ export async function addTask(input: {
   parent: string;
   plan?: string;
   summary?: string;
+  status?: TaskStatus;
 }): Promise<{ task: TaskNode; progressPercent: number }> {
   return withWorkspaceMutationLock(async () => {
     const paths = getWorkspacePaths();
@@ -137,11 +138,15 @@ export async function addTask(input: {
       throw new Error(`Task "${id}" already exists.`);
     }
 
+    if (input.status && !(TASK_STATUSES as readonly string[]).includes(input.status)) {
+      throw new Error(`Task "${input.name}" uses unsupported status "${String(input.status)}".`);
+    }
+
     const task: TaskNode = {
       id,
       name: input.name,
       summary: input.summary ?? input.name,
-      status: "pending",
+      status: input.status ?? "pending",
       planRef,
       parentTaskId,
       countedForProgress: true

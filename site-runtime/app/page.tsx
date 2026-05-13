@@ -9,5 +9,5 @@ export default async function HomePage() {
   const snapshot = await loadControlPlaneSnapshot();
   const docsLanguage = snapshot.workspace.docsLanguage;
   const locale = isSiteLocale(docsLanguage) ? docsLanguage : i18n.defaultLanguage;
-  redirect(`/${locale}/docs/console`);
+  redirect(`/${locale}`);
 }

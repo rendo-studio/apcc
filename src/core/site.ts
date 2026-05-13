@@ -305,19 +305,13 @@ function getRuntimeConsoleCopy(docsLanguage: "en" | "zh-CN") {
   if (docsLanguage === "zh-CN") {
     return {
       consoleTitle: "控制台",
-      overviewTitle: "概览",
-      overviewDescription: "APCC 运行时控制台概览。",
-      plansTitle: "计划",
-      plansDescription: "APCC 运行时计划控制台。"
+      consoleDescription: "APCC 运行时控制台概览。"
     };
   }
 
   return {
     consoleTitle: "Console",
-    overviewTitle: "Overview",
-    overviewDescription: "APCC runtime console overview.",
-    plansTitle: "Plans",
-    plansDescription: "APCC runtime plan console."
+    consoleDescription: "APCC runtime console overview."
   };
 }
 
@@ -387,29 +381,12 @@ async function patchRootMetaForConsole(stagedDocsRoot: string): Promise<void> {
 async function injectRuntimeConsoleDocs(stagedDocsRoot: string, docsLanguage: "en" | "zh-CN"): Promise<void> {
   const copy = getRuntimeConsoleCopy(docsLanguage);
   const consoleRoot = path.join(stagedDocsRoot, "console");
+  const consolePage = path.join(stagedDocsRoot, "console.md");
+
   await fs.rm(consoleRoot, { recursive: true, force: true, maxRetries: 3, retryDelay: 200 });
-  await fs.mkdir(consoleRoot, { recursive: true });
+  await fs.rm(consolePage, { force: true, maxRetries: 3, retryDelay: 200 });
 
-  await writeText(
-    path.join(consoleRoot, "meta.json"),
-    `${JSON.stringify(
-      {
-        title: copy.consoleTitle,
-        pages: ["index", "plans"]
-      },
-      null,
-      2
-    )}\n`
-  );
-
-  await writeText(
-    path.join(consoleRoot, "index.md"),
-    renderRuntimeConsoleDoc(copy.overviewTitle, copy.overviewDescription)
-  );
-  await writeText(
-    path.join(consoleRoot, "plans.md"),
-    renderRuntimeConsoleDoc(copy.plansTitle, copy.plansDescription)
-  );
+  await writeText(consolePage, renderRuntimeConsoleDoc(copy.consoleTitle, copy.consoleDescription));
 
   await patchRootMetaForConsole(stagedDocsRoot);
 }
@@ -1447,6 +1424,51 @@ function hasPrebuiltShell(root: string): boolean {
   );
 }
 
+async function acquirePrebuiltShellBuildLock(
+  artifactBase: string,
+  options: {
+    timeoutMs?: number;
+    pollMs?: number;
+    staleMs?: number;
+  } = {}
+): Promise<() => Promise<void>> {
+  const { timeoutMs = 180000, pollMs = 250, staleMs = 300000 } = options;
+  const lockRoot = path.join(artifactBase, ".build-lock");
+  const deadline = Date.now() + timeoutMs;
+
+  await fs.mkdir(artifactBase, { recursive: true });
+
+  while (true) {
+    try {
+      await fs.mkdir(lockRoot);
+      return async () => {
+        await fs.rm(lockRoot, { recursive: true, force: true, maxRetries: 3, retryDelay: 200 }).catch(
+          () => undefined
+        );
+      };
+    } catch (error) {
+      const code = error && typeof error === "object" && "code" in error ? String(error.code) : "";
+      if (code !== "EEXIST") {
+        throw error;
+      }
+
+      const stats = await fs.stat(lockRoot).catch(() => null);
+      if (stats && Date.now() - stats.mtimeMs > staleMs) {
+        await fs.rm(lockRoot, { recursive: true, force: true, maxRetries: 3, retryDelay: 200 }).catch(
+          () => undefined
+        );
+        continue;
+      }
+
+      if (Date.now() >= deadline) {
+        throw new Error("timed out waiting for the prebuilt docs shell build lock.");
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, pollMs));
+    }
+  }
+}
+
 async function findPackagedPrebuiltShell(artifactBase: string): Promise<string | null> {
   const entries = await fs.readdir(artifactBase, { withFileTypes: true }).catch(() => []);
   const shells = entries
@@ -1659,94 +1681,161 @@ export async function buildPrebuiltSiteShellArtifact(): Promise<string> {
     return artifactRoot;
   }
 
-  const packagedShell = await findPackagedPrebuiltShell(artifactBase);
-  if (!nodeFs.existsSync(sourceRoot)) {
-    if (packagedShell) {
+  const releaseBuildLock = await acquirePrebuiltShellBuildLock(artifactBase);
+
+  try {
+    const lockedLatestPointer = await readText(latestPointerPath)
+      .then((content) => JSON.parse(content) as { root?: string; sourceMtimeMs?: number })
+      .catch(() => null);
+    const lockedLatestPointerRoot = lockedLatestPointer?.root
+      ? resolvePrebuiltShellPointerRoot(artifactBase, lockedLatestPointer.root)
+      : null;
+    if (
+      lockedLatestPointerRoot &&
+      lockedLatestPointer?.sourceMtimeMs !== undefined &&
+      lockedLatestPointer.sourceMtimeMs >= latestSourceMtime &&
+      hasPrebuiltShell(lockedLatestPointerRoot)
+    ) {
+      if (lockedLatestPointer.root !== path.basename(lockedLatestPointerRoot)) {
+        await writeText(
+          latestPointerPath,
+          `${JSON.stringify(
+            {
+              root: path.basename(lockedLatestPointerRoot),
+              sourceMtimeMs: lockedLatestPointer.sourceMtimeMs
+            },
+            null,
+            2
+          )}\n`
+        );
+      }
+      return lockedLatestPointerRoot;
+    }
+
+    if (hasPrebuiltShell(artifactRoot)) {
       await writeText(
         latestPointerPath,
         `${JSON.stringify(
           {
-            root: path.basename(packagedShell),
+            root: path.basename(artifactRoot),
             sourceMtimeMs: latestSourceMtime
           },
           null,
           2
         )}\n`
       );
-      return packagedShell;
+      return artifactRoot;
     }
 
-    throw new Error("APCC package is missing the prebuilt docs viewer shell.");
-  }
+    const packagedShell = await findPackagedPrebuiltShell(artifactBase);
+    if (!nodeFs.existsSync(sourceRoot)) {
+      if (packagedShell) {
+        await writeText(
+          latestPointerPath,
+          `${JSON.stringify(
+            {
+              root: path.basename(packagedShell),
+              sourceMtimeMs: latestSourceMtime
+            },
+            null,
+            2
+          )}\n`
+        );
+        return packagedShell;
+      }
 
-  await ensureSiteRuntimeSourceDependencies(sourceRoot);
-  await fs.rm(path.join(sourceRoot, ".next"), { recursive: true, force: true, maxRetries: 3, retryDelay: 200 });
-
-  const invocation = createNextInvocation(sourceRoot, "build");
-  const child = spawn(invocation.command, invocation.args, {
-    cwd: sourceRoot,
-    stdio: "inherit",
-    shell: false,
-    env: {
-      ...process.env,
-      NEXT_TELEMETRY_DISABLED: "1"
+      throw new Error("APCC package is missing the prebuilt docs viewer shell.");
     }
-  });
 
-  const exitCode = await new Promise<number>((resolve, reject) => {
-    child.once("error", reject);
-    child.once("exit", (code) => resolve(code ?? 1));
-  });
+    await ensureSiteRuntimeSourceDependencies(sourceRoot);
+    let exitCode = 1;
+    const maxBuildAttempts = process.platform === "win32" ? 2 : 1;
 
-  if (exitCode !== 0) {
-    throw new Error(`prebuilt docs shell build failed with exit code ${exitCode}`);
+    for (let attempt = 1; attempt <= maxBuildAttempts; attempt += 1) {
+      await fs.rm(path.join(sourceRoot, ".next"), {
+        recursive: true,
+        force: true,
+        maxRetries: 10,
+        retryDelay: 200
+      });
+
+      const invocation = createNextInvocation(sourceRoot, "build");
+      const child = spawn(invocation.command, invocation.args, {
+        cwd: sourceRoot,
+        stdio: "inherit",
+        shell: false,
+        env: {
+          ...process.env,
+          NEXT_TELEMETRY_DISABLED: "1"
+        }
+      });
+
+      exitCode = await new Promise<number>((resolve, reject) => {
+        child.once("error", reject);
+        child.once("exit", (code) => resolve(code ?? 1));
+      });
+
+      if (exitCode === 0) {
+        break;
+      }
+
+      if (attempt < maxBuildAttempts) {
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      }
+    }
+
+    if (exitCode !== 0) {
+      throw new Error(`prebuilt docs shell build failed with exit code ${exitCode}`);
+    }
+
+    const standaloneRoot = path.join(sourceRoot, ".next", "standalone");
+    const staticRoot = path.join(sourceRoot, ".next", "static");
+    if (!nodeFs.existsSync(path.join(standaloneRoot, "server.js")) || !nodeFs.existsSync(staticRoot)) {
+      throw new Error("prebuilt docs shell output is incomplete after build.");
+    }
+
+    const tempRoot = `${artifactRoot}.tmp-${Date.now()}`;
+    await fs.rm(tempRoot, { recursive: true, force: true });
+    await fs.mkdir(tempRoot, { recursive: true });
+    await fs.cp(standaloneRoot, tempRoot, { recursive: true, force: true, dereference: true });
+    await fs.mkdir(path.join(tempRoot, ".next"), { recursive: true });
+    await fs.cp(staticRoot, path.join(tempRoot, ".next", "static"), { recursive: true, force: true });
+    if (nodeFs.existsSync(path.join(sourceRoot, "public"))) {
+      await fs.cp(path.join(sourceRoot, "public"), path.join(tempRoot, "public"), {
+        recursive: true,
+        force: true
+      });
+    }
+    await writeText(
+      path.join(tempRoot, "artifact-manifest.json"),
+      `${JSON.stringify(
+        {
+          builtAt: new Date().toISOString(),
+          sourceMtimeMs: latestSourceMtime
+        },
+        null,
+        2
+      )}\n`
+    );
+
+    await fs.mkdir(artifactBase, { recursive: true });
+    await renameWithRetries(tempRoot, artifactRoot);
+    await writeText(
+      latestPointerPath,
+      `${JSON.stringify(
+        {
+          root: path.basename(artifactRoot),
+          sourceMtimeMs: latestSourceMtime
+        },
+        null,
+        2
+      )}\n`
+    );
+
+    return artifactRoot;
+  } finally {
+    await releaseBuildLock();
   }
-
-  const standaloneRoot = path.join(sourceRoot, ".next", "standalone");
-  const staticRoot = path.join(sourceRoot, ".next", "static");
-  if (!nodeFs.existsSync(path.join(standaloneRoot, "server.js")) || !nodeFs.existsSync(staticRoot)) {
-    throw new Error("prebuilt docs shell output is incomplete after build.");
-  }
-
-  const tempRoot = `${artifactRoot}.tmp-${Date.now()}`;
-  await fs.rm(tempRoot, { recursive: true, force: true });
-  await fs.mkdir(tempRoot, { recursive: true });
-  await fs.cp(standaloneRoot, tempRoot, { recursive: true, force: true, dereference: true });
-  await fs.mkdir(path.join(tempRoot, ".next"), { recursive: true });
-  await fs.cp(staticRoot, path.join(tempRoot, ".next", "static"), { recursive: true, force: true });
-  if (nodeFs.existsSync(path.join(sourceRoot, "public"))) {
-    await fs.cp(path.join(sourceRoot, "public"), path.join(tempRoot, "public"), {
-      recursive: true,
-      force: true
-    });
-  }
-  await writeText(
-    path.join(tempRoot, "artifact-manifest.json"),
-    `${JSON.stringify(
-      {
-        builtAt: new Date().toISOString(),
-        sourceMtimeMs: latestSourceMtime
-      },
-      null,
-      2
-    )}\n`
-  );
-
-  await fs.mkdir(artifactBase, { recursive: true });
-  await renameWithRetries(tempRoot, artifactRoot);
-  await writeText(
-    latestPointerPath,
-    `${JSON.stringify(
-      {
-        root: path.basename(artifactRoot),
-        sourceMtimeMs: latestSourceMtime
-      },
-      null,
-      2
-    )}\n`
-  );
-
-  return artifactRoot;
 }
 
 export async function ensureRunnablePrebuiltSiteShell(runtimeBase: string): Promise<string> {

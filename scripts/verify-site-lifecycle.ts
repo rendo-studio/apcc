@@ -149,6 +149,10 @@ async function main() {
         "npm install -g apcc",
         "apcc guide",
         "```",
+        "",
+        "```npm",
+        "npm install apcc",
+        "```",
         ""
       ].join("\n"),
       "utf8"
@@ -180,13 +184,13 @@ async function main() {
     );
     assert.equal(
       bareRootResponse.headers.get("location"),
-      "/zh-CN/docs/console",
+      "/zh-CN",
       "the bare site root should respect the workspace docs language"
     );
     assert.equal(
       new URL(firstHomeResponse.url).pathname,
-      "/zh-CN/docs/console",
-      "the docs-site root should land on the localized console overview"
+      "/zh-CN",
+      "the docs-site root should land on the localized home overview"
     );
     assert.equal(firstResponse.status, 200, "prebuilt runtime should serve the localized overview page");
     assert.equal(renderingFixtureResponse.status, 200, "prebuilt runtime should serve the markdown rendering fixture page");
@@ -195,6 +199,11 @@ async function main() {
       renderingFixtureHtml,
       /<pre[^>]*>[\s\S]*shiki/i,
       "fenced code blocks should render through the Fumadocs code-block pipeline"
+    );
+    assert.match(
+      renderingFixtureHtml,
+      /role="tab"[\s\S]*npm[\s\S]*pnpm[\s\S]*yarn[\s\S]*bun/,
+      "Fumadocs package-manager code blocks should render as package-manager tabs"
     );
     assert.equal(nodeFs.existsSync(path.join(first.runtimeRoot, "server.js")), false, "runtime root should not carry a copied shell server");
     assert.equal(nodeFs.existsSync(path.join(first.runtimeRoot, "node_modules")), false, "runtime root should not install shell dependencies per project");

@@ -245,3 +245,28 @@ items:
     summary: Add a maintainer-facing requirements document for UI designers that defines the functional modules and capability bar a qualified APCC docs site must meet.
     parentPlanId: null
     versionRef: 0-3-4-docs-site-runtime-and-control-plane-hardening
+  - id: fix-index-doc-route-access-50
+    name: Fix index doc route access
+    summary: Allow docs pages backed by index.md or index.mdx to remain reachable when users navigate to explicit /index routes, while preserving the canonical parent-folder URL.
+    parentPlanId: null
+    versionRef: 0-3-5-docs-site-ui-and-task-ergonomics
+  - id: restore-fumadocs-standard-docs-rendering-51
+    name: Restore Fumadocs-standard docs rendering
+    summary: Diagnose explicit index-route failures in the prebuilt docs runtime, realign page rendering with Fumadocs conventions, and preserve APCC live-runtime refresh behavior.
+    parentPlanId: null
+    versionRef: 0-3-5-docs-site-ui-and-task-ergonomics
+  - id: refine-task-add-status-ergonomics-52
+    name: Refine task-add status ergonomics
+    summary: Allow task add to accept an optional status without changing the default pending behavior.
+    parentPlanId: null
+    versionRef: 0-3-5-docs-site-ui-and-task-ergonomics
+  - id: refactor-docs-site-ui-from-tmp-ui-design
+    name: Refactor docs-site UI from .tmp/ui design
+    summary: Implement the APCC docs center homepage, console, and docs reading surfaces against the .tmp/ui design target while preserving the prebuilt runtime, runtime-data contract, and live refresh behavior.
+    parentPlanId: null
+    versionRef: 0-3-5-docs-site-ui-and-task-ergonomics
+  - id: require-fumadocs-preread-for-docs-site-dev
+    name: Require Fumadocs preread for docs-site development
+    summary: Make Fumadocs reference prereading an explicit maintainer workflow step before changing docs-site viewer or Fumadocs-backed surfaces.
+    parentPlanId: null
+    versionRef: 0-3-5-docs-site-ui-and-task-ergonomics

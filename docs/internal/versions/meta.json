@@ -1,5 +1,6 @@
 {
   "pages": [
+    "0-3-5-docs-site-ui-and-task-ergonomics",
     "0-3-4-docs-site-runtime-and-control-plane-hardening",
     "0-3-3-invalid-yaml-recovery-and-direct-edit-guidance-hardening",
     "0-3-2-workspace-schema-provenance-and-docs-site-localization",
