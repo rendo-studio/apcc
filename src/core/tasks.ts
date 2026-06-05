@@ -302,11 +302,17 @@ export function buildTaskTree(tasks: TaskNode[], allowOrphanRoots = false): Task
   return roots;
 }
 
-export function renderTaskTreeLines(tree: TaskTreeNode[], depth = 0): string[] {
+export function renderTaskTreeLines(
+  tree: TaskTreeNode[],
+  depth = 0,
+  options: { details?: boolean } = {}
+): string[] {
   return tree.flatMap((node) => {
     const prefix = `${"  ".repeat(depth)}- `;
-    const line = `${prefix}${node.name} (${node.id}) [${node.status}]`;
-    return [line, ...renderTaskTreeLines(node.children, depth + 1)];
+    const line = `${prefix}${node.name} (${node.id}) [${node.status}] plan: ${node.planRef}`;
+    const detailLines =
+      options.details && node.summary ? [`${"  ".repeat(depth + 1)}summary: ${node.summary}`] : [];
+    return [line, ...detailLines, ...renderTaskTreeLines(node.children, depth + 1, options)];
   });
 }
 

@@ -113,9 +113,9 @@ Do not treat a current task title as the end goal. If the project identity or en
 ```bash
 apcc plan add --name "Ship onboarding" --parent root --summary "Make first-hour usage reliable."
 apcc plan add --name "Cut 0.3.4 scope" --parent root --version 0.3.4
-apcc plan show
-apcc plan show --version 0.3.4
-apcc plan show --unversioned
+apcc plan list
+apcc plan list --version 0.3.4
+apcc plan list --unversioned
 apcc plan update --id <plan-id> --summary "Updated summary."
 apcc plan update --id <plan-id> --version 0.3.4
 ```
@@ -125,8 +125,11 @@ apcc plan update --id <plan-id> --version 0.3.4
 ```bash
 apcc task add --name "Document first-hour loop" --parent root --plan <plan-id> --summary "Write the public first-hour loop." --status in_progress
 apcc task list
+apcc task list --plan <plan-id>
+apcc task list --details
 apcc task list --version 0.3.4
 apcc task list --unversioned
+apcc task show <task-id>
 ```
 
 Important behavior:
@@ -135,11 +138,12 @@ Important behavior:
 - `task add` accepts an optional `--status`; if omitted, the initial task status stays `pending`
 - plans may carry an optional `--version` anchor that resolves from either a version record id or a version label
 - single-node mutations return concise deltas, not the full tree
-- full context is available through `plan show`, `task list`, and `status`
+- full context is available through `plan list`, `task list --details`, `task show <task-id>`, and `status`
 - plan status and progress are derived from tasks at read time
 - tasks do not persist their own version anchor; they inherit version scope from their referenced plan
 - child tasks must stay on the same `planRef` as their parent task
-- `plan show` and `task list` accept `--version <record-id-or-version-label>` and `--unversioned` filters
+- `plan list` and `task list` accept `--version <record-id-or-version-label>` and `--unversioned` filters
+- `task list` always shows each task `planRef`, accepts `--plan <plan-id>` for a plan-scoped tree, and accepts `--details` for task summaries
 - the id `root` is reserved as the CLI parent marker
 
 For bulk plan or task restructuring, edit `.apcc/plans/current.yaml` and `.apcc/tasks/current.yaml` directly, then run:
@@ -175,7 +179,9 @@ apcc site start --port 4317
 apcc site status
 apcc site list
 apcc site stop
+apcc site stop --all
 apcc site clean
+apcc site clean --all
 apcc site build
 ```
 
@@ -188,6 +194,8 @@ Use `--port` when you want a stable local address for the current start without 
 `site build` creates a deployable read-only docs-site artifact. It does not prepare `site start`, does not replace the live watcher, and must not stop a healthy live runtime.
 
 `site stop` is an explicit runtime control command. It should not be treated as a routine end-of-task step by development agents.
+
+`site clean --all` is an explicit local cache reset for clearing APCC docs-site runtime cache, including stale runtime roots for projects that no longer exist. It removes generated runtime artifacts, not project `.apcc/`, authored `docs/`, or `site build` output.
 
 ## Output Contract
 

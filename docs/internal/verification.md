@@ -47,6 +47,7 @@ For lifecycle changes, verify the commands serially:
 2. `npm run dev -- site start`
 3. `npm run dev -- site start`
 4. `npm run dev -- site clean`
+5. `npm run dev -- site clean --all`
 
 Expected result:
 
@@ -54,6 +55,7 @@ Expected result:
 - the second start reuses the same runtime
 - stop preserves the runtime directory
 - clean removes the runtime directory
+- clean --all removes APCC-managed site runtime directories and shared shell cache without touching project `.apcc/` or `docs/`
 - the runtime root does not install its own `node_modules`
 - the runtime root does not carry its own standalone server artifact
 - `site build` does not stop or downgrade a healthy live runtime

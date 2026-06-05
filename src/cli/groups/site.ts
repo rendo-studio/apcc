@@ -1,6 +1,7 @@
 import { AclipApp, booleanArgument, integerArgument, stringArgument } from "@rendo-studio/aclip";
 import {
   buildSiteRuntime,
+  cleanAllSiteRuntimes,
   cleanSiteRuntime,
   getSiteRuntimeStatus,
   listSiteRuntimes,
@@ -173,17 +174,32 @@ export function registerSiteGroup(app: AclipApp) {
     .command("clean", {
       summary: "Stop and clean the local docs runtime.",
       description: withGuideHint(
-        "Terminate the managed local docs server if it is running and remove the staged runtime so the next start begins from a cold state."
+        "Terminate the managed local docs server if it is running and remove staged runtime cache. Use --all to clear every APCC docs-site runtime cache on this machine."
       ),
       arguments: [
+        booleanArgument("all", {
+          required: false,
+          description: "Clean every APCC docs-site runtime cache instead of only one targeted workspace.",
+          flag: "--all"
+        }),
         stringArgument("path", {
           required: false,
           description: "Optional project root or docs-pack path. Defaults to the configured docs-site source path."
         })
       ],
-      examples: ["apcc site clean", "apcc site clean --path D:/project/example"],
-      handler: async ({ path }) => ({
-        site: await cleanSiteRuntime(path ? String(path) : undefined)
-      })
+      examples: [
+        "apcc site clean",
+        "apcc site clean --path D:/project/example",
+        "apcc site clean --all"
+      ],
+      handler: async ({ all, path }) => {
+        if (all && path) {
+          throw new Error("Use either --all or --path for site clean, not both.");
+        }
+
+        return {
+          site: all ? await cleanAllSiteRuntimes() : await cleanSiteRuntime(path ? String(path) : undefined)
+        };
+      }
     });
 }

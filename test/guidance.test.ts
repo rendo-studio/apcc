@@ -42,6 +42,8 @@ describe("workflow guidance artifacts", () => {
     expect(agents).not.toContain("It is identical to `apcc guide workflow`");
     expect(agents).toContain("cold round or the workspace may be desynced");
     expect(agents).toContain("`apcc site start`");
+    expect(agents).toContain("`apcc status` is a structured control-plane summary");
+    expect(agents).toContain("read the smallest relevant authored docs");
     expect(agents).toContain("continue without rerunning the full round-start sequence");
     expect(agents).toContain("refresh the workspace");
     expect(agents).toContain("If the project identity or long-lived end goal is unclear");

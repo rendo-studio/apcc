@@ -111,8 +111,9 @@ apcc site start --port 4317
 
 Then apply this rule:
 
-- if `status` already gives you the project identity, goal, phase, next actions, and blockers, start work
+- if `status` already gives you the project identity, goal, phase, next actions, blockers, and task-relevant constraints, start work
 - inspect more files only if something is still unclear
+- if `status` is not enough to explain the current background, constraints, decisions, or handoff context, read the smallest relevant authored docs under `docs/`; `status` is a structured control-plane summary, not a substitute for authored docs
 - if the project identity or long-lived goal is still unclear, clarify them before implementation
 - if a human may have changed files, inspect the touched workspace surface directly before continuing
 - after `site start`, tell the human the returned docs-site URL explicitly
@@ -330,14 +331,14 @@ Moving one plan in the tree should prefer:
 apcc plan update --id support-next-round-estimation-1 --parent root
 ```
 
-After direct `.apcc/` edits, run `apcc doctor check` and an explicit inspection command such as `apcc status`, `apcc plan show`, or `apcc task list`.
+After direct `.apcc/` edits, run `apcc doctor check` and an explicit inspection command such as `apcc status`, `apcc plan list`, or `apcc task list`.
 
 Important rules:
 
 - `.apcc` should persist explicit facts, not derived execution caches
 - progress and plan execution status are derived at read time from the current plan and task trees
 - CLI mutations do not require a manual sync step to make derived views correct
-- direct edits to `.apcc/` are reflected automatically in `apcc status`, `apcc plan show`, and the docs-site snapshot
+- direct edits to `.apcc/` are reflected automatically in `apcc status`, `apcc plan list`, and the docs-site snapshot
 - there is no manual sync ritual in the normal operating loop
 - do not treat CLI as the only valid way to edit the control plane
 
@@ -510,7 +511,7 @@ The first-hour loop is a cold-start loop. It is not the right default for warm c
 ```bash
 apcc project show
 apcc goal show
-apcc plan show
+apcc plan list
 apcc task list
 apcc status
 ```
@@ -547,15 +548,17 @@ apcc site start
 apcc site stop
 apcc site build
 apcc site clean
+apcc site clean --all
 ```
 
-`site status` is the low-cost runtime probe. `site start` is the default live-refreshing local collaboration surface. It uses the APCC-packaged prebuilt viewer shell automatically. `site stop` stops the local runtime without purging it. `site build` creates a deployable read-only docs-site artifact and must not stop a healthy live runtime. `site clean` removes the staged runtime and is the heavy reset path.
+`site status` is the low-cost runtime probe. `site start` is the default live-refreshing local collaboration surface. It uses the APCC-packaged prebuilt viewer shell automatically. `site stop` stops the local runtime without purging it. `site build` creates a deployable read-only docs-site artifact and must not stop a healthy live runtime. `site clean` removes the targeted staged runtime and is the heavy reset path. `site clean --all` clears APCC-managed docs-site runtime cache across workspaces on this machine.
 
 Important operating rule for development agents:
 
 - after `site start`, report the returned URL to the human
 - keep the site alive across normal task completion
-- use `site stop` or `site clean` only when the human explicitly asks for it or when you are intentionally resetting a runtime you own
+- use `site stop`, `site clean`, or `site clean --all` only when the human explicitly asks for it or when you are intentionally resetting runtime cache you own
+- never use `site clean --all` as a routine end-of-task cleanup step; it is for explicit local cache reset, including old APCC docs-site cache or runtimes whose source projects no longer exist
 
 `doctor fix` is a repair command, not a mandatory every-round command. Use it when the workspace or managed files need recovery.
 

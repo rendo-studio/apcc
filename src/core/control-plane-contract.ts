@@ -414,7 +414,7 @@ export function renderControlPlaneContractMarkdown(): string {
           "3. replace existing fields structurally instead of appending duplicate keys under one YAML mapping",
           "4. use only the allowed values on this page",
           "5. run `apcc doctor check`",
-          "6. inspect the derived view with `apcc status`, `apcc plan show`, or `apcc task list`"
+          "6. inspect the derived view with `apcc status`, `apcc plan list`, or `apcc task list`"
         ].join("\n"),
         "",
         `If you are unsure whether a field is stored or derived, do not invent a new persisted field.`

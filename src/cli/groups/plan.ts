@@ -170,9 +170,9 @@ export function registerPlanGroup(app: AclipApp) {
         };
       }
     })
-    .command("show", {
-      summary: "Show the current plan tree.",
-      description: withGuideHint("Inspect the current structured plan tree."),
+    .command("list", {
+      summary: "List the current plan tree.",
+      description: withGuideHint("List the current structured plan tree."),
       arguments: [
         stringArgument("version", {
           required: false,
@@ -185,7 +185,7 @@ export function registerPlanGroup(app: AclipApp) {
           flag: "--unversioned"
         })
       ],
-      examples: ["apcc plan show", "apcc plan show --version 0.2.0", "apcc plan show --unversioned"],
+      examples: ["apcc plan list", "apcc plan list --version 0.2.0", "apcc plan list --unversioned"],
       handler: async ({ version, unversioned }) => {
         const resolved = await resolveVersionFilter({
           version: version ? String(version) : null,

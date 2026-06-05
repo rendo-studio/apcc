@@ -214,3 +214,26 @@ items:
     validationSummary: npm run generate:control-plane-contract-doc, npm run check, npm run test, npm run build, npm run dev -- site build, npm run verify:package-install, npm run verify:site-lifecycle, npm run dev -- doctor check, npm run dev -- status, npm run dev -- plan show --version 0.3.5, npm run dev -- task list --version 0.3.5, agent-browser smoke for /docs /en/docs/console and explicit Fumadocs /index route, npm run prepare:publish-package -- --out .tmp/apcc-publish-0.3.5, npm run prepare:publish-package -- --out .tmp/apcc-scoped-publish-0.3.5 --name @rendo-studio/apcc, npm pack --dry-run (apcc staged package), npm pack --dry-run (@rendo-studio/apcc staged package), GitHub release v0.3.5, npm publish apcc@0.3.5, npm publish @rendo-studio/apcc@0.3.5
     createdAt: 2026-05-13T09:04:34.966Z
     recordedAt: 2026-05-13T09:34:42.788Z
+  - id: 0-4-0-context-recovery-and-site-cleanup-semantics
+    version: 0.4.0
+    title: Context recovery and site cleanup semantics
+    summary: Minor release that standardizes APCC inspection commands, improves task detail visibility for agents, hardens context-recovery guidance, and adds an explicit all-workspace docs-site runtime cache reset.
+    docPath: internal/versions/0-4-0-context-recovery-and-site-cleanup-semantics.md
+    status: recorded
+    decisionRefs: []
+    highlights:
+      - Adds apcc site clean --all to clear APCC-managed docs-site runtime cache and shared shell cache without deleting project context
+      - Standardizes plan inspection on apcc plan list and removes the old apcc plan show compatibility surface
+      - Adds apcc task show id for focused single-task detail reads
+      - Adds apcc task list --plan and --details so agents can inspect plan-scoped work without reading .apcc directly
+      - Hardens shipped AGENTS and workflow guidance so agents read the smallest relevant authored docs context when status is insufficient after context loss
+      - Makes normal task list output include planRef so task-to-plan context stays visible in compact CLI reads
+    breakingChanges:
+      - apcc plan show is removed. Use apcc plan list for the canonical plan tree listing command.
+    migrationNotes:
+      - Treat apcc site clean --all as an explicit local cache reset only and not as routine end-of-task cleanup.
+      - Update scripts prompts or agent playbooks that call apcc plan show to call apcc plan list.
+      - Use apcc task show id for focused task detail and apcc task list --details only when a broader detailed tree is useful.
+    validationSummary: npm run generate:control-plane-contract-doc; npm run check; npm run test; npm run build; npm run dev -- site build; npm run verify:package-install; npm run verify:site-lifecycle; npm run dev -- doctor check; npm run dev -- status; npm run dev -- plan list --version 0.4.0; npm run dev -- task list --version 0.4.0; npm run dev -- task show publish-apcc-0-4-0; npm run prepare:publish-package -- --out .tmp/apcc-publish-0.4.0; npm run prepare:publish-package -- --out .tmp/apcc-scoped-publish-0.4.0 --name @rendo-studio/apcc; npm pack --dry-run for both staged package names; npm publish --dry-run for both staged package names; npm publish apcc@0.4.0; npm publish @rendo-studio/apcc@0.4.0; npm view confirms both package names resolve to 0.4.0.
+    createdAt: 2026-06-05T19:07:04.086Z
+    recordedAt: 2026-06-05T19:43:49.397Z

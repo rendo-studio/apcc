@@ -8,6 +8,7 @@ import path from "node:path";
 import { initWorkspace } from "../src/core/bootstrap.js";
 import {
   buildSiteRuntime,
+  cleanAllSiteRuntimes,
   cleanSiteRuntime,
   getSiteRuntimeStatus,
   startSiteRuntime,
@@ -346,10 +347,12 @@ async function main() {
       "site start should ignore a stale watcher pid and start a fresh watcher"
     );
 
-    const cleaned = await cleanSiteRuntime(workspaceRoot);
+    const cleaned = await cleanAllSiteRuntimes(runtimeBase);
     const statusAfterClean = await getSiteRuntimeStatus(workspaceRoot);
+    const cleanedRuntime = cleaned.items.find((item) => item.runtimeRoot === restarted.runtimeRoot);
 
-    assert.equal(cleaned.cleaned, true, "site clean should remove the runtime root");
+    assert.equal(cleanedRuntime?.cleaned, true, "site clean --all should remove the runtime root");
+    assert.equal(cleaned.sharedShellCacheCleaned, true, "site clean --all should remove the shared shell cache");
     assert.equal(statusAfterClean.state, "absent", "site status should return to absent after clean");
     await assert.rejects(
       fs.stat(restarted.runtimeRoot),

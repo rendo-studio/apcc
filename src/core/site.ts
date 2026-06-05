@@ -479,6 +479,12 @@ async function removeGlobalRegistryEntry(runtimeBase: string, siteId: string): P
   await writeText(getGlobalRegistryFile(runtimeBase), `${JSON.stringify(registry, null, 2)}\n`);
 }
 
+async function clearGlobalSiteRegistry(runtimeBase: string): Promise<void> {
+  const registryFile = getGlobalRegistryFile(runtimeBase);
+  await fs.rm(registryFile, { force: true, maxRetries: 3, retryDelay: 200 });
+  await fs.rmdir(path.dirname(registryFile)).catch(() => undefined);
+}
+
 async function readProjectNameForSiteEntry(sourceWorkspaceRoot: string | null): Promise<string | null> {
   if (!sourceWorkspaceRoot) {
     return null;
@@ -514,9 +520,79 @@ function runtimeBaseFromRoot(runtimeRoot: string): string {
   return path.dirname(path.dirname(runtimeRoot));
 }
 
+function isSiteRuntimeRootUnderBase(runtimeBase: string, runtimeRoot: string): boolean {
+  const sitesRoot = path.resolve(path.join(runtimeBase, "sites"));
+  const resolvedRuntimeRoot = path.resolve(runtimeRoot);
+  const relative = path.relative(sitesRoot, resolvedRuntimeRoot);
+
+  return relative.length > 0 && !relative.startsWith("..") && !path.isAbsolute(relative);
+}
+
 async function listGlobalSiteEntries(runtimeBase = getRuntimeBase()): Promise<GlobalSiteRegistryEntry[]> {
   const registry = await readGlobalRegistry(runtimeBase);
   return Object.values(registry).sort((left, right) => right.startedAt.localeCompare(left.startedAt));
+}
+
+async function resolveSiteRuntimeTargetFromRoot(
+  runtimeBase: string,
+  runtimeRoot: string,
+  fallback?: Pick<GlobalSiteRegistryEntry, "siteId" | "sourceDocsRoot" | "sourceWorkspaceRoot">
+): Promise<ResolvedSiteRuntimeLocation | null> {
+  if (!isSiteRuntimeRootUnderBase(runtimeBase, runtimeRoot)) {
+    return null;
+  }
+
+  const runtimeDataRoot = path.join(runtimeRoot, "runtime-data");
+  const [registry, metadata] = await Promise.all([
+    readRegistry(runtimeRoot),
+    readRuntimeMetadata(runtimeDataRoot)
+  ]);
+
+  if (!registry && !metadata && !fallback) {
+    return null;
+  }
+
+  const sourceDocsRoot = registry?.sourceDocsRoot ?? metadata?.sourceDocsRoot ?? fallback?.sourceDocsRoot;
+  if (!sourceDocsRoot) {
+    return null;
+  }
+
+  return {
+    sourceDocsRoot,
+    sourceWorkspaceRoot:
+      registry?.sourceWorkspaceRoot ?? metadata?.sourceWorkspaceRoot ?? fallback?.sourceWorkspaceRoot ?? null,
+    siteId: registry?.siteId ?? metadata?.siteId ?? fallback?.siteId ?? path.basename(runtimeRoot),
+    runtimeBase,
+    runtimeRoot,
+    runtimeDataRoot,
+    templateRoot: registry?.templateRoot ?? metadata?.templateRoot ?? getPrebuiltShellRoot()
+  };
+}
+
+async function listAllSiteRuntimeTargets(runtimeBase = getRuntimeBase()): Promise<ResolvedSiteRuntimeLocation[]> {
+  const targets = new Map<string, ResolvedSiteRuntimeLocation>();
+  const addTarget = (target: ResolvedSiteRuntimeLocation | null) => {
+    if (!target) {
+      return;
+    }
+    targets.set(path.resolve(target.runtimeRoot).toLowerCase(), target);
+  };
+
+  for (const entry of await listGlobalSiteEntries(runtimeBase)) {
+    addTarget(await resolveSiteRuntimeTargetFromRoot(runtimeBase, entry.runtimeRoot, entry));
+  }
+
+  const sitesRoot = path.join(runtimeBase, "sites");
+  const entries = await fs.readdir(sitesRoot, { withFileTypes: true }).catch(() => []);
+  for (const entry of entries) {
+    if (!entry.isDirectory()) {
+      continue;
+    }
+
+    addTarget(await resolveSiteRuntimeTargetFromRoot(runtimeBase, path.join(sitesRoot, entry.name)));
+  }
+
+  return [...targets.values()].sort((left, right) => left.runtimeRoot.localeCompare(right.runtimeRoot));
 }
 
 function targetFromGlobalSiteEntry(entry: GlobalSiteRegistryEntry, templateRoot: string): ResolvedSiteRuntimeLocation {
@@ -2378,9 +2454,7 @@ export async function stopSiteRuntime(inputPath?: string) {
   return stopSiteRuntimeAtLocation(target);
 }
 
-export async function cleanSiteRuntime(inputPath?: string) {
-  const stopResult = await stopSiteRuntime(inputPath);
-  const { runtimeBase, runtimeRoot, siteId } = stopResult;
+async function removeSiteRuntimeRoot(runtimeRoot: string): Promise<boolean> {
   const existed = nodeFs.existsSync(runtimeRoot);
 
   if (existed) {
@@ -2398,16 +2472,28 @@ export async function cleanSiteRuntime(inputPath?: string) {
     }
   }
 
-  await removeGlobalRegistryEntry(runtimeBase, siteId);
+  return existed;
+}
+
+async function cleanSiteRuntimeAtLocation(target: ResolvedSiteRuntimeLocation) {
+  const stopResult = await stopSiteRuntimeAtLocation(target);
+  const cleaned = await removeSiteRuntimeRoot(target.runtimeRoot);
+
+  await removeGlobalRegistryEntry(target.runtimeBase, target.siteId);
 
   return {
-    runtimeBase,
-    runtimeRoot,
-    siteId,
-    cleaned: existed,
+    runtimeBase: target.runtimeBase,
+    runtimeRoot: target.runtimeRoot,
+    siteId: target.siteId,
+    cleaned,
     terminatedPid: stopResult.terminatedPid,
     terminatedWatcherPid: stopResult.terminatedWatcherPid
   };
+}
+
+export async function cleanSiteRuntime(inputPath?: string) {
+  const target = await resolveSiteRuntimeLocation(inputPath);
+  return cleanSiteRuntimeAtLocation(target);
 }
 
 export async function listSiteRuntimes(runtimeBase = getRuntimeBase()): Promise<SiteRuntimeListEntry[]> {
@@ -2463,6 +2549,41 @@ export async function stopAllSiteRuntimes(runtimeBase = getRuntimeBase()) {
 
   return {
     count: results.length,
+    items: results
+  };
+}
+
+export async function cleanAllSiteRuntimes(runtimeBase = getRuntimeBase()) {
+  const targets = await listAllSiteRuntimeTargets(runtimeBase);
+  const results = await Promise.all(
+    targets.map(async (target) => {
+      const result = await cleanSiteRuntimeAtLocation(target);
+      const projectName = await readProjectNameForSiteEntry(target.sourceWorkspaceRoot);
+
+      return {
+        siteId: target.siteId,
+        projectName,
+        sourceDocsRoot: target.sourceDocsRoot,
+        sourceWorkspaceRoot: target.sourceWorkspaceRoot,
+        runtimeRoot: target.runtimeRoot,
+        cleaned: result.cleaned,
+        terminatedPid: result.terminatedPid,
+        terminatedWatcherPid: result.terminatedWatcherPid
+      };
+    })
+  );
+
+  const sharedShellCacheRoot = getSharedRuntimeShellCacheRoot(runtimeBase);
+  const sharedShellCacheCleaned = nodeFs.existsSync(sharedShellCacheRoot);
+  await fs.rm(sharedShellCacheRoot, { recursive: true, force: true, maxRetries: 3, retryDelay: 200 });
+  await clearGlobalSiteRegistry(runtimeBase);
+  await fs.rmdir(path.join(runtimeBase, "sites")).catch(() => undefined);
+
+  return {
+    count: results.length,
+    cleaned: results.some((item) => item.cleaned) || sharedShellCacheCleaned,
+    sharedShellCacheRoot,
+    sharedShellCacheCleaned,
     items: results
   };
 }

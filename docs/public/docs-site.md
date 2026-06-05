@@ -93,6 +93,12 @@ Clean a different project's runtime explicitly:
 apcc site clean --path D:/project/example
 ```
 
+Clean every APCC docs-site runtime cache on this machine:
+
+```bash
+apcc site clean --all
+```
+
 ## Lifecycle Expectations
 
 APCC treats the local docs site runtime as a managed local service backed by a shared prebuilt viewer shell.
@@ -109,15 +115,16 @@ Expected behavior:
 - `apcc site stop` stops the local runtime but preserves the staged runtime for a faster next start
 - `apcc site stop --all` stops every active runtime without deleting their staged runtime roots
 - `apcc site clean` stops the runtime and removes the staged runtime so the next start is cold
+- `apcc site clean --all` stops every APCC docs-site runtime it can identify, removes every APCC-managed staged runtime cache, and clears shared shell cache so future starts rebuild from project sources
 - if a previous runtime died uncleanly or the machine shut down, the next `apcc site start` should recover by starting a fresh healthy runtime instead of requiring a manual cleanup first
 
 The lifecycle commands should not mutate a healthy running runtime just to decide whether it can be reused.
 
 When a development agent opens the site for a human, it should explicitly tell the human the returned URL and leave the runtime running unless the human asks to stop it.
 
-APCC does not currently expose `site clean --all`.
+`apcc site clean --all` is a heavy local cache reset. Use it when a human explicitly wants to clear historical docs-site runtime cache, old APCC runtime cache, or runtime roots for projects that no longer exist. Do not use it as a routine end-of-task cleanup step.
 
-That is intentional. Bulk stop is a safe operational shortcut; bulk clean is destructive enough that it should remain explicit per target.
+This command removes generated APCC runtime artifacts only. It must not delete repository source files, `.apcc/`, authored `docs/`, or deployable `site build` output.
 
 The user-facing local runtime states are:
 

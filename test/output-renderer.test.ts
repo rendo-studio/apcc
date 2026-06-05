@@ -138,7 +138,7 @@ describe("output renderer", () => {
         error: {
           message: "Plan does not exist.",
           code: "not_found",
-          hint: "Run `apcc plan show` first."
+          hint: "Run `apcc plan list` first."
         }
       }),
       "stderr"
@@ -147,6 +147,28 @@ describe("output renderer", () => {
     expect(rendered).toContain("# Error");
     expect(rendered).toContain("Plan does not exist.");
     expect(rendered).toContain("## Hint");
+  });
+
+  it("renders task list filters and details with plan context", () => {
+    const rendered = renderCapturedOutput(
+      JSON.stringify({
+        taskTree: [],
+        lines: [
+          "- Release check (release-check) [pending] plan: release-hardening",
+          "  summary: Verify the release package."
+        ],
+        planFilter: {
+          id: "release-hardening",
+          name: "Release hardening"
+        }
+      }),
+      "stdout"
+    );
+
+    expect(rendered).toContain("## Filter");
+    expect(rendered).toContain("Plan: release-hardening (Release hardening)");
+    expect(rendered).toContain("plan: release-hardening");
+    expect(rendered).toContain("summary: Verify the release package.");
   });
 
   it("renders site instance lists without requiring --json", () => {
@@ -302,5 +324,36 @@ describe("output renderer", () => {
     expect(rendered).toContain("- Count: `1`");
     expect(rendered).toContain("## Instances");
     expect(rendered).toContain("APCC | `D:/project/VibeCoding` | stopped | runtime preserved");
+  });
+
+  it("renders bulk site clean results without requiring --json", () => {
+    const rendered = renderCapturedOutput(
+      JSON.stringify({
+        site: {
+          count: 1,
+          cleaned: true,
+          sharedShellCacheCleaned: true,
+          items: [
+            {
+              siteId: "efab4b08e11c2c32",
+              projectName: "APCC",
+              sourceDocsRoot: "D:/project/VibeCoding/docs",
+              sourceWorkspaceRoot: "D:/project/VibeCoding",
+              runtimeRoot: "C:/Users/yueyo/AppData/Local/APCC/runtime/sites/efab4b08e11c2c32",
+              cleaned: true,
+              terminatedPid: 13200,
+              terminatedWatcherPid: 3488
+            }
+          ]
+        }
+      }),
+      "stdout"
+    );
+
+    expect(rendered).toContain("# Site");
+    expect(rendered).toContain("- Count: `1`");
+    expect(rendered).toContain("- Cleaned: yes");
+    expect(rendered).toContain("- Shared shell cache cleaned: yes");
+    expect(rendered).toContain("APCC | `D:/project/VibeCoding` | cleaned");
   });
 });

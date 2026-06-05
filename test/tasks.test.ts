@@ -330,6 +330,73 @@ describe("task control plane", () => {
     expect(invalid.stderr).toContain("Unsupported task status");
   });
 
+  it("lists tasks with plan context, filters by plan, and shows one task", async () => {
+    const fixture = await createWorkspaceFixture({
+      plans: {
+        endGoalRef: "end-goal-test",
+        items: [
+          {
+            id: "plan-root",
+            name: "Root plan",
+            summary: "Default top-level plan used by workspace fixtures.",
+            parentPlanId: null,
+            versionRef: null
+          },
+          {
+            id: "plan-other",
+            name: "Other plan",
+            summary: "Alternate plan for task inspection checks.",
+            parentPlanId: null,
+            versionRef: null
+          }
+        ]
+      },
+      tasks: {
+        items: [
+          {
+            id: "task-root",
+            name: "Root task",
+            summary: "Inspect the root task in list and detail views.",
+            status: "pending",
+            planRef: "plan-root",
+            parentTaskId: null,
+            countedForProgress: true
+          },
+          {
+            id: "task-other",
+            name: "Other task",
+            summary: "Task that should be filtered out by plan.",
+            status: "pending",
+            planRef: "plan-other",
+            parentTaskId: null,
+            countedForProgress: true
+          }
+        ]
+      }
+    });
+    restorers.push(fixture.use());
+    cleanups.push(fixture.cleanup);
+
+    const listed = runTaskCli(["task", "list"], fixture.root);
+    expect(listed.status).toBe(0);
+    expect(listed.stdout).toContain("task-root");
+    expect(listed.stdout).toContain("plan: plan-root");
+
+    const filtered = runTaskCli(["task", "list", "--plan", "plan-root", "--details"], fixture.root);
+    expect(filtered.status).toBe(0);
+    expect(filtered.stdout).toContain("Plan: plan-root (Root plan)");
+    expect(filtered.stdout).toContain("task-root");
+    expect(filtered.stdout).toContain("summary: Inspect the root task in list and detail views.");
+    expect(filtered.stdout).not.toContain("task-other");
+
+    const shown = runTaskCli(["task", "show", "task-root"], fixture.root);
+    expect(shown.status).toBe(0);
+    expect(shown.stdout).toContain("# Task");
+    expect(shown.stdout).toContain("`task-root`");
+    expect(shown.stdout).toContain("Plan: `plan-root`");
+    expect(shown.stdout).toContain("Inspect the root task in list and detail views.");
+  });
+
   it("updates task fields and deletes task subtrees", async () => {
     const fixture = await createWorkspaceFixture();
     restorers.push(fixture.use());

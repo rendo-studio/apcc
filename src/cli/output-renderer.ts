@@ -38,6 +38,10 @@ function renderList(items: string[], emptyLabel = "None"): string {
   return items.length > 0 ? items.map((item) => `- ${item}`).join("\n") : `- ${emptyLabel}`;
 }
 
+function renderRawLines(items: string[], emptyLabel = "None"): string {
+  return items.length > 0 ? items.join("\n") : `- ${emptyLabel}`;
+}
+
 function renderSection(title: string, body: string): string {
   return `## ${title}\n\n${body}`;
 }
@@ -92,6 +96,9 @@ function renderSiteInstances(items: Array<Record<string, unknown>>, emptyLabel: 
       }
       if (typeof item.stopped === "boolean") {
         parts.push(item.stopped ? "stopped" : "not stopped");
+      }
+      if (typeof item.cleaned === "boolean") {
+        parts.push(item.cleaned ? "cleaned" : "not cleaned");
       }
       if (typeof item.preservedRuntime === "boolean") {
         parts.push(item.preservedRuntime ? "runtime preserved" : "runtime removed");
@@ -248,6 +255,10 @@ function renderSite(payload: Record<string, unknown>): string {
     lines.push(`- Cleaned: ${payload.cleaned ? "yes" : "no"}`);
   }
 
+  if (typeof payload.sharedShellCacheCleaned === "boolean") {
+    lines.push(`- Shared shell cache cleaned: ${payload.sharedShellCacheCleaned ? "yes" : "no"}`);
+  }
+
   if (typeof payload.stopped === "boolean") {
     lines.push(`- Stopped: ${payload.stopped ? "yes" : "no"}`);
   }
@@ -348,7 +359,7 @@ function renderPlanPayload(payload: Record<string, unknown>): string {
     if (lines.length > 2) {
       lines.push("");
     }
-    lines.push(renderSection("Plan Tree", renderList(asStringArray(payload.lines))));
+    lines.push(renderSection("Plan Tree", renderRawLines(asStringArray(payload.lines))));
   }
   if (Array.isArray(payload.deletedPlanIds)) {
     if (lines.length > 2) {
@@ -392,15 +403,26 @@ function renderTaskPayload(payload: Record<string, unknown>): string {
   }
 
   const lines = ["# Tasks", ""];
+  const filterLines: string[] = [];
   if (isRecord(payload.versionFilter)) {
     const versionFilter =
       typeof payload.versionFilter.version === "string"
         ? `${payload.versionFilter.version}${typeof payload.versionFilter.id === "string" ? ` (${payload.versionFilter.id})` : ""}`
         : "unversioned";
-    lines.push(renderSection("Filter", `- Version scope: ${versionFilter}`), "");
+    filterLines.push(`- Version scope: ${versionFilter}`);
+  }
+  if (isRecord(payload.planFilter) && typeof payload.planFilter.id === "string") {
+    const planFilter =
+      typeof payload.planFilter.name === "string" && payload.planFilter.name !== payload.planFilter.id
+        ? `${payload.planFilter.id} (${payload.planFilter.name})`
+        : payload.planFilter.id;
+    filterLines.push(`- Plan: ${planFilter}`);
+  }
+  if (filterLines.length > 0) {
+    lines.push(renderSection("Filter", filterLines.join("\n")), "");
   }
   if (Array.isArray(payload.lines)) {
-    lines.push(renderSection("Task Tree", renderList(asStringArray(payload.lines))));
+    lines.push(renderSection("Task Tree", renderRawLines(asStringArray(payload.lines))));
   }
   if (Array.isArray(payload.deletedTaskIds)) {
     lines.push("", renderSection("Deleted Tasks", renderList(asStringArray(payload.deletedTaskIds))));

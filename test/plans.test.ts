@@ -1,3 +1,7 @@
+import { spawnSync } from "node:child_process";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
 import { afterEach, describe, expect, it } from "vitest";
 
 import {
@@ -17,6 +21,24 @@ import { createWorkspaceFixture } from "./helpers/workspace.js";
 
 const restorers: Array<() => void> = [];
 const cleanups: Array<() => Promise<void>> = [];
+const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+
+function runPlanCli(args: string[], workspaceRoot: string) {
+  const result = spawnSync(process.execPath, ["--import", "tsx", path.join(repoRoot, "src", "bin", "apcc.ts"), ...args], {
+    cwd: repoRoot,
+    encoding: "utf8",
+    env: {
+      ...process.env,
+      APCC_WORKSPACE_ROOT: workspaceRoot
+    }
+  });
+
+  return {
+    status: result.status,
+    stdout: result.stdout,
+    stderr: result.stderr
+  };
+}
 
 afterEach(async () => {
   while (restorers.length > 0) {
@@ -92,6 +114,21 @@ describe("plan control plane", () => {
         parent: "root"
       })
     ).rejects.toThrow(/reserved/i);
+  });
+
+  it("uses plan list as the collection inspection command", async () => {
+    const fixture = await createWorkspaceFixture();
+    restorers.push(fixture.use());
+    cleanups.push(fixture.cleanup);
+
+    const listed = runPlanCli(["plan", "list"], fixture.root);
+    expect(listed.status).toBe(0);
+    expect(listed.stdout).toContain("# Plans");
+    expect(listed.stdout).toContain("plan-root");
+
+    const shown = runPlanCli(["plan", "show"], fixture.root);
+    expect(shown.status).not.toBe(0);
+    expect(shown.stderr).toContain("unknown command path");
   });
 
   it("skips already-used generated plan ids after deleted sibling gaps", async () => {

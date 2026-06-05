@@ -9,7 +9,7 @@ import {
 } from "../../core/tasks.js";
 import { derivePlanStatuses, filterTasksByPlanVersion, loadPlans } from "../../core/plans.js";
 import { resolveVersionRecordSelector } from "../../core/version.js";
-import { TASK_STATUSES } from "../../core/types.js";
+import { TASK_STATUSES, type TaskNode } from "../../core/types.js";
 import { withGuideHint } from "../guide-hint.js";
 
 async function resolveVersionFilter(input: {
@@ -47,6 +47,14 @@ function parseTaskStatus(value: string): "pending" | "in_progress" | "done" | "b
   }
 
   return value as "pending" | "in_progress" | "done" | "blocked";
+}
+
+function getTaskOrThrow(tasks: TaskNode[], id: string): TaskNode {
+  const task = tasks.find((item) => item.id === id);
+  if (!task) {
+    throw new Error(`Task "${id}" does not exist.`);
+  }
+  return task;
 }
 
 export function registerTaskGroup(app: AclipApp) {
@@ -198,6 +206,24 @@ export function registerTaskGroup(app: AclipApp) {
         });
       }
     })
+    .command("show", {
+      summary: "Show one task.",
+      description: withGuideHint("Inspect one task with its plan, parent, progress behavior, and summary."),
+      arguments: [
+        stringArgument("id", {
+          required: true,
+          positional: true,
+          description: "Task id."
+        })
+      ],
+      examples: ["apcc task show release-check"],
+      handler: async ({ id }) => {
+        const tasks = await loadTasks();
+        return {
+          task: getTaskOrThrow(tasks.items, String(id))
+        };
+      }
+    })
     .command("list", {
       summary: "List the current task tree.",
       description: withGuideHint("Inspect the current tree-shaped task structure."),
@@ -211,22 +237,51 @@ export function registerTaskGroup(app: AclipApp) {
           required: false,
           description: "Only show tasks under plans without an effective version anchor.",
           flag: "--unversioned"
+        }),
+        stringArgument("plan", {
+          required: false,
+          description: "Only show tasks attached to the specified plan id.",
+          flag: "--plan"
+        }),
+        booleanArgument("details", {
+          required: false,
+          description: "Include each listed task summary in addition to status and plan id.",
+          flag: "--details"
         })
       ],
-      examples: ["apcc task list", "apcc task list --version 0.2.0", "apcc task list --unversioned"],
-      handler: async ({ version, unversioned }) => {
+      examples: [
+        "apcc task list",
+        "apcc task list --plan release-hardening",
+        "apcc task list --details",
+        "apcc task list --version 0.2.0",
+        "apcc task list --unversioned"
+      ],
+      handler: async ({ version, unversioned, plan, details }) => {
         const resolved = await resolveVersionFilter({
           version: version ? String(version) : null,
           unversioned: Boolean(unversioned)
         });
         const tasks = await loadTasks();
         const derivedPlans = derivePlanStatuses(await loadPlans(), tasks);
-        const filteredTasks = filterTasksByPlanVersion(tasks.items, derivedPlans, resolved.filter);
+        const planId = plan ? String(plan) : null;
+        if (planId && !derivedPlans.items.some((item) => item.id === planId)) {
+          throw new Error(`Plan "${planId}" does not exist.`);
+        }
+        const versionFilteredTasks = filterTasksByPlanVersion(tasks.items, derivedPlans, resolved.filter);
+        const filteredTasks = planId
+          ? versionFilteredTasks.filter((task) => task.planRef === planId)
+          : versionFilteredTasks;
         const tree = buildTaskTree(filteredTasks, true);
         return {
           tasks: filteredTasks,
           taskTree: tree,
-          lines: renderTaskTreeLines(tree),
+          lines: renderTaskTreeLines(tree, 0, { details: Boolean(details) }),
+          planFilter: planId
+            ? {
+                id: planId,
+                name: derivedPlans.items.find((item) => item.id === planId)?.name ?? planId
+              }
+            : null,
           versionFilter: resolved.versionRecord
             ? {
                 id: resolved.versionRecord.id,

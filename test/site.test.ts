@@ -10,6 +10,7 @@ import { createDocsViewerSource } from "../site-runtime/lib/docs-viewer.js";
 import { decodeRouteSlug, docsSlugToUrl } from "../site-runtime/lib/docs-path.js";
 import { initWorkspace } from "../src/core/bootstrap.js";
 import {
+  cleanAllSiteRuntimes,
   ensureRunnablePrebuiltSiteShell,
   getSiteRuntimeStatus,
   listSiteRuntimes,
@@ -1020,5 +1021,86 @@ describe("site runtime staging", () => {
       })
     );
     expect(stillOpen).toBe(true);
+  }, 15000);
+
+  it("cleans all APCC-managed site runtime caches without requiring project paths", async () => {
+    const runtimeBase = await fs.mkdtemp(path.join(os.tmpdir(), "apcc-runtime-base-"));
+    const previousRuntimeBase = process.env.APCC_SITE_RUNTIME_BASE;
+    process.env.APCC_SITE_RUNTIME_BASE = runtimeBase;
+    restorers.push(() => {
+      if (previousRuntimeBase === undefined) {
+        delete process.env.APCC_SITE_RUNTIME_BASE;
+        return;
+      }
+      process.env.APCC_SITE_RUNTIME_BASE = previousRuntimeBase;
+    });
+    cleanups.push(async () => {
+      await fs.rm(runtimeBase, { recursive: true, force: true });
+    });
+
+    const existingProject = await createWorkspaceFixture();
+    const deletedProject = await createWorkspaceFixture();
+    cleanups.push(existingProject.cleanup, deletedProject.cleanup);
+
+    const first = await stageDocsForSiteRuntime(existingProject.root);
+    const second = await stageDocsForSiteRuntime(deletedProject.root);
+    const nonApccRuntimeRoot = path.join(runtimeBase, "sites", "not-apcc-cache");
+    const outsideRuntimeRoot = path.join(os.tmpdir(), `apcc-outside-runtime-${Date.now()}`);
+    const sharedShellRoot = path.join(runtimeBase, "shared-shells", "shell-old");
+    await fs.mkdir(nonApccRuntimeRoot, { recursive: true });
+    await fs.writeFile(path.join(nonApccRuntimeRoot, "note.txt"), "not APCC runtime data\n", "utf8");
+    await fs.mkdir(outsideRuntimeRoot, { recursive: true });
+    cleanups.push(async () => {
+      await fs.rm(outsideRuntimeRoot, { recursive: true, force: true });
+    });
+    await fs.mkdir(sharedShellRoot, { recursive: true });
+    await fs.writeFile(path.join(sharedShellRoot, "server.js"), "old shell cache\n", "utf8");
+    await fs.rm(deletedProject.root, { recursive: true, force: true });
+
+    await fs.mkdir(path.join(runtimeBase, "registry"), { recursive: true });
+    await fs.writeFile(
+      path.join(runtimeBase, "registry", "sites.json"),
+      JSON.stringify(
+        {
+          [first.siteId]: {
+            siteId: first.siteId,
+            sourceDocsRoot: first.sourceDocsRoot,
+            sourceWorkspaceRoot: first.sourceWorkspaceRoot,
+            runtimeRoot: first.runtimeRoot,
+            port: 0,
+            url: "",
+            startedAt: "2026-04-25T00:00:00.000Z",
+            mode: "live"
+          },
+          outside: {
+            siteId: "outside",
+            sourceDocsRoot: outsideRuntimeRoot,
+            sourceWorkspaceRoot: null,
+            runtimeRoot: outsideRuntimeRoot,
+            port: 0,
+            url: "",
+            startedAt: "2026-04-25T00:00:00.000Z",
+            mode: "live"
+          }
+        },
+        null,
+        2
+      ) + "\n",
+      "utf8"
+    );
+
+    const result = await cleanAllSiteRuntimes(runtimeBase);
+
+    expect(result.count).toBe(2);
+    expect(result.sharedShellCacheCleaned).toBe(true);
+    expect(result.items.map((item) => item.siteId).sort()).toEqual([first.siteId, second.siteId].sort());
+    expect(result.items.every((item) => item.cleaned)).toBe(true);
+    await expect(fs.stat(first.runtimeRoot)).rejects.toThrow();
+    await expect(fs.stat(second.runtimeRoot)).rejects.toThrow();
+    await expect(fs.stat(path.join(runtimeBase, "registry", "sites.json"))).rejects.toThrow();
+    await expect(fs.stat(path.join(runtimeBase, "shared-shells"))).rejects.toThrow();
+    await expect(fs.stat(path.join(existingProject.root, ".apcc"))).resolves.toBeTruthy();
+    await expect(fs.stat(nonApccRuntimeRoot)).resolves.toBeTruthy();
+    await expect(fs.stat(outsideRuntimeRoot)).resolves.toBeTruthy();
   }, 15000);
 });

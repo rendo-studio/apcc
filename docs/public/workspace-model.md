@@ -125,7 +125,7 @@ Rules:
 - `plan.versionRef` is persisted explicitly
 - a child plan inherits the nearest non-null ancestor version anchor as its effective version scope
 - tasks do not store `versionRef`; they inherit version scope through `task.planRef`
-- `apcc plan show --version ...` and `apcc task list --version ...` filter by the effective plan scope, not by duplicated task metadata
+- `apcc plan list --version ...` and `apcc task list --version ...` filter by the effective plan scope, not by duplicated task metadata
 
 ## Runtime Artifacts
 

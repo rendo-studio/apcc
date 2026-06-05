@@ -30,6 +30,10 @@ describe("workflow guide", () => {
     expect(guide.markdown).toContain("do not silently substitute a one-line feature request for a project definition");
     expect(guide.markdown).toContain("## Cold Round Start");
     expect(guide.markdown).toContain("apcc site start");
+    expect(guide.markdown).toContain("apcc site clean --all");
+    expect(guide.markdown).toContain("never use `site clean --all` as a routine end-of-task cleanup step");
+    expect(guide.markdown).toContain("status` is a structured control-plane summary");
+    expect(guide.markdown).toContain("read the smallest relevant authored docs");
     expect(guide.markdown).toContain("do not rerun `site start` or `status` by default");
     expect(guide.markdown).toContain("## Inspect Only If Needed");
     expect(guide.markdown).toContain("## Refresh The Workspace First");

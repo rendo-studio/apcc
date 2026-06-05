@@ -270,3 +270,18 @@ items:
     summary: Make Fumadocs reference prereading an explicit maintainer workflow step before changing docs-site viewer or Fumadocs-backed surfaces.
     parentPlanId: null
     versionRef: 0-3-5-docs-site-ui-and-task-ergonomics
+  - id: refine-agent-context-and-cli-inspection
+    name: Refine agent context recovery and CLI inspection semantics
+    summary: Tighten consumer agent guidance for authored-doc recovery after context loss, unify plan listing semantics, and improve task inspection with plan-scoped lists and single-task details.
+    parentPlanId: null
+    versionRef: null
+  - id: add-site-clean-all-cache-reset
+    name: Add site clean all cache reset
+    summary: Add an explicit docs-site cache reset command that cleans all APCC-managed site runtime caches without requiring project paths.
+    parentPlanId: null
+    versionRef: null
+  - id: publish-context-recovery-and-site-cleanup-release
+    name: Publish context recovery and site cleanup release
+    summary: Cut, verify, and publish APCC 0.4.0 for command-inspection semantics, agent context recovery guidance, and site clean --all runtime cache reset.
+    parentPlanId: null
+    versionRef: 0-4-0-context-recovery-and-site-cleanup-semantics

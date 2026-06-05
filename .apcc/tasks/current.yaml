@@ -1126,3 +1126,24 @@ items:
     planRef: refactor-docs-site-ui-from-tmp-ui-design
     parentTaskId: null
     countedForProgress: true
+  - id: implement-context-and-task-inspection-updates
+    name: Implement context recovery and task inspection updates
+    summary: Update shipped APCC guidance and CLI behavior so Agents use docs when status is insufficient, plans list through a unified command, and tasks support plan filtering plus detailed single-task inspection.
+    status: done
+    planRef: refine-agent-context-and-cli-inspection
+    parentTaskId: null
+    countedForProgress: true
+  - id: implement-site-clean-all-cache-reset
+    name: Implement site clean --all cache reset
+    summary: Implement and document site clean --all so users and agents can clear historical or orphaned APCC docs-site runtime caches without losing project context.
+    status: done
+    planRef: add-site-clean-all-cache-reset
+    parentTaskId: null
+    countedForProgress: true
+  - id: publish-apcc-0-4-0
+    name: Publish APCC 0.4.0
+    summary: Bump APCC to 0.4.0, record release notes, prepare staged packages, publish both npm package names, tag GitHub, and verify the public artifacts.
+    status: done
+    planRef: publish-context-recovery-and-site-cleanup-release
+    parentTaskId: null
+    countedForProgress: true
