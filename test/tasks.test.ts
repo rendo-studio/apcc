@@ -397,6 +397,106 @@ describe("task control plane", () => {
     expect(shown.stdout).toContain("Inspect the root task in list and detail views.");
   });
 
+  it("filters tasks by owner and status while keeping pinned tasks visible outside the page limit", async () => {
+    const fixture = await createWorkspaceFixture({
+      owners: {
+        items: [
+          {
+            id: "codex-main",
+            name: "Codex Main",
+            kind: "agent",
+            status: "active",
+            aliases: [],
+            createdAt: "2026-06-01T00:00:00Z",
+            updatedAt: "2026-06-01T00:00:00Z"
+          }
+        ]
+      },
+      plans: {
+        endGoalRef: "end-goal-test",
+        items: [
+          {
+            id: "plan-root",
+            name: "Root plan",
+            summary: "Plan owner should be inherited by tasks.",
+            parentPlanId: null,
+            versionRef: null,
+            owner: "codex-main",
+            pinned: false,
+            pinnedReason: null,
+            createdAt: "2026-06-01T00:00:00Z",
+            updatedAt: "2026-06-01T00:00:00Z"
+          }
+        ]
+      },
+      tasks: {
+        items: [
+          {
+            id: "task-pinned",
+            name: "Pinned task",
+            summary: "Pinned task should stay visible.",
+            status: "in_progress",
+            planRef: "plan-root",
+            parentTaskId: null,
+            countedForProgress: true,
+            owner: null,
+            pinned: true,
+            pinnedReason: "Important context.",
+            createdAt: "2026-06-01T00:00:00Z",
+            updatedAt: "2026-06-01T00:00:00Z",
+            statusChangedAt: "2026-06-01T00:00:00Z"
+          },
+          {
+            id: "task-page",
+            name: "Page task",
+            summary: "First non-pinned page item.",
+            status: "in_progress",
+            planRef: "plan-root",
+            parentTaskId: null,
+            countedForProgress: true,
+            owner: null,
+            pinned: false,
+            pinnedReason: null,
+            createdAt: "2026-06-01T00:00:00Z",
+            updatedAt: "2026-06-01T00:00:00Z",
+            statusChangedAt: "2026-06-01T00:00:00Z"
+          },
+          {
+            id: "task-hidden",
+            name: "Hidden task",
+            summary: "Hidden by page limit.",
+            status: "in_progress",
+            planRef: "plan-root",
+            parentTaskId: null,
+            countedForProgress: true,
+            owner: null,
+            pinned: false,
+            pinnedReason: null,
+            createdAt: "2026-06-01T00:00:00Z",
+            updatedAt: "2026-06-01T00:00:00Z",
+            statusChangedAt: "2026-06-01T00:00:00Z"
+          }
+        ]
+      }
+    });
+    restorers.push(fixture.use());
+    cleanups.push(fixture.cleanup);
+
+    const listed = runTaskCli(["task", "list", "--owner", "codex-main", "--status", "in_progress", "--limit", "1"], fixture.root);
+    const shown = runTaskCli(["task", "show", "task-pinned"], fixture.root);
+
+    expect(listed.status).toBe(0);
+    expect(listed.stdout).toContain("## Pinned");
+    expect(listed.stdout).toContain("task-pinned");
+    expect(listed.stdout).toContain("task-page");
+    expect(listed.stdout).not.toContain("task-hidden");
+    expect(listed.stdout).toContain("Next cursor: `1`");
+    expect(listed.stdout).toContain("owner: codex-main");
+    expect(shown.status).toBe(0);
+    expect(shown.stdout).toContain("Owner: `codex-main`");
+    expect(shown.stdout).toContain("Pinned: yes");
+  });
+
   it("updates task fields and deletes task subtrees", async () => {
     const fixture = await createWorkspaceFixture();
     restorers.push(fixture.use());

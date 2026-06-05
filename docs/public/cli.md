@@ -37,6 +37,7 @@ Current public command groups:
 - `doctor`
 - `project`
 - `goal`
+- `owner`
 - `plan`
 - `task`
 - `status`
@@ -108,15 +109,28 @@ Do not treat a current task title as the end goal. If the project identity or en
 
 ## Plans And Tasks
 
+`owner` registers the humans, agents, services, or other operators that can own plan and task work:
+
+```bash
+apcc owner list
+apcc owner add --id codex-main --name "Codex Main" --kind agent
+apcc owner update --id codex-main --status inactive
+```
+
+Use owner ids before assigning work so parallel agents do not accidentally create near-duplicate owner names for the same operator.
+
 `plan` manages current execution streams:
 
 ```bash
 apcc plan add --name "Ship onboarding" --parent root --summary "Make first-hour usage reliable."
+apcc plan add --name "Ship onboarding" --parent root --owner codex-main
 apcc plan add --name "Cut 0.3.4 scope" --parent root --version 0.3.4
 apcc plan list
+apcc plan list --owner codex-main --status in_progress --limit 20
 apcc plan list --version 0.3.4
 apcc plan list --unversioned
 apcc plan update --id <plan-id> --summary "Updated summary."
+apcc plan update --id <plan-id> --pin --pinned-reason "Important handoff context."
 apcc plan update --id <plan-id> --version 0.3.4
 ```
 
@@ -124,11 +138,15 @@ apcc plan update --id <plan-id> --version 0.3.4
 
 ```bash
 apcc task add --name "Document first-hour loop" --parent root --plan <plan-id> --summary "Write the public first-hour loop." --status in_progress
+apcc task add --name "Document first-hour loop" --parent root --plan <plan-id> --owner codex-main
 apcc task list
 apcc task list --plan <plan-id>
+apcc task list --owner codex-main --status in_progress --limit 20
+apcc task list --cursor 20
 apcc task list --details
 apcc task list --version 0.3.4
 apcc task list --unversioned
+apcc task list --all
 apcc task show <task-id>
 ```
 
@@ -136,6 +154,10 @@ Important behavior:
 
 - `plan add` and `task add` accept optional explicit `--id` values
 - `task add` accepts an optional `--status`; if omitted, the initial task status stays `pending`
+- plan and task owner fields reference explicit records from `owner list`
+- owner assignment is mutable and can be changed during handoff with `--owner` or cleared with `--clear-owner`
+- `--pin` marks a plan or task as important context that should stay visible in progressive list output; it is not a priority, blocker, or ownership marker
+- use `--pinned-reason` when the reason a pinned item must stay visible is not obvious
 - plans may carry an optional `--version` anchor that resolves from either a version record id or a version label
 - single-node mutations return concise deltas, not the full tree
 - full context is available through `plan list`, `task list --details`, `task show <task-id>`, and `status`
@@ -143,8 +165,11 @@ Important behavior:
 - tasks do not persist their own version anchor; they inherit version scope from their referenced plan
 - child tasks must stay on the same `planRef` as their parent task
 - `plan list` and `task list` accept `--version <record-id-or-version-label>` and `--unversioned` filters
+- `plan list` and `task list` accept `--owner`, `--status`, `--limit`, `--cursor`, and `--all` for progressive disclosure
 - `task list` always shows each task `planRef`, accepts `--plan <plan-id>` for a plan-scoped tree, and accepts `--details` for task summaries
 - the id `root` is reserved as the CLI parent marker
+
+Paged list output includes pagination metadata such as shown count, hidden count, and next cursor. Do not treat a paged list as the full project context unless the output says all matching items are shown. Use `--all` only when the full matching tree is genuinely needed.
 
 For bulk plan or task restructuring, edit `.apcc/plans/current.yaml` and `.apcc/tasks/current.yaml` directly, then run:
 

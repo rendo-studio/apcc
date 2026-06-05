@@ -45,6 +45,7 @@ Put these in `.apcc/`:
 - end goal
 - plans
 - tasks
+- owner registry
 - decisions
 - project-level versions
 - docs-site workspace config
@@ -63,6 +64,7 @@ Recommended active files include:
   goals/end.yaml
   plans/current.yaml
   tasks/current.yaml
+  owners/registry.yaml
   decisions/records.yaml
   versions/records.yaml
 ```
@@ -79,6 +81,10 @@ The Console and status views are plan-first:
 - child tasks stay on the same `planRef` as their parent task
 
 Do not persist a separate `plan.status` field. A stored plan says what stream exists; current status is computed from the task tree.
+
+Plan and task owner fields reference `.apcc/owners/registry.yaml`. Owner ids identify the human, agent, service, or other operator currently responsible for that work. The owner can change during handoff.
+
+Pinned plans and tasks are explicit context-retention markers. A pinned item is always shown in progressive list output so important context is not hidden by pagination or large historical trees. Pinned does not mean priority, blocker, current focus, or ownership.
 
 ## Derived State Rule
 
@@ -98,6 +104,9 @@ Persisted explicitly:
 - parent relationships
 - optional plan version anchors
 - task status
+- owner registry and owner refs
+- pinned context markers and pinned reasons
+- creation and update timestamps for plan/task lifecycle reminders
 - doc references
 - decision and version records
 
@@ -126,6 +135,25 @@ Rules:
 - a child plan inherits the nearest non-null ancestor version anchor as its effective version scope
 - tasks do not store `versionRef`; they inherit version scope through `task.planRef`
 - `apcc plan list --version ...` and `apcc task list --version ...` filter by the effective plan scope, not by duplicated task metadata
+
+## Progressive Disclosure
+
+Large workspaces may contain thousands of plans or tasks. APCC list commands are allowed to show a progressive view instead of the entire tree.
+
+Rules:
+
+- pinned items remain visible outside the normal page limit
+- paged output reports shown count, hidden count, and next cursor
+- filters such as owner, status, plan, and version must be shown in output
+- use `--all` only when the full matching tree is actually needed
+
+`apcc status` stays a project-level summary. It should surface important reminders without trying to render every plan or task.
+
+## Lifecycle Reminders
+
+APCC records plan and task timestamps so `status` and `doctor check` can remind humans and agents about stale work.
+
+Reminders are not cleanup. APCC should warn about long-unupdated work, long-blocked tasks, inactive owners assigned to open work, unowned in-progress tasks, or completed items that remain pinned, but it should not delete or unpin anything automatically.
 
 ## Runtime Artifacts
 

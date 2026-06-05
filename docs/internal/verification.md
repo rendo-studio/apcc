@@ -88,6 +88,7 @@ The package install smoke check must:
 - install the tarball into a scratch project under `.tmp/production-smoke/`
 - execute the package-manager generated `apcc` binary
 - initialize a scratch workspace under `.tmp/production-smoke/`
+- exercise owner registration, owner assignment, pinned plan/task context, and paginated owner/status list filters
 - run `apcc doctor check` and `apcc doctor fix` on that workspace
 - build a deployable docs-site artifact from the installed package
 

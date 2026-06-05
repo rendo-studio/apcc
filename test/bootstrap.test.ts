@@ -31,6 +31,7 @@ describe("init", () => {
 
     expect(first.createdFiles).toContain(".apcc/project/overview.yaml");
     expect(first.createdFiles).toContain(".apcc/goals/end.yaml");
+    expect(first.createdFiles).toContain(".apcc/owners/registry.yaml");
     expect(first.createdFiles).toContain("docs/shared/overview.md");
     expect(first.createdFiles).toContain("docs/shared/goal.md");
     expect(first.createdFiles).toContain("docs/shared/meta.json");
@@ -78,7 +79,7 @@ describe("init", () => {
     expect(result.createdFiles).toContain("docs/shared/meta.json");
     expect(config).toContain("docsLanguage: zh-CN");
     expect(meta).toContain("docsLanguage: zh-CN");
-    expect(meta).toContain("workspaceSchemaVersion: 10");
+    expect(meta).toContain("workspaceSchemaVersion: 11");
     expect(meta).toContain("apccVersion:");
     expect(JSON.parse(sharedMeta)).toEqual({
       title: "共享",

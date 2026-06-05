@@ -237,3 +237,25 @@ items:
     validationSummary: npm run generate:control-plane-contract-doc; npm run check; npm run test; npm run build; npm run dev -- site build; npm run verify:package-install; npm run verify:site-lifecycle; npm run dev -- doctor check; npm run dev -- status; npm run dev -- plan list --version 0.4.0; npm run dev -- task list --version 0.4.0; npm run dev -- task show publish-apcc-0-4-0; npm run prepare:publish-package -- --out .tmp/apcc-publish-0.4.0; npm run prepare:publish-package -- --out .tmp/apcc-scoped-publish-0.4.0 --name @rendo-studio/apcc; npm pack --dry-run for both staged package names; npm publish --dry-run for both staged package names; npm publish apcc@0.4.0; npm publish @rendo-studio/apcc@0.4.0; npm view confirms both package names resolve to 0.4.0.
     createdAt: 2026-06-05T19:07:04.086Z
     recordedAt: 2026-06-05T19:43:49.397Z
+  - id: 0-5-0-progressive-disclosure-and-ownership-metadata
+    version: 0.5.0
+    title: Progressive disclosure and ownership metadata
+    summary: Add scalable plan/task inspection with pinned context, owner registry, ownership filters, lifecycle timestamps, and stale-work reminders.
+    docPath: internal/versions/0-5-0-progressive-disclosure-and-ownership-metadata.md
+    status: recorded
+    decisionRefs: []
+    highlights:
+      - Added owner registry and apcc owner list add update
+      - Added plan and task owner refs pinned markers pinned reasons and lifecycle timestamps
+      - Added owner status and cursor pagination filters to plan list and task list
+      - Made status use progressive top level plan disclosure with reminders
+      - Added doctor and status warnings for stale work long blocked tasks inactive owners unowned active work and done pinned items
+    breakingChanges: []
+    migrationNotes:
+      - Run apcc doctor fix in existing workspaces to backfill schema 11 owner registry and metadata fields
+      - Use apcc owner list or apcc owner add before assigning owner ids
+      - Treat pinned as context retention not priority
+      - Use --all when a full plan or task tree is needed
+    validationSummary: Passed npm run check npm run test npm run build npm run verify:package-install npm run dev -- site build npm run verify:site-lifecycle npm pack --dry-run npm publish --dry-run and published apcc@0.5.0 plus @rendo-studio/apcc@0.5.0
+    createdAt: 2026-06-05T20:10:33.669Z
+    recordedAt: 2026-06-05T21:07:37.429Z

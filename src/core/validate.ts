@@ -4,14 +4,23 @@ import path from "node:path";
 import { initWorkspace, WORKSPACE_SCHEMA_VERSION, WORKSPACE_TEMPLATE_VERSION } from "./bootstrap.js";
 import { migrateDecisionState } from "./decision.js";
 import { loadEndGoal } from "./end-goal.js";
+import {
+  assertOwnerRefsExist,
+  assertValidOwnerRegistry,
+  emptyOwnerState,
+  loadOwners,
+  normalizeOwnerState,
+  saveOwners
+} from "./owners.js";
 import { getApccPackageVersion } from "./package-runtime.js";
-import { assertPlanVersionRefsExist, assertValidPlanTree } from "./plans.js";
+import { assertPlanVersionRefsExist, assertValidPlanTree, derivePlanStatuses, loadPlans, normalizePlansState, savePlans } from "./plans.js";
 import { loadProjectOverview } from "./project-overview.js";
 import { isFileNotFoundError, isYamlFileParseError, readText, readYamlFile, writeYamlFile } from "./storage.js";
-import { loadTasks, assertValidTaskTree } from "./tasks.js";
+import { loadTasks, assertValidTaskTree, normalizeTasksState, saveTasks } from "./tasks.js";
 import type {
   DecisionState,
   GoalState,
+  OwnerState,
   PlansState,
   ProjectOverviewState,
   TasksState,
@@ -108,6 +117,25 @@ const DEFAULT_END_GOAL: GoalState = {
   nonGoals: []
 };
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+const STALE_TASK_DAYS = 30;
+const STALE_PLAN_DAYS = 60;
+const STALE_BLOCKED_DAYS = 14;
+const STALE_DONE_PINNED_DAYS = 14;
+
+function daysSince(value: string | null | undefined, now = Date.now()): number | null {
+  if (!value) {
+    return null;
+  }
+
+  const timestamp = Date.parse(value);
+  if (!Number.isFinite(timestamp)) {
+    return null;
+  }
+
+  return Math.floor((now - timestamp) / DAY_MS);
+}
+
 async function loadMetaAndConfig() {
   const paths = getWorkspacePaths();
   let meta: WorkspaceMetaState | null = null;
@@ -141,13 +169,14 @@ async function loadMetaAndConfig() {
 
 export async function validateWorkspace() {
   const paths = getWorkspacePaths();
-  const [endGoalAttempt, projectOverviewAttempt, decisionsAttempt, versionsAttempt, plansAttempt, tasksAttempt] = await Promise.all([
+  const [endGoalAttempt, projectOverviewAttempt, decisionsAttempt, versionsAttempt, plansAttempt, tasksAttempt, ownersAttempt] = await Promise.all([
     tryReadYamlFile<GoalState>(paths.endGoalFile, DEFAULT_END_GOAL),
     tryReadYamlFile<ProjectOverviewState | null>(paths.projectOverviewFile, null),
     tryReadYamlFile<DecisionState>(paths.decisionFile, { items: [] }),
     tryReadYamlFile<VersionState>(paths.versionFile, { items: [] }),
     tryReadYamlFile<PlansState>(paths.planFile, { endGoalRef: "", items: [] }),
-    tryReadYamlFile<TasksState>(paths.taskFile, { items: [] })
+    tryReadYamlFile<TasksState>(paths.taskFile, { items: [] }),
+    tryReadYamlFile<OwnerState>(paths.ownerFile, emptyOwnerState())
   ]);
   const endGoal = endGoalAttempt.value;
   const projectOverview = projectOverviewAttempt.value;
@@ -155,12 +184,14 @@ export async function validateWorkspace() {
   const versions = versionsAttempt.value;
   const rawPlans = plansAttempt.value;
   const rawTasks = tasksAttempt.value;
+  const rawOwners = ownersAttempt.value;
   const requiredFiles = [
     paths.projectOverviewFile,
     paths.endGoalFile,
     paths.planFile,
     paths.taskFile,
     paths.taskArchiveFile,
+    paths.ownerFile,
     paths.decisionFile,
     paths.versionFile,
     path.join(paths.root, "AGENTS.md"),
@@ -188,10 +219,12 @@ export async function validateWorkspace() {
   const warnings: string[] = [];
   const rawPlanItems = Array.isArray(rawPlans.items) ? rawPlans.items : [];
   const rawTaskItems = Array.isArray(rawTasks.items) ? rawTasks.items : [];
+  const rawOwnerItems = Array.isArray(rawOwners.items) ? rawOwners.items : [];
   const rawDecisionItems = Array.isArray(decisions.items) ? decisions.items : [];
   const rawVersionItems = Array.isArray(versions.items) ? versions.items : [];
   const planItems = rawPlanItems.filter((item): item is PlansState["items"][number] => Boolean(item) && typeof item === "object");
   const taskItems = rawTaskItems.filter((item): item is TasksState["items"][number] => Boolean(item) && typeof item === "object");
+  const ownerItems = rawOwnerItems.filter((item): item is OwnerState["items"][number] => Boolean(item) && typeof item === "object");
   const decisionItems = rawDecisionItems.filter((item): item is DecisionState["items"][number] => Boolean(item) && typeof item === "object");
   const versionItems = rawVersionItems.filter((item): item is VersionState["items"][number] => Boolean(item) && typeof item === "object");
 
@@ -233,6 +266,20 @@ export async function validateWorkspace() {
       assertValidTaskTree(taskItems);
     } catch (error) {
       schemaIssues.push(error instanceof Error ? error.message : "Task tree is invalid");
+    }
+  }
+
+  if (ownersAttempt.parseIssue) {
+    schemaIssues.push(ownersAttempt.parseIssue);
+  } else if (!Array.isArray(rawOwners.items)) {
+    schemaIssues.push("Owner registry must define an items array");
+  } else if (ownerItems.length !== rawOwnerItems.length) {
+    schemaIssues.push("Owner registry items must all be objects");
+  } else {
+    try {
+      assertValidOwnerRegistry(ownerItems);
+    } catch (error) {
+      schemaIssues.push(error instanceof Error ? error.message : "Owner registry is invalid");
     }
   }
 
@@ -290,11 +337,74 @@ export async function validateWorkspace() {
     }
   }
 
+  if (!plansAttempt.parseIssue && !tasksAttempt.parseIssue && !ownersAttempt.parseIssue) {
+    try {
+      const ownerIds = new Set(ownerItems.map((owner) => owner.id));
+      assertOwnerRefsExist({
+        ownerIds,
+        refs: [
+          ...planItems.map((plan) => ({ source: `Plan ${plan.id}`, owner: plan.owner })),
+          ...taskItems.map((task) => ({ source: `Task ${task.id}`, owner: task.owner }))
+        ]
+      });
+    } catch (error) {
+      schemaIssues.push(error instanceof Error ? error.message : "Owner refs are invalid");
+    }
+  }
+
   if (!plansAttempt.parseIssue && !versionsAttempt.parseIssue) {
     try {
       assertPlanVersionRefsExist(planItems, new Set(versionItems.map((record) => record.id)));
     } catch (error) {
       schemaIssues.push(error instanceof Error ? error.message : "Plan version refs are invalid");
+    }
+  }
+
+  if (!plansAttempt.parseIssue && !tasksAttempt.parseIssue && !ownersAttempt.parseIssue) {
+    const normalizedPlans = normalizePlansState(rawPlans);
+    const normalizedTasks = normalizeTasksState(rawTasks);
+    const normalizedOwners = normalizeOwnerState(rawOwners);
+    const derivedPlans = derivePlanStatuses(normalizedPlans, normalizedTasks);
+    const ownersById = new Map(normalizedOwners.items.map((owner) => [owner.id, owner]));
+    const planOwnerById = new Map(derivedPlans.items.map((plan) => [plan.id, plan.effectiveOwner]));
+    const now = Date.now();
+
+    for (const task of normalizedTasks.items) {
+      const effectiveOwner = task.owner ?? planOwnerById.get(task.planRef) ?? null;
+      const owner = effectiveOwner ? ownersById.get(effectiveOwner) : null;
+      const lastUpdatedDays = daysSince(task.updatedAt ?? task.createdAt, now);
+      const statusChangedDays = daysSince(task.statusChangedAt ?? task.updatedAt ?? task.createdAt, now);
+
+      if (task.status === "in_progress" && !effectiveOwner) {
+        warnings.push(`Task ${task.id} is in_progress but has no owner.`);
+      }
+      if (owner?.status === "inactive" && task.status !== "done") {
+        warnings.push(`Task ${task.id} is open but assigned to inactive owner ${owner.id}.`);
+      }
+      if (task.status !== "done" && lastUpdatedDays !== null && lastUpdatedDays >= STALE_TASK_DAYS) {
+        warnings.push(`Task ${task.id} has been open without updates for ${lastUpdatedDays} days.`);
+      }
+      if (task.status === "blocked" && statusChangedDays !== null && statusChangedDays >= STALE_BLOCKED_DAYS) {
+        warnings.push(`Task ${task.id} has been blocked for ${statusChangedDays} days.`);
+      }
+      if (task.status === "done" && task.pinned && lastUpdatedDays !== null && lastUpdatedDays >= STALE_DONE_PINNED_DAYS) {
+        warnings.push(`Task ${task.id} is done but still pinned after ${lastUpdatedDays} days.`);
+      }
+    }
+
+    for (const plan of derivedPlans.items) {
+      const owner = plan.effectiveOwner ? ownersById.get(plan.effectiveOwner) : null;
+      const lastUpdatedDays = daysSince(plan.updatedAt ?? plan.createdAt, now);
+
+      if (owner?.status === "inactive" && plan.status !== "done") {
+        warnings.push(`Plan ${plan.id} is open but assigned to inactive owner ${owner.id}.`);
+      }
+      if (plan.status !== "done" && lastUpdatedDays !== null && lastUpdatedDays >= STALE_PLAN_DAYS) {
+        warnings.push(`Plan ${plan.id} has been open without updates for ${lastUpdatedDays} days.`);
+      }
+      if (plan.status === "done" && plan.pinned && lastUpdatedDays !== null && lastUpdatedDays >= STALE_DONE_PINNED_DAYS) {
+        warnings.push(`Plan ${plan.id} is done but still pinned after ${lastUpdatedDays} days.`);
+      }
     }
   }
 
@@ -490,6 +600,9 @@ export async function repairWorkspace() {
       preserveExistingDocs: true
     });
     await migrateDecisionState();
+    await saveOwners(await loadOwners());
+    await savePlans(await loadPlans());
+    await saveTasks(await loadTasks());
 
     const nextMeta: WorkspaceMetaState = {
       workspaceSchemaVersion: WORKSPACE_SCHEMA_VERSION,

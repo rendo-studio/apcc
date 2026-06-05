@@ -106,7 +106,7 @@ function createValidationChecks(validation: ValidationResult): DoctorCheck[] {
       severity: MEDIUM_SEVERITY,
       category: "workspace",
       summary: `${validation.warnings.length} warning(s) detected in the current workspace.`,
-      hint: "The workspace is usable, but it is not fully aligned with the current managed template."
+      hint: validation.warnings.join("\n")
     });
   }
 

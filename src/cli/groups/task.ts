@@ -1,16 +1,22 @@
 import { AclipApp, booleanArgument, stringArgument } from "@rendo-studio/aclip";
 import {
   addTask,
+  buildEffectiveTaskOwnerMap,
   buildTaskTree,
   deleteTask,
+  filterTasksByOwner,
+  filterTasksByStatus,
   loadTasks,
   renderTaskTreeLines,
   updateTask
 } from "../../core/tasks.js";
+import { loadOwners } from "../../core/owners.js";
 import { derivePlanStatuses, filterTasksByPlanVersion, loadPlans } from "../../core/plans.js";
 import { resolveVersionRecordSelector } from "../../core/version.js";
-import { TASK_STATUSES, type TaskNode } from "../../core/types.js";
+import { TASK_STATUSES, type DerivedPlansState, type TaskNode } from "../../core/types.js";
 import { withGuideHint } from "../guide-hint.js";
+
+const DEFAULT_LIST_LIMIT = 50;
 
 async function resolveVersionFilter(input: {
   version?: string | null;
@@ -57,6 +63,71 @@ function getTaskOrThrow(tasks: TaskNode[], id: string): TaskNode {
   return task;
 }
 
+function parseNonNegativeInteger(value: string, label: string): number {
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 0) {
+    throw new Error(`${label} must be a non-negative integer.`);
+  }
+  return parsed;
+}
+
+function parsePositiveInteger(value: string, label: string): number {
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    throw new Error(`${label} must be a positive integer.`);
+  }
+  return parsed;
+}
+
+function paginatePinnedAware<T extends { pinned: boolean }>(
+  items: T[],
+  input: {
+    limit?: string | null;
+    cursor?: string | null;
+    all?: boolean | null;
+  }
+) {
+  const pinnedItems = items.filter((item) => item.pinned);
+  const pageableItems = items.filter((item) => !item.pinned);
+  const all = Boolean(input.all);
+  const cursor = all ? 0 : input.cursor ? parseNonNegativeInteger(input.cursor, "--cursor") : 0;
+  const numericLimit = input.limit ? parsePositiveInteger(input.limit, "--limit") : DEFAULT_LIST_LIMIT;
+  const limit = all ? null : numericLimit;
+  const pageItems = all ? pageableItems : pageableItems.slice(cursor, cursor + numericLimit);
+  const nextOffset = all ? null : cursor + numericLimit;
+  const nextCursor = nextOffset !== null && nextOffset < pageableItems.length ? String(nextOffset) : null;
+  const shown = pinnedItems.length + pageItems.length;
+
+  return {
+    pinnedItems,
+    pageItems,
+    pageInfo: {
+      total: items.length,
+      shown,
+      pinned: pinnedItems.length,
+      hidden: Math.max(items.length - shown, 0),
+      limit,
+      cursor,
+      nextCursor,
+      all
+    }
+  };
+}
+
+async function assertOwnerExists(owner: string | null | undefined) {
+  if (!owner) {
+    return;
+  }
+  const owners = await loadOwners();
+  if (!owners.items.some((item) => item.id === owner)) {
+    throw new Error(`Owner "${owner}" does not exist. Run apcc owner list or apcc owner add first.`);
+  }
+}
+
+function taskOwnerMap(tasks: TaskNode[], plans: DerivedPlansState): Map<string, string | null> {
+  return buildEffectiveTaskOwnerMap(tasks, plans);
+}
+
 export function registerTaskGroup(app: AclipApp) {
   app
     .group("task", {
@@ -95,6 +166,20 @@ export function registerTaskGroup(app: AclipApp) {
         stringArgument("status", {
           required: false,
           description: "Optional initial status: pending, in_progress, done, or blocked."
+        }),
+        stringArgument("owner", {
+          required: false,
+          description: "Optional owner id from the owner registry."
+        }),
+        booleanArgument("pin", {
+          required: false,
+          description: "Pin this task so it is always shown in progressive list output.",
+          flag: "--pin"
+        }),
+        stringArgument("pinned-reason", {
+          required: false,
+          description: "Optional reason explaining why this task is pinned.",
+          flag: "--pinned-reason"
         })
       ],
       examples: [
@@ -103,14 +188,18 @@ export function registerTaskGroup(app: AclipApp) {
         "apcc task add --id wire-local-site-runtime --name 'Wire local site runtime' --parent root --plan implement-local-docs-site-runtime-4",
         "apcc task add --name 'Add baseline registry' --parent task-site-runtime"
       ],
-      handler: async ({ id, name, parent, plan, summary, status }) => {
+      handler: async ({ id, name, parent, plan, summary, status, owner, pin, "pinned-reason": pinnedReason }) => {
+        await assertOwnerExists(owner ? String(owner) : null);
         return addTask({
           id: id ? String(id) : undefined,
           name: String(name),
           parent: String(parent),
           plan: plan ? String(plan) : undefined,
           summary: summary ? String(summary) : undefined,
-          status: status ? parseTaskStatus(String(status)) : undefined
+          status: status ? parseTaskStatus(String(status)) : undefined,
+          owner: owner ? String(owner) : undefined,
+          pinned: Boolean(pin),
+          pinnedReason: pinnedReason ? String(pinnedReason) : undefined
         });
       }
     })
@@ -147,6 +236,36 @@ export function registerTaskGroup(app: AclipApp) {
         stringArgument("counted-for-progress", {
           required: false,
           description: "Optional true or false flag for progress accounting."
+        }),
+        stringArgument("owner", {
+          required: false,
+          description: "Optional replacement owner id.",
+          flag: "--owner"
+        }),
+        booleanArgument("clear-owner", {
+          required: false,
+          description: "Clear the direct owner id.",
+          flag: "--clear-owner"
+        }),
+        booleanArgument("pin", {
+          required: false,
+          description: "Pin this task.",
+          flag: "--pin"
+        }),
+        booleanArgument("unpin", {
+          required: false,
+          description: "Unpin this task.",
+          flag: "--unpin"
+        }),
+        stringArgument("pinned-reason", {
+          required: false,
+          description: "Optional replacement pinned reason.",
+          flag: "--pinned-reason"
+        }),
+        booleanArgument("clear-pinned-reason", {
+          required: false,
+          description: "Clear the pinned reason.",
+          flag: "--clear-pinned-reason"
         })
       ],
       examples: [
@@ -161,14 +280,30 @@ export function registerTaskGroup(app: AclipApp) {
           !input.status &&
           !input.parent &&
           !input.plan &&
-          input["counted-for-progress"] === undefined
+          input["counted-for-progress"] === undefined &&
+          !input.owner &&
+          !input["clear-owner"] &&
+          !input.pin &&
+          !input.unpin &&
+          !input["pinned-reason"] &&
+          !input["clear-pinned-reason"]
         ) {
           throw new Error(
-            "task update requires at least one of --name, --summary, --status, --parent, --plan, or --counted-for-progress."
+            "task update requires at least one field to change."
           );
+        }
+        if (input.owner && input["clear-owner"]) {
+          throw new Error("Use either --owner or --clear-owner, not both.");
+        }
+        if (input.pin && input.unpin) {
+          throw new Error("Use either --pin or --unpin, not both.");
+        }
+        if (input["pinned-reason"] && input["clear-pinned-reason"]) {
+          throw new Error("Use either --pinned-reason or --clear-pinned-reason, not both.");
         }
 
         const nextStatus = input.status ? parseTaskStatus(String(input.status)) : undefined;
+        await assertOwnerExists(input.owner ? String(input.owner) : null);
 
         let countedForProgress: boolean | undefined;
         if (input["counted-for-progress"] !== undefined) {
@@ -186,7 +321,14 @@ export function registerTaskGroup(app: AclipApp) {
           ...(nextStatus ? { status: nextStatus } : {}),
           ...(input.parent ? { parent: String(input.parent) } : {}),
           ...(input.plan ? { plan: String(input.plan) } : {}),
-          ...(countedForProgress !== undefined ? { countedForProgress } : {})
+          ...(countedForProgress !== undefined ? { countedForProgress } : {}),
+          ...(input["clear-owner"] ? { owner: null } : input.owner ? { owner: String(input.owner) } : {}),
+          ...(input.pin ? { pinned: true } : input.unpin ? { pinned: false } : {}),
+          ...(input["clear-pinned-reason"]
+            ? { pinnedReason: null }
+            : input["pinned-reason"]
+              ? { pinnedReason: String(input["pinned-reason"]) }
+              : {})
         });
       }
     })
@@ -219,8 +361,12 @@ export function registerTaskGroup(app: AclipApp) {
       examples: ["apcc task show release-check"],
       handler: async ({ id }) => {
         const tasks = await loadTasks();
+        const derivedPlans = derivePlanStatuses(await loadPlans(), tasks);
+        const ownerByTaskId = taskOwnerMap(tasks.items, derivedPlans);
+        const task = getTaskOrThrow(tasks.items, String(id));
         return {
-          task: getTaskOrThrow(tasks.items, String(id))
+          task,
+          effectiveOwner: ownerByTaskId.get(task.id) ?? null
         };
       }
     })
@@ -243,6 +389,31 @@ export function registerTaskGroup(app: AclipApp) {
           description: "Only show tasks attached to the specified plan id.",
           flag: "--plan"
         }),
+        stringArgument("status", {
+          required: false,
+          description: "Optional task status filter.",
+          flag: "--status"
+        }),
+        stringArgument("owner", {
+          required: false,
+          description: "Only show tasks whose effective owner matches this owner id.",
+          flag: "--owner"
+        }),
+        stringArgument("limit", {
+          required: false,
+          description: "Maximum non-pinned tasks to show. Defaults to 50.",
+          flag: "--limit"
+        }),
+        stringArgument("cursor", {
+          required: false,
+          description: "Numeric cursor returned by a previous list command.",
+          flag: "--cursor"
+        }),
+        booleanArgument("all", {
+          required: false,
+          description: "Show all matching tasks.",
+          flag: "--all"
+        }),
         booleanArgument("details", {
           required: false,
           description: "Include each listed task summary in addition to status and plan id.",
@@ -252,15 +423,20 @@ export function registerTaskGroup(app: AclipApp) {
       examples: [
         "apcc task list",
         "apcc task list --plan release-hardening",
+        "apcc task list --owner codex-main --status in_progress",
+        "apcc task list --limit 20",
         "apcc task list --details",
         "apcc task list --version 0.2.0",
-        "apcc task list --unversioned"
+        "apcc task list --unversioned",
+        "apcc task list --all"
       ],
-      handler: async ({ version, unversioned, plan, details }) => {
+      handler: async ({ version, unversioned, plan, status, owner, limit, cursor, all, details }) => {
         const resolved = await resolveVersionFilter({
           version: version ? String(version) : null,
           unversioned: Boolean(unversioned)
         });
+        const statusFilter = status ? parseTaskStatus(String(status)) : null;
+        await assertOwnerExists(owner ? String(owner) : null);
         const tasks = await loadTasks();
         const derivedPlans = derivePlanStatuses(await loadPlans(), tasks);
         const planId = plan ? String(plan) : null;
@@ -268,20 +444,36 @@ export function registerTaskGroup(app: AclipApp) {
           throw new Error(`Plan "${planId}" does not exist.`);
         }
         const versionFilteredTasks = filterTasksByPlanVersion(tasks.items, derivedPlans, resolved.filter);
-        const filteredTasks = planId
+        const planFilteredTasks = planId
           ? versionFilteredTasks.filter((task) => task.planRef === planId)
           : versionFilteredTasks;
-        const tree = buildTaskTree(filteredTasks, true);
+        const filteredTasks = filterTasksByOwner(
+          filterTasksByStatus(planFilteredTasks, statusFilter),
+          derivedPlans,
+          owner ? String(owner) : null
+        );
+        const paged = paginatePinnedAware<TaskNode>(filteredTasks, {
+          limit: limit ? String(limit) : null,
+          cursor: cursor ? String(cursor) : null,
+          all: Boolean(all)
+        });
+        const ownerByTaskId = taskOwnerMap(filteredTasks, derivedPlans);
+        const tree = buildTaskTree(paged.pageItems, true);
+        const pinnedTree = buildTaskTree(paged.pinnedItems, true);
         return {
           tasks: filteredTasks,
           taskTree: tree,
-          lines: renderTaskTreeLines(tree, 0, { details: Boolean(details) }),
+          pinnedLines: renderTaskTreeLines(pinnedTree, 0, { details: Boolean(details), ownerByTaskId }),
+          lines: renderTaskTreeLines(tree, 0, { details: Boolean(details), ownerByTaskId }),
+          pageInfo: paged.pageInfo,
           planFilter: planId
             ? {
                 id: planId,
                 name: derivedPlans.items.find((item) => item.id === planId)?.name ?? planId
               }
             : null,
+          statusFilter,
+          ownerFilter: owner ? { id: String(owner) } : null,
           versionFilter: resolved.versionRecord
             ? {
                 id: resolved.versionRecord.id,

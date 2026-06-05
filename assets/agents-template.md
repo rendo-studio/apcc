@@ -17,7 +17,9 @@ Mandatory:
 9. When initializing or reinitializing APCC, prefer setting the primary docs language to match the current human conversation unless the repository already has an established docs language.
 10. When a new task, plan change, or execution boundary is confirmed, update `.apcc` first and only then start implementation work.
 11. For targeted task or plan mutations, prefer CLI commands such as `apcc task update --parent/--plan` or `apcc plan update --parent` instead of hand-editing a single node in YAML.
-12. For bulk plan or task restructuring, edit `.apcc/` directly against `apcc guide control-plane-contract`, replace fields structurally instead of appending duplicate keys, then run `apcc doctor check` and an explicit inspection command.
-13. Use `apcc guide` to discover public APCC docs topics when command behavior or workspace semantics are unclear.
-14. After `apcc site start`, tell the human the returned docs-site URL. Prefer a stable unique port on first start with `apcc site start --port <port>` or `.apcc/config/workspace.yaml`.
-15. Do not run `apcc site stop` as an end-of-task ritual. Leave the docs site running unless the human explicitly asks to stop or clean it.
+12. For large plan or task trees, use `apcc plan list` and `apcc task list` filters such as `--owner`, `--status`, `--limit`, `--cursor`, and `--all`; treat pinned items as context that must stay visible, not as priority markers.
+13. Before assigning work, use `apcc owner list` to avoid owner-id collisions; add missing owners explicitly instead of inventing near-duplicate ids.
+14. For bulk plan or task restructuring, edit `.apcc/` directly against `apcc guide control-plane-contract`, replace fields structurally instead of appending duplicate keys, then run `apcc doctor check` and an explicit inspection command.
+15. Use `apcc guide` to discover public APCC docs topics when command behavior or workspace semantics are unclear.
+16. After `apcc site start`, tell the human the returned docs-site URL. Prefer a stable unique port on first start with `apcc site start --port <port>` or `.apcc/config/workspace.yaml`.
+17. Do not run `apcc site stop` as an end-of-task ritual. Leave the docs site running unless the human explicitly asks to stop or clean it.

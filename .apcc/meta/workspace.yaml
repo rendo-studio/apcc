@@ -1,12 +1,12 @@
-workspaceSchemaVersion: 10
-apccVersion: 0.3.3
+workspaceSchemaVersion: 11
+apccVersion: 0.5.0
 workspaceName: apcc
 docsRoot: docs
 workspaceRoot: .apcc
 bootstrapMode: init
-templateVersion: 2026-04-30.runtime-state-and-version-scoping-1
+templateVersion: 2026-06-06.progressive-disclosure-and-ownership-1
 projectKind: general
 docsMode: standard
 docsLanguage: en
 createdAt: 2026-04-22T18:47:35.212Z
-lastUpgradedAt: 2026-04-29T11:39:31.016Z
+lastUpgradedAt: 2026-06-05T20:39:27.976Z

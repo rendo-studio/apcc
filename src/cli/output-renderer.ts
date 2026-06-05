@@ -46,6 +46,37 @@ function renderSection(title: string, body: string): string {
   return `## ${title}\n\n${body}`;
 }
 
+function renderPageInfo(value: unknown): string | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  const lines: string[] = [];
+  if (typeof value.total === "number" && typeof value.shown === "number") {
+    lines.push(`- Showing: ${inlineCode(`${value.shown}/${value.total}`)}`);
+  }
+  if (typeof value.pinned === "number") {
+    lines.push(`- Pinned shown: ${inlineCode(String(value.pinned))}`);
+  }
+  if (typeof value.hidden === "number") {
+    lines.push(`- Hidden: ${inlineCode(String(value.hidden))}`);
+  }
+  if (typeof value.limit === "number") {
+    lines.push(`- Limit: ${inlineCode(String(value.limit))}`);
+  }
+  if (typeof value.cursor === "number") {
+    lines.push(`- Cursor: ${inlineCode(String(value.cursor))}`);
+  }
+  if (typeof value.nextCursor === "string" && value.nextCursor.length > 0) {
+    lines.push(`- Next cursor: ${inlineCode(value.nextCursor)}`);
+  }
+  if (value.all === true) {
+    lines.push("- Mode: all");
+  }
+
+  return lines.length > 0 ? renderSection("Pagination", lines.join("\n")) : null;
+}
+
 function asStringArray(value: unknown): string[] {
   if (!Array.isArray(value)) {
     return [];
@@ -192,6 +223,11 @@ function renderStatus(payload: Record<string, unknown>, synced = false): string 
     renderSection("Blockers", renderList(asStringArray(payload.blockers)))
   );
 
+  const reminders = asStringArray(payload.reminders);
+  if (reminders.length > 0) {
+    lines.push("", renderSection("Reminders", renderList(reminders)));
+  }
+
   return ensureTrailingNewline(lines.join("\n"));
 }
 
@@ -325,8 +361,14 @@ function renderPlanRecord(payload: Record<string, unknown>): string {
     `- Name: ${typeof payload.name === "string" ? payload.name : "Unknown"}`,
     `- Status: ${inlineCode(formatTaskStatus(payload.status))}`,
     `- Parent: ${typeof payload.parentPlanId === "string" ? inlineCode(payload.parentPlanId) : inlineCode("root")}`,
-    `- Version: ${typeof payload.effectiveVersionRef === "string" ? inlineCode(payload.effectiveVersionRef) : "Unversioned"}`
+    `- Version: ${typeof payload.effectiveVersionRef === "string" ? inlineCode(payload.effectiveVersionRef) : "Unversioned"}`,
+    `- Owner: ${typeof payload.effectiveOwner === "string" ? inlineCode(payload.effectiveOwner) : "Unassigned"}`,
+    `- Pinned: ${payload.pinned === true ? "yes" : "no"}`
   ];
+
+  if (payload.pinned === true && typeof payload.pinnedReason === "string" && payload.pinnedReason.trim().length > 0) {
+    lines.push(`- Pinned reason: ${payload.pinnedReason}`);
+  }
 
   if (typeof payload.summary === "string" && payload.summary.trim().length > 0) {
     lines.push("", renderSection("Summary", payload.summary));
@@ -345,21 +387,41 @@ function renderPlanPayload(payload: Record<string, unknown>): string {
   }
 
   const lines = ["# Plans", ""];
+  const filterLines: string[] = [];
   if (isRecord(payload.versionFilter)) {
     const versionFilter =
       typeof payload.versionFilter.version === "string"
         ? `${payload.versionFilter.version}${typeof payload.versionFilter.id === "string" ? ` (${payload.versionFilter.id})` : ""}`
         : "unversioned";
-    lines.push(renderSection("Filter", `- Version scope: ${versionFilter}`), "");
+    filterLines.push(`- Version scope: ${versionFilter}`);
+  }
+  if (typeof payload.statusFilter === "string") {
+    filterLines.push(`- Status: ${payload.statusFilter}`);
+  }
+  if (isRecord(payload.ownerFilter) && typeof payload.ownerFilter.id === "string") {
+    filterLines.push(`- Owner: ${payload.ownerFilter.id}`);
+  }
+  if (filterLines.length > 0) {
+    lines.push(renderSection("Filter", filterLines.join("\n")), "");
   }
   if (Array.isArray(payload.topLevelPlans)) {
     lines.push(renderSection("Top-level Plans", renderList(asStringArray(payload.topLevelPlans))));
+  }
+  if (Array.isArray(payload.pinnedLines) && asStringArray(payload.pinnedLines).length > 0) {
+    if (lines.length > 2) {
+      lines.push("");
+    }
+    lines.push(renderSection("Pinned", renderRawLines(asStringArray(payload.pinnedLines))));
   }
   if (Array.isArray(payload.lines)) {
     if (lines.length > 2) {
       lines.push("");
     }
     lines.push(renderSection("Plan Tree", renderRawLines(asStringArray(payload.lines))));
+  }
+  const pageInfo = renderPageInfo(payload.pageInfo);
+  if (pageInfo) {
+    lines.push("", pageInfo);
   }
   if (Array.isArray(payload.deletedPlanIds)) {
     if (lines.length > 2) {
@@ -374,7 +436,8 @@ function renderPlanPayload(payload: Record<string, unknown>): string {
   return ensureTrailingNewline(lines.join("\n"));
 }
 
-function renderTaskRecord(payload: Record<string, unknown>, progressPercent?: unknown): string {
+function renderTaskRecord(payload: Record<string, unknown>, progressPercent?: unknown, effectiveOwner?: unknown): string {
+  const owner = typeof effectiveOwner === "string" ? effectiveOwner : typeof payload.owner === "string" ? payload.owner : null;
   const lines = [
     "# Task",
     "",
@@ -383,8 +446,14 @@ function renderTaskRecord(payload: Record<string, unknown>, progressPercent?: un
     `- Status: ${inlineCode(formatTaskStatus(payload.status))}`,
     `- Plan: ${typeof payload.planRef === "string" ? inlineCode(payload.planRef) : "Unknown"}`,
     `- Parent: ${typeof payload.parentTaskId === "string" ? inlineCode(payload.parentTaskId) : inlineCode("root")}`,
-    `- Counted for progress: ${payload.countedForProgress === false ? "no" : "yes"}`
+    `- Counted for progress: ${payload.countedForProgress === false ? "no" : "yes"}`,
+    `- Owner: ${owner ? inlineCode(owner) : "Unassigned"}`,
+    `- Pinned: ${payload.pinned === true ? "yes" : "no"}`
   ];
+
+  if (payload.pinned === true && typeof payload.pinnedReason === "string" && payload.pinnedReason.trim().length > 0) {
+    lines.push(`- Pinned reason: ${payload.pinnedReason}`);
+  }
 
   if (typeof progressPercent === "number") {
     lines.push(`- Progress: ${inlineCode(`${progressPercent}%`)}`);
@@ -399,7 +468,7 @@ function renderTaskRecord(payload: Record<string, unknown>, progressPercent?: un
 
 function renderTaskPayload(payload: Record<string, unknown>): string {
   if (isRecord(payload.task)) {
-    return renderTaskRecord(payload.task, payload.progressPercent);
+    return renderTaskRecord(payload.task, payload.progressPercent, payload.effectiveOwner);
   }
 
   const lines = ["# Tasks", ""];
@@ -418,11 +487,24 @@ function renderTaskPayload(payload: Record<string, unknown>): string {
         : payload.planFilter.id;
     filterLines.push(`- Plan: ${planFilter}`);
   }
+  if (typeof payload.statusFilter === "string") {
+    filterLines.push(`- Status: ${payload.statusFilter}`);
+  }
+  if (isRecord(payload.ownerFilter) && typeof payload.ownerFilter.id === "string") {
+    filterLines.push(`- Owner: ${payload.ownerFilter.id}`);
+  }
   if (filterLines.length > 0) {
     lines.push(renderSection("Filter", filterLines.join("\n")), "");
   }
+  if (Array.isArray(payload.pinnedLines) && asStringArray(payload.pinnedLines).length > 0) {
+    lines.push(renderSection("Pinned", renderRawLines(asStringArray(payload.pinnedLines))), "");
+  }
   if (Array.isArray(payload.lines)) {
     lines.push(renderSection("Task Tree", renderRawLines(asStringArray(payload.lines))));
+  }
+  const pageInfo = renderPageInfo(payload.pageInfo);
+  if (pageInfo) {
+    lines.push("", pageInfo);
   }
   if (Array.isArray(payload.deletedTaskIds)) {
     lines.push("", renderSection("Deleted Tasks", renderList(asStringArray(payload.deletedTaskIds))));
@@ -432,6 +514,53 @@ function renderTaskPayload(payload: Record<string, unknown>): string {
   }
 
   return ensureTrailingNewline(lines.join("\n"));
+}
+
+function renderOwnerRecord(payload: Record<string, unknown>): string {
+  const lines = [
+    "# Owner",
+    "",
+    `- ID: ${typeof payload.id === "string" ? inlineCode(payload.id) : "Unknown"}`,
+    `- Name: ${typeof payload.name === "string" ? payload.name : "Unknown"}`,
+    `- Kind: ${typeof payload.kind === "string" ? inlineCode(payload.kind) : "Unknown"}`,
+    `- Status: ${typeof payload.status === "string" ? inlineCode(payload.status) : "Unknown"}`
+  ];
+
+  const aliases = asStringArray(payload.aliases);
+  if (aliases.length > 0) {
+    lines.push("", renderSection("Aliases", renderList(aliases)));
+  }
+
+  return ensureTrailingNewline(lines.join("\n"));
+}
+
+function renderOwnerPayload(payload: Record<string, unknown>): string {
+  if (Array.isArray(payload.owner)) {
+    const owners = asRecordArray(payload.owner);
+    return ensureTrailingNewline(
+      [
+        "# Owners",
+        "",
+        renderSection(
+          "Records",
+          renderList(
+            owners.map((record) => {
+              const id = typeof record.id === "string" ? record.id : "unknown";
+              const name = typeof record.name === "string" ? record.name : "Unknown";
+              const kind = typeof record.kind === "string" ? record.kind : "unknown";
+              const status = typeof record.status === "string" ? record.status : "unknown";
+              const aliases = asStringArray(record.aliases);
+              const aliasSuffix = aliases.length > 0 ? ` | aliases: ${aliases.join(", ")}` : "";
+              return `${inlineCode(id)} | ${status} | ${kind} | ${name}${aliasSuffix}`;
+            }),
+            "No owner records."
+          )
+        )
+      ].join("\n")
+    );
+  }
+
+  return renderOwnerRecord(isRecord(payload.owner) ? payload.owner : payload);
 }
 
 function renderDecisionRecord(payload: Record<string, unknown>): string {
@@ -735,6 +864,10 @@ function renderSuccessPayload(payload: unknown): string {
 
   if ("task" in payload || "taskTree" in payload || "deletedTaskIds" in payload || "progressPercent" in payload) {
     return renderTaskPayload(payload);
+  }
+
+  if ("owner" in payload) {
+    return renderOwnerPayload(payload);
   }
 
   if ("decision" in payload) {

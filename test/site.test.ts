@@ -465,7 +465,7 @@ describe("site runtime staging", () => {
           preferredPort: 4555
         },
         docsLanguage: "en",
-        workspaceSchemaVersion: 10
+        workspaceSchemaVersion: 11
       }
     });
     restorers.push(fixture.use());

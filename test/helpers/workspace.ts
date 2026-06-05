@@ -6,6 +6,7 @@ import { stringify } from "yaml";
 
 import type {
   GoalState,
+  OwnerState,
   PlansState,
   ProjectOverviewState,
   TasksState,
@@ -20,6 +21,7 @@ interface WorkspaceFixtureInput {
   plans?: PlansState;
   tasks?: TasksState;
   versions?: VersionState;
+  owners?: OwnerState;
   config?: WorkspaceConfigState;
   meta?: WorkspaceMetaState;
 }
@@ -47,7 +49,12 @@ const defaultPlans: PlansState = {
       name: "Root plan",
       summary: "Default top-level plan used by workspace fixtures.",
       parentPlanId: null,
-      versionRef: null
+      versionRef: null,
+      owner: null,
+      pinned: false,
+      pinnedReason: null,
+      createdAt: "2026-04-19T00:00:00Z",
+      updatedAt: "2026-04-19T00:00:00Z"
     }
   ]
 };
@@ -60,14 +67,18 @@ const defaultVersions: VersionState = {
   items: []
 };
 
+const defaultOwners: OwnerState = {
+  items: []
+};
+
 const defaultMeta: WorkspaceMetaState = {
-  workspaceSchemaVersion: 10,
+  workspaceSchemaVersion: 11,
   apccVersion: "0.0.0-test",
   workspaceName: "test-workspace",
   docsRoot: "docs",
   workspaceRoot: ".apcc",
   bootstrapMode: "init",
-  templateVersion: "2026-04-30.runtime-state-and-version-scoping-1",
+  templateVersion: "2026-06-06.progressive-disclosure-and-ownership-1",
   projectKind: "general",
   docsMode: "standard",
   docsLanguage: "en",
@@ -86,7 +97,7 @@ const defaultConfig: WorkspaceConfigState = {
     sourcePath: "docs",
     preferredPort: null
   },
-  workspaceSchemaVersion: 10
+  workspaceSchemaVersion: 11
 };
 
 async function writeYaml(filePath: string, value: unknown) {
@@ -117,6 +128,7 @@ export async function createWorkspaceFixture(input: WorkspaceFixtureInput = {}) 
   const plans = input.plans ?? defaultPlans;
   const tasks = input.tasks ?? defaultTasks;
   const versions = input.versions ?? defaultVersions;
+  const owners = input.owners ?? defaultOwners;
   const config = input.config ?? defaultConfig;
   const meta = input.meta ?? defaultMeta;
 
@@ -127,6 +139,7 @@ export async function createWorkspaceFixture(input: WorkspaceFixtureInput = {}) 
   await writeYaml(path.join(root, ".apcc", "plans", "current.yaml"), plans);
   await writeYaml(path.join(root, ".apcc", "tasks", "current.yaml"), tasks);
   await writeYaml(path.join(root, ".apcc", "tasks", "archive.yaml"), { items: [] });
+  await writeYaml(path.join(root, ".apcc", "owners", "registry.yaml"), owners);
   await writeYaml(path.join(root, ".apcc", "decisions", "records.yaml"), { items: [] });
   await writeYaml(path.join(root, ".apcc", "versions", "records.yaml"), versions);
 

@@ -453,12 +453,42 @@ apcc plan add --name "Ship onboarding" --parent root --summary "Turn the first-h
 apcc task add --name "Add workflow guide command" --parent root --plan ship-onboarding-1 --summary "Expose the canonical workflow guide through the CLI."
 ```
 
+For parallel work, register owners before assigning work:
+
+```bash
+apcc owner list
+apcc owner add --id codex-main --name "Codex Main" --kind agent
+apcc task update --id add-workflow-guide-command-1 --owner codex-main
+```
+
+Owner ids are explicit control-plane references. Use `owner list` first so humans and agents do not accidentally create near-duplicate owner ids for the same operator. Owner assignment can change during handoff with `plan update --owner`, `task update --owner`, or `--clear-owner`.
+
+Use pinned items narrowly. `pinned` means "this plan or task is important context that should stay visible in progressive disclosure output." It is not a priority marker, not a blocker marker, not an owner marker, and not a permanent favorite. Add a pinned reason when the reason is not obvious:
+
+```bash
+apcc task update --id release-check --pin --pinned-reason "Release gate that must stay visible during handoff."
+apcc task update --id release-check --unpin --clear-pinned-reason
+```
+
+For large workspaces, list commands are progressive disclosure views. Pinned items remain visible, while ordinary matches can be paged:
+
+```bash
+apcc plan list --owner codex-main --status in_progress --limit 20
+apcc task list --plan ship-onboarding-1 --limit 20
+apcc task list --cursor 20
+apcc task list --all
+```
+
+Do not assume a paged list is the whole project. Read the pagination summary, hidden count, filters, pinned section, and next cursor before deciding whether more context is needed. Use `--all` only when the full tree is genuinely needed.
+
 Important command rules:
 
 - `plan add` and `task add` return ids
 - `--parent root` is the explicit top-level marker for CLI tree mutations
 - every plan must have a summary
 - every task must have a summary
+- owners are registered with `owner add/list/update` and referenced by plan/task owner fields
+- pinned plans and tasks are always shown in normal progressive list output to avoid losing important context
 - the current focus comes from the plan tree plus the scoped task drilldown attached to each plan
 - do not reintroduce an `active goal` layer
 - do not persist `plan.status`; it is derived from the current task state
@@ -471,6 +501,8 @@ apcc task update --id add-workflow-guide-command-1 --status done
 apcc plan delete --id old-plan-1
 apcc task delete --id obsolete-task-1
 ```
+
+`apcc status` and `apcc doctor check` may report reminders for stale work, long-blocked tasks, inactive owners assigned to open work, unowned in-progress tasks, or completed items that remain pinned. Treat these reminders as prompts to inspect and update the control plane; APCC should not clean them automatically.
 
 ## Docs-Site Workspace Config
 

@@ -25,7 +25,12 @@ function normalizePlanNode(raw: PlanNode): PlanNode {
     name: raw.name,
     summary: raw.summary ?? null,
     parentPlanId: raw.parentPlanId ?? null,
-    versionRef: raw.versionRef ?? null
+    versionRef: raw.versionRef ?? null,
+    owner: raw.owner ?? null,
+    pinned: Boolean(raw.pinned),
+    pinnedReason: raw.pinnedReason ?? null,
+    createdAt: raw.createdAt ?? null,
+    updatedAt: raw.updatedAt ?? raw.createdAt ?? null
   };
 }
 
@@ -172,6 +177,33 @@ function buildEffectivePlanVersionRefs(plans: PlanNode[]): Map<string, string | 
   return cache;
 }
 
+function buildEffectivePlanOwners(plans: PlanNode[]): Map<string, string | null> {
+  const normalizedPlans = normalizePlanItems(plans);
+  const byId = new Map(normalizedPlans.map((plan) => [plan.id, plan]));
+  const cache = new Map<string, string | null>();
+
+  const resolve = (planId: string): string | null => {
+    if (cache.has(planId)) {
+      return cache.get(planId) ?? null;
+    }
+
+    const plan = byId.get(planId);
+    if (!plan) {
+      return null;
+    }
+
+    const resolved = plan.owner ?? (plan.parentPlanId ? resolve(plan.parentPlanId) : null);
+    cache.set(planId, resolved);
+    return resolved;
+  };
+
+  for (const plan of normalizedPlans) {
+    resolve(plan.id);
+  }
+
+  return cache;
+}
+
 export function createPlanId(name: string, siblingCount: number): string {
   const slug = name
     .trim()
@@ -227,7 +259,9 @@ export function buildPlanTree(plans: DerivedPlanNode[], allowOrphanRoots = false
 
 export function renderPlanTreeLines(tree: PlanTreeNode[], depth = 0): string[] {
   return tree.flatMap((node) => {
-    const line = `${"  ".repeat(depth)}- ${node.name} (${node.id}) [${node.status}]`;
+    const owner = node.effectiveOwner ? ` owner: ${node.effectiveOwner}` : "";
+    const pinned = node.pinned ? " [pinned]" : "";
+    const line = `${"  ".repeat(depth)}- ${node.name} (${node.id}) [${node.status}]${pinned}${owner}`;
     return [line, ...renderPlanTreeLines(node.children, depth + 1)];
   });
 }
@@ -339,6 +373,7 @@ function derivePlanStatus(tasks: TaskNode[]): TaskStatus {
 
 export function derivePlanStatuses(plans: PlansState, tasks: TasksState): DerivedPlansState {
   const effectiveVersionRefs = buildEffectivePlanVersionRefs(plans.items);
+  const effectiveOwners = buildEffectivePlanOwners(plans.items);
   const items = plans.items.map((plan) => {
     const relevantPlanIds = new Set([plan.id, ...collectDescendantPlanIds(plans.items, plan.id)]);
     const planTasks = tasks.items.filter((task) => relevantPlanIds.has(task.planRef));
@@ -346,7 +381,8 @@ export function derivePlanStatuses(plans: PlansState, tasks: TasksState): Derive
     return {
       ...plan,
       status: derivePlanStatus(planTasks),
-      effectiveVersionRef: effectiveVersionRefs.get(plan.id) ?? null
+      effectiveVersionRef: effectiveVersionRefs.get(plan.id) ?? null,
+      effectiveOwner: effectiveOwners.get(plan.id) ?? null
     };
   });
 
@@ -369,6 +405,20 @@ export function filterDerivedPlansByVersion(
   return plans.items.filter((plan) =>
     filter.unversioned ? plan.effectiveVersionRef === null : plan.effectiveVersionRef === filter.versionRef
   );
+}
+
+export function filterDerivedPlansByStatus(
+  plans: DerivedPlanNode[],
+  status?: TaskStatus | null
+): DerivedPlanNode[] {
+  return status ? plans.filter((plan) => plan.status === status) : plans;
+}
+
+export function filterDerivedPlansByOwner(
+  plans: DerivedPlanNode[],
+  owner?: string | null
+): DerivedPlanNode[] {
+  return owner ? plans.filter((plan) => plan.effectiveOwner === owner) : plans;
 }
 
 export function filterTasksByPlanVersion(
@@ -394,6 +444,9 @@ export async function addPlan(input: {
   parent: string;
   summary?: string;
   version?: string;
+  owner?: string | null;
+  pinned?: boolean;
+  pinnedReason?: string | null;
 }): Promise<{ plan: PlanNode; plans: PlansState }> {
   return withWorkspaceMutationLock(async () => {
     const paths = getWorkspacePaths();
@@ -416,12 +469,18 @@ export async function addPlan(input: {
       throw new Error(`Version record "${input.version}" does not exist.`);
     }
 
+    const now = new Date().toISOString();
     const plan: PlanNode = {
       id,
       name: input.name,
       summary: input.summary ?? input.name,
       parentPlanId,
-      versionRef: input.version ?? null
+      versionRef: input.version ?? null,
+      owner: input.owner ?? null,
+      pinned: input.pinned ?? false,
+      pinnedReason: input.pinnedReason ?? null,
+      createdAt: now,
+      updatedAt: now
     };
 
     const next: PlansState = {
@@ -442,6 +501,9 @@ export async function updatePlan(input: {
   summary?: string;
   parent?: string;
   version?: string | null;
+  owner?: string | null;
+  pinned?: boolean;
+  pinnedReason?: string | null;
 }): Promise<{ plan: PlanNode; plans: PlansState }> {
   return withWorkspaceMutationLock(async () => {
     const paths = getWorkspacePaths();
@@ -452,8 +514,16 @@ export async function updatePlan(input: {
       throw new Error(`Plan "${input.id}" does not exist.`);
     }
 
-    if (!input.name && input.summary === undefined && input.parent === undefined && input.version === undefined) {
-      throw new Error("Plan update requires at least one of name, summary, parent, or version.");
+    if (
+      !input.name &&
+      input.summary === undefined &&
+      input.parent === undefined &&
+      input.version === undefined &&
+      input.owner === undefined &&
+      input.pinned === undefined &&
+      input.pinnedReason === undefined
+    ) {
+      throw new Error("Plan update requires at least one of name, summary, parent, version, owner, pinned, or pinnedReason.");
     }
 
     const current = plans.items[index];
@@ -482,6 +552,10 @@ export async function updatePlan(input: {
       ...(input.name ? { name: input.name } : {}),
       ...(input.summary !== undefined ? { summary: input.summary } : {}),
       ...(input.version !== undefined ? { versionRef: input.version } : {}),
+      ...(input.owner !== undefined ? { owner: input.owner } : {}),
+      ...(input.pinned !== undefined ? { pinned: input.pinned } : {}),
+      ...(input.pinnedReason !== undefined ? { pinnedReason: input.pinnedReason } : {}),
+      updatedAt: new Date().toISOString(),
       parentPlanId: nextParent
     };
 

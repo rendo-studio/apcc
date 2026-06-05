@@ -2,6 +2,7 @@ import { AclipApp } from "@rendo-studio/aclip";
 
 import { registerDecisionGroup } from "./groups/decision.js";
 import { registerGoalGroup } from "./groups/goal.js";
+import { registerOwnerGroup } from "./groups/owner.js";
 import { registerProjectGroup } from "./groups/project.js";
 import { registerPlanGroup } from "./groups/plan.js";
 import { registerStatusCommand } from "./groups/status.js";
@@ -33,6 +34,7 @@ export function createApp() {
   registerProjectGroup(app);
   registerDecisionGroup(app);
   registerGoalGroup(app);
+  registerOwnerGroup(app);
   registerPlanGroup(app);
   registerStatusCommand(app);
   registerTaskGroup(app);

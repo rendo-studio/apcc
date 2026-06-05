@@ -15,6 +15,7 @@ import type {
   PlansState,
   DecisionState,
   VersionState,
+  OwnerState,
   TaskArchiveState,
   TasksState,
   WorkspaceConfigState,
@@ -25,8 +26,8 @@ import { withWorkspaceRoot } from "./workspace.js";
 type ProjectKind = "general" | "frontend" | "library" | "service";
 type DocsMode = "minimal" | "standard";
 
-export const WORKSPACE_SCHEMA_VERSION = 10;
-export const WORKSPACE_TEMPLATE_VERSION = "2026-04-30.runtime-state-and-version-scoping-1";
+export const WORKSPACE_SCHEMA_VERSION = 11;
+export const WORKSPACE_TEMPLATE_VERSION = "2026-06-06.progressive-disclosure-and-ownership-1";
 
 interface BootstrapInput {
   targetPath?: string;
@@ -247,7 +248,7 @@ function buildProjectOverview(
   };
 }
 
-function buildPlans(endGoal: GoalState, docsLanguage: DocsLanguage): PlansState {
+function buildPlans(endGoal: GoalState, docsLanguage: DocsLanguage, createdAt: string): PlansState {
   return {
     endGoalRef: endGoal.goalId,
     items: [
@@ -259,7 +260,12 @@ function buildPlans(endGoal: GoalState, docsLanguage: DocsLanguage): PlansState 
             ? "在进入正式执行前，先锚定项目概览、最终目标与 authored docs。"
             : "Anchor the project overview, end goal, and authored docs before execution begins.",
         parentPlanId: null,
-        versionRef: null
+        versionRef: null,
+        owner: null,
+        pinned: false,
+        pinnedReason: null,
+        createdAt,
+        updatedAt: createdAt
       },
       {
         id: "translate-end-goal-into-plan-streams-1",
@@ -269,7 +275,12 @@ function buildPlans(endGoal: GoalState, docsLanguage: DocsLanguage): PlansState 
             ? "把长期目标拆解为明确的执行流与任务结构。"
             : "Break the long-lived end goal into explicit execution streams and task structure.",
         parentPlanId: null,
-        versionRef: null
+        versionRef: null,
+        owner: null,
+        pinned: false,
+        pinnedReason: null,
+        createdAt,
+        updatedAt: createdAt
       },
       {
         id: "deliver-and-validate-first-slice-1",
@@ -279,13 +290,18 @@ function buildPlans(endGoal: GoalState, docsLanguage: DocsLanguage): PlansState 
             ? "交付首个具体切片，并验证框架状态保持一致。"
             : "Ship the first concrete slice and verify the framework state stays coherent.",
         parentPlanId: null,
-        versionRef: null
+        versionRef: null,
+        owner: null,
+        pinned: false,
+        pinnedReason: null,
+        createdAt,
+        updatedAt: createdAt
       }
     ]
   };
 }
 
-function buildTasks(docsLanguage: DocsLanguage): TasksState {
+function buildTasks(docsLanguage: DocsLanguage, createdAt: string): TasksState {
   return {
     items: [
       {
@@ -298,7 +314,13 @@ function buildTasks(docsLanguage: DocsLanguage): TasksState {
         status: "pending",
         planRef: "establish-shared-project-context-1",
         parentTaskId: null,
-        countedForProgress: false
+        countedForProgress: false,
+        owner: null,
+        pinned: true,
+        pinnedReason: docsLanguage === "zh-CN" ? "初始工作区上下文锚点。" : "Initial workspace context anchor.",
+        createdAt,
+        updatedAt: createdAt,
+        statusChangedAt: createdAt
       },
       {
         id: "task-project-context-1",
@@ -310,7 +332,13 @@ function buildTasks(docsLanguage: DocsLanguage): TasksState {
         status: "pending",
         planRef: "establish-shared-project-context-1",
         parentTaskId: "task-project-context",
-        countedForProgress: true
+        countedForProgress: true,
+        owner: null,
+        pinned: false,
+        pinnedReason: null,
+        createdAt,
+        updatedAt: createdAt,
+        statusChangedAt: createdAt
       },
       {
         id: "task-breakdown",
@@ -322,7 +350,13 @@ function buildTasks(docsLanguage: DocsLanguage): TasksState {
         status: "pending",
         planRef: "translate-end-goal-into-plan-streams-1",
         parentTaskId: null,
-        countedForProgress: false
+        countedForProgress: false,
+        owner: null,
+        pinned: false,
+        pinnedReason: null,
+        createdAt,
+        updatedAt: createdAt,
+        statusChangedAt: createdAt
       },
       {
         id: "task-breakdown-1",
@@ -334,7 +368,13 @@ function buildTasks(docsLanguage: DocsLanguage): TasksState {
         status: "pending",
         planRef: "translate-end-goal-into-plan-streams-1",
         parentTaskId: "task-breakdown",
-        countedForProgress: true
+        countedForProgress: true,
+        owner: null,
+        pinned: false,
+        pinnedReason: null,
+        createdAt,
+        updatedAt: createdAt,
+        statusChangedAt: createdAt
       },
       {
         id: "task-delivery",
@@ -346,7 +386,13 @@ function buildTasks(docsLanguage: DocsLanguage): TasksState {
         status: "pending",
         planRef: "deliver-and-validate-first-slice-1",
         parentTaskId: null,
-        countedForProgress: false
+        countedForProgress: false,
+        owner: null,
+        pinned: false,
+        pinnedReason: null,
+        createdAt,
+        updatedAt: createdAt,
+        statusChangedAt: createdAt
       },
       {
         id: "task-delivery-1",
@@ -358,7 +404,13 @@ function buildTasks(docsLanguage: DocsLanguage): TasksState {
         status: "pending",
         planRef: "deliver-and-validate-first-slice-1",
         parentTaskId: "task-delivery",
-        countedForProgress: true
+        countedForProgress: true,
+        owner: null,
+        pinned: false,
+        pinnedReason: null,
+        createdAt,
+        updatedAt: createdAt,
+        statusChangedAt: createdAt
       }
     ]
   };
@@ -379,6 +431,9 @@ function buildWorkspaceFiles(
     items: []
   };
   const initialVersionState: VersionState = {
+    items: []
+  };
+  const initialOwnerState: OwnerState = {
     items: []
   };
   const initialTaskArchiveState: TaskArchiveState = {
@@ -426,15 +481,19 @@ function buildWorkspaceFiles(
     },
     {
       relativePath: ".apcc/plans/current.yaml",
-      value: buildPlans(endGoal, docsLanguage)
+      value: buildPlans(endGoal, docsLanguage, createdAt)
     },
     {
       relativePath: ".apcc/tasks/current.yaml",
-      value: buildTasks(docsLanguage)
+      value: buildTasks(docsLanguage, createdAt)
     },
     {
       relativePath: ".apcc/tasks/archive.yaml",
       value: initialTaskArchiveState
+    },
+    {
+      relativePath: ".apcc/owners/registry.yaml",
+      value: initialOwnerState
     },
     {
       relativePath: ".apcc/decisions/records.yaml",

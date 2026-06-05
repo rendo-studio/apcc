@@ -59,7 +59,7 @@ describe("workspace validation and repair", () => {
     expect(repaired.validation.repairNeeded).toBe(false);
 
     const repairedMeta = await fs.readFile(path.join(root, ".apcc", "meta", "workspace.yaml"), "utf8");
-    expect(repairedMeta).toContain("workspaceSchemaVersion: 10");
+    expect(repairedMeta).toContain("workspaceSchemaVersion: 11");
     expect(repairedMeta).toContain("apccVersion:");
     expect(repairedMeta).not.toContain("\nschemaVersion:");
   });
@@ -102,7 +102,7 @@ describe("workspace validation and repair", () => {
         "  enabled: true",
         "  sourcePath: docs",
         "  preferredPort: null",
-        "workspaceSchemaVersion: 10",
+        "workspaceSchemaVersion: 11",
         ""
       ].join("\n"),
       "utf8"
@@ -185,7 +185,87 @@ describe("workspace validation and repair", () => {
     expect(repaired.validation.ok).toBe(true);
 
     const repairedConfig = await fs.readFile(path.join(root, ".apcc", "config", "workspace.yaml"), "utf8");
-    expect(repairedConfig).toContain("workspaceSchemaVersion: 10");
+    expect(repairedConfig).toContain("workspaceSchemaVersion: 11");
     expect(repairedConfig).toContain("docsLanguage: en");
+  });
+
+  it("warns about stale or unowned active work without repairing it automatically", async () => {
+    const root = path.join(process.env.TEMP ?? process.cwd(), `apcc-validate-stale-${Date.now()}`);
+    cleanups.push(root);
+
+    await initWorkspace({
+      targetPath: root,
+      projectName: "Stale Workspace",
+      endGoalName: "Track stale work",
+      endGoalSummary: "Surface stale work as warnings."
+    });
+
+    const oldDate = "2000-01-01T00:00:00Z";
+    await fs.writeFile(
+      path.join(root, ".apcc", "owners", "registry.yaml"),
+      [
+        "items:",
+        "  - id: inactive-agent",
+        "    name: Inactive Agent",
+        "    kind: agent",
+        "    status: inactive",
+        "    aliases: []",
+        `    createdAt: ${oldDate}`,
+        `    updatedAt: ${oldDate}`,
+        ""
+      ].join("\n"),
+      "utf8"
+    );
+    await fs.writeFile(
+      path.join(root, ".apcc", "plans", "current.yaml"),
+      [
+        "endGoalRef: end-goal-track-stale-work",
+        "items:",
+        "  - id: stale-plan",
+        "    name: Stale plan",
+        "    summary: Stale plan",
+        "    parentPlanId: null",
+        "    versionRef: null",
+        "    owner: inactive-agent",
+        "    pinned: true",
+        "    pinnedReason: Important context.",
+        `    createdAt: ${oldDate}`,
+        `    updatedAt: ${oldDate}`,
+        ""
+      ].join("\n"),
+      "utf8"
+    );
+    await fs.writeFile(
+      path.join(root, ".apcc", "tasks", "current.yaml"),
+      [
+        "items:",
+        "  - id: stale-task",
+        "    name: Stale task",
+        "    summary: Stale task",
+        "    status: in_progress",
+        "    planRef: stale-plan",
+        "    parentTaskId: null",
+        "    countedForProgress: true",
+        "    owner: null",
+        "    pinned: false",
+        "    pinnedReason: null",
+        `    createdAt: ${oldDate}`,
+        `    updatedAt: ${oldDate}`,
+        `    statusChangedAt: ${oldDate}`,
+        ""
+      ].join("\n"),
+      "utf8"
+    );
+
+    const validation = await withWorkspaceRoot(root, async () => validateWorkspace());
+
+    expect(validation.ok).toBe(true);
+    expect(validation.warnings).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining("stale-task"),
+        expect.stringContaining("inactive owner inactive-agent"),
+        expect.stringContaining("stale-plan")
+      ])
+    );
   });
 });

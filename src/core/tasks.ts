@@ -3,13 +3,44 @@ import { readYamlFile, writeYamlFile } from "./storage.js";
 import { getWorkspacePaths } from "./workspace.js";
 import { computeProgress } from "./progress.js";
 import { assertControlPlaneId } from "./ids.js";
-import { TASK_STATUSES, type TaskNode, type TasksState, type TaskStatus, type TaskTreeNode } from "./types.js";
+import { TASK_STATUSES, type DerivedPlansState, type TaskNode, type TasksState, type TaskStatus, type TaskTreeNode } from "./types.js";
 import { loadPlans } from "./plans.js";
 import { withWorkspaceMutationLock } from "./workspace-mutation.js";
 
+export function normalizeTaskNode(raw: TaskNode): TaskNode {
+  return {
+    id: raw.id,
+    name: raw.name,
+    summary: raw.summary ?? null,
+    status: raw.status,
+    planRef: raw.planRef,
+    parentTaskId: raw.parentTaskId ?? null,
+    countedForProgress: raw.countedForProgress,
+    owner: raw.owner ?? null,
+    pinned: Boolean(raw.pinned),
+    pinnedReason: raw.pinnedReason ?? null,
+    createdAt: raw.createdAt ?? null,
+    updatedAt: raw.updatedAt ?? raw.createdAt ?? null,
+    statusChangedAt: raw.statusChangedAt ?? raw.updatedAt ?? raw.createdAt ?? null
+  };
+}
+
+export function normalizeTasksState(tasks: TasksState): TasksState {
+  return {
+    items: Array.isArray(tasks.items) ? tasks.items.map(normalizeTaskNode) : []
+  };
+}
+
 export async function loadTasks(): Promise<TasksState> {
   const paths = getWorkspacePaths();
-  return readYamlFile<TasksState>(paths.taskFile);
+  return normalizeTasksState(await readYamlFile<TasksState>(paths.taskFile));
+}
+
+export async function saveTasks(tasks: TasksState): Promise<void> {
+  await withWorkspaceMutationLock(async () => {
+    const paths = getWorkspacePaths();
+    await writeYamlFile(paths.taskFile, normalizeTasksState(tasks));
+  });
 }
 
 function assertTaskPlanAlignment(tasks: TaskNode[]): void {
@@ -101,6 +132,9 @@ export async function addTask(input: {
   plan?: string;
   summary?: string;
   status?: TaskStatus;
+  owner?: string | null;
+  pinned?: boolean;
+  pinnedReason?: string | null;
 }): Promise<{ task: TaskNode; progressPercent: number }> {
   return withWorkspaceMutationLock(async () => {
     const paths = getWorkspacePaths();
@@ -142,6 +176,7 @@ export async function addTask(input: {
       throw new Error(`Task "${input.name}" uses unsupported status "${String(input.status)}".`);
     }
 
+    const now = new Date().toISOString();
     const task: TaskNode = {
       id,
       name: input.name,
@@ -149,7 +184,13 @@ export async function addTask(input: {
       status: input.status ?? "pending",
       planRef,
       parentTaskId,
-      countedForProgress: true
+      countedForProgress: true,
+      owner: input.owner ?? null,
+      pinned: input.pinned ?? false,
+      pinnedReason: input.pinnedReason ?? null,
+      createdAt: now,
+      updatedAt: now,
+      statusChangedAt: now
     };
 
     const next: TasksState = {
@@ -181,6 +222,9 @@ export async function updateTask(input: {
   parent?: string;
   plan?: string;
   countedForProgress?: boolean;
+  owner?: string | null;
+  pinned?: boolean;
+  pinnedReason?: string | null;
 }): Promise<{ task: TaskNode; progressPercent: number }> {
   return withWorkspaceMutationLock(async () => {
     const paths = getWorkspacePaths();
@@ -226,12 +270,19 @@ export async function updateTask(input: {
       throw new Error(`Task "${input.id}" cannot be re-parented under its descendant "${nextParent}".`);
     }
 
+    const now = new Date().toISOString();
+    const nextStatus = input.status ?? currentTask.status;
     const updatedTask: TaskNode = {
       ...currentTask,
       ...(input.name ? { name: input.name } : {}),
       ...(input.summary !== undefined ? { summary: input.summary } : {}),
-      ...(input.status ? { status: input.status } : {}),
+      status: nextStatus,
       ...(input.countedForProgress !== undefined ? { countedForProgress: input.countedForProgress } : {}),
+      ...(input.owner !== undefined ? { owner: input.owner } : {}),
+      ...(input.pinned !== undefined ? { pinned: input.pinned } : {}),
+      ...(input.pinnedReason !== undefined ? { pinnedReason: input.pinnedReason } : {}),
+      updatedAt: now,
+      statusChangedAt: nextStatus !== currentTask.status ? now : currentTask.statusChangedAt,
       parentTaskId: nextParent,
       planRef: nextPlanRef
     };
@@ -305,15 +356,42 @@ export function buildTaskTree(tasks: TaskNode[], allowOrphanRoots = false): Task
 export function renderTaskTreeLines(
   tree: TaskTreeNode[],
   depth = 0,
-  options: { details?: boolean } = {}
+  options: { details?: boolean; ownerByTaskId?: Map<string, string | null> } = {}
 ): string[] {
   return tree.flatMap((node) => {
     const prefix = `${"  ".repeat(depth)}- `;
-    const line = `${prefix}${node.name} (${node.id}) [${node.status}] plan: ${node.planRef}`;
+    const owner = options.ownerByTaskId?.get(node.id) ?? node.owner;
+    const ownerText = owner ? ` owner: ${owner}` : "";
+    const pinned = node.pinned ? " [pinned]" : "";
+    const line = `${prefix}${node.name} (${node.id}) [${node.status}]${pinned} plan: ${node.planRef}${ownerText}`;
     const detailLines =
       options.details && node.summary ? [`${"  ".repeat(depth + 1)}summary: ${node.summary}`] : [];
     return [line, ...detailLines, ...renderTaskTreeLines(node.children, depth + 1, options)];
   });
+}
+
+export function resolveEffectiveTaskOwner(task: TaskNode, plans: DerivedPlansState): string | null {
+  return task.owner ?? plans.items.find((plan) => plan.id === task.planRef)?.effectiveOwner ?? null;
+}
+
+export function buildEffectiveTaskOwnerMap(tasks: TaskNode[], plans: DerivedPlansState): Map<string, string | null> {
+  return new Map(tasks.map((task) => [task.id, resolveEffectiveTaskOwner(task, plans)]));
+}
+
+export function filterTasksByStatus(tasks: TaskNode[], status?: TaskStatus | null): TaskNode[] {
+  return status ? tasks.filter((task) => task.status === status) : tasks;
+}
+
+export function filterTasksByOwner(
+  tasks: TaskNode[],
+  plans: DerivedPlansState,
+  owner?: string | null
+): TaskNode[] {
+  if (!owner) {
+    return tasks;
+  }
+
+  return tasks.filter((task) => resolveEffectiveTaskOwner(task, plans) === owner);
 }
 
 export function findNextActions(tasks: TaskNode[]): string[] {

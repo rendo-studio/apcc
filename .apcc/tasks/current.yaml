@@ -6,6 +6,12 @@ items:
     planRef: re-integrate-apcc-repository-1
     parentTaskId: null
     countedForProgress: false
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-reintegrate-workspace-1
     name: Initialize the fresh workspace and shared anchors
     summary: Create the new .apcc workspace, shared overview, and shared goal from a clean baseline.
@@ -13,6 +19,12 @@ items:
     planRef: re-integrate-apcc-repository-1
     parentTaskId: task-reintegrate-workspace
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-public-docs
     name: Author a formal public docs package
     summary: Replace scaffold placeholders with external-facing documentation for developers adopting APCC.
@@ -20,6 +32,12 @@ items:
     planRef: author-formal-public-docs-package-1
     parentTaskId: null
     countedForProgress: false
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-public-docs-1
     name: Write formal public usage documentation
     summary: Publish concise quickstart, CLI, workspace, docs package, docs site, and decisions-versus-versions documentation for external developers.
@@ -27,6 +45,12 @@ items:
     planRef: author-formal-public-docs-package-1
     parentTaskId: task-public-docs
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-maintainer-docs
     name: Align maintainer docs and verification
     summary: Add maintainer-only guidance and verify the repository against the new clean integration model.
@@ -34,6 +58,12 @@ items:
     planRef: align-maintainer-docs-and-verification-1
     parentTaskId: null
     countedForProgress: false
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-maintainer-docs-1
     name: Write internal maintainer docs and verify the docs site
     summary: Keep internal repository notes separate from public docs and verify the site runtime against the new package.
@@ -41,6 +71,12 @@ items:
     planRef: align-maintainer-docs-and-verification-1
     parentTaskId: task-maintainer-docs
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-public-positioning
     name: Finalize APCC public positioning
     summary: Rename the framework surfaces and align release-facing docs and records around the APCC name.
@@ -48,6 +84,12 @@ items:
     planRef: finalize-apcc-public-positioning-1
     parentTaskId: null
     countedForProgress: false
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-public-positioning-1
     name: Rename the CLI, workspace root, and docs-site surfaces
     summary: Move the product from OpenDaaS/opendaas/.opendaas to APCC/apcc/.apcc across code, runtime, and generated artifacts.
@@ -55,6 +97,12 @@ items:
     planRef: finalize-apcc-public-positioning-1
     parentTaskId: task-public-positioning
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-public-positioning-2
     name: Align the framework positioning and public entrypoints
     summary: Update README, workflow guidance, and public docs so APCC is described as a project context framework with a structured control-plane role.
@@ -62,6 +110,12 @@ items:
     planRef: finalize-apcc-public-positioning-1
     parentTaskId: task-public-positioning
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-public-positioning-3
     name: Record the first APCC baseline version
     summary: Persist the first project-level version record that captures the APCC naming baseline and validation status.
@@ -69,6 +123,12 @@ items:
     planRef: finalize-apcc-public-positioning-1
     parentTaskId: task-public-positioning
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-workspace-first-and-docs-language
     name: Harden workspace-first execution and docs-language defaults
     summary: Update the framework so agents refresh `.apcc` before action and so new workspaces persist one primary docs language without multilingual maintenance overhead.
@@ -76,6 +136,12 @@ items:
     planRef: harden-workspace-first-and-docs-language-1
     parentTaskId: null
     countedForProgress: false
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-workspace-first-and-docs-language-1
     name: Enforce workspace-first guidance
     summary: Tighten the workflow guide and AGENTS guidance so agents update `.apcc` before implementation when a new task or plan shift is confirmed.
@@ -83,6 +149,12 @@ items:
     planRef: harden-workspace-first-and-docs-language-1
     parentTaskId: task-workspace-first-and-docs-language
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-workspace-first-and-docs-language-2
     name: Persist a primary docs language in new workspaces
     summary: Add `docsLanguage` to init, workspace config, scaffold generation, and docs-site defaults without adding multilingual docs mapping complexity.
@@ -90,6 +162,12 @@ items:
     planRef: harden-workspace-first-and-docs-language-1
     parentTaskId: task-workspace-first-and-docs-language
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-docs-site-lifecycle
     name: Harden docs-site lifecycle management
     summary: Fix local docs runtime lifecycle so repeated `site open` calls safely reuse healthy runtimes and `site stop` or `site clean` reliably terminate Windows wrapper processes.
@@ -97,6 +175,12 @@ items:
     planRef: harden-docs-site-lifecycle-1
     parentTaskId: null
     countedForProgress: false
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-docs-site-lifecycle-1
     name: Stop mutating healthy runtimes during reuse checks
     summary: Ensure `site open` decides reuse before rewriting runtime artifacts or clearing `.next`.
@@ -104,6 +188,12 @@ items:
     planRef: harden-docs-site-lifecycle-1
     parentTaskId: task-docs-site-lifecycle
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-docs-site-lifecycle-2
     name: Make site stop and clean terminate Windows wrapper processes
     summary: Ensure `site stop` and `site clean` actually kill the hidden PowerShell wrapper and any runtime processes so stale runtimes cannot be falsely reused.
@@ -111,6 +201,12 @@ items:
     planRef: harden-docs-site-lifecycle-1
     parentTaskId: task-docs-site-lifecycle
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-docs-site-lifecycle-3
     name: Verify stable reuse and restart semantics
     summary: Confirm first open starts a runtime, repeated open reuses it without resetting metadata, stop or clean forces the next open to start fresh, and `site build` still passes.
@@ -118,6 +214,12 @@ items:
     planRef: harden-docs-site-lifecycle-1
     parentTaskId: task-docs-site-lifecycle
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-docs-site-lifecycle-4
     name: Keep site build compatible with the runtime template
     summary: Fix runtime template typing gaps exposed by `site build` so lifecycle work does not regress the production build check.
@@ -125,6 +227,12 @@ items:
     planRef: harden-docs-site-lifecycle-1
     parentTaskId: task-docs-site-lifecycle
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-cross-platform-verification
     name: Broaden cross-platform verification coverage
     summary: Add automated cross-platform checks for the CLI and docs-site lifecycle and document the package-manager decision for the embedded docs runtime.
@@ -132,6 +240,12 @@ items:
     planRef: broaden-cross-platform-verification-1
     parentTaskId: null
     countedForProgress: false
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-cross-platform-verification-1
     name: Add a cross-platform docs-site lifecycle smoke check
     summary: Create a serial lifecycle verification script that starts, reuses, stops, restarts, and cleans a temporary docs runtime without depending on the repository workspace.
@@ -139,6 +253,12 @@ items:
     planRef: broaden-cross-platform-verification-1
     parentTaskId: task-cross-platform-verification
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-cross-platform-verification-2
     name: Add multi-OS CI coverage
     summary: Run check, test, build, docs-site build, and the lifecycle smoke script on Windows, Linux, and macOS in CI.
@@ -146,6 +266,12 @@ items:
     planRef: broaden-cross-platform-verification-1
     parentTaskId: task-cross-platform-verification
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-cross-platform-verification-3
     name: Record the docs-site package-manager decision
     summary: Document why the embedded docs runtime stays on npm for now instead of switching to bun or pnpm.
@@ -153,6 +279,12 @@ items:
     planRef: broaden-cross-platform-verification-1
     parentTaskId: task-cross-platform-verification
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-prebuilt-docs-runtime
     name: Migrate toward a prebuilt docs runtime
     summary: Shift the docs site away from a per-project source-driven runtime by first defining and generating the runtime-data contract a prebuilt viewer shell will consume.
@@ -160,6 +292,12 @@ items:
     planRef: migrate-to-prebuilt-docs-runtime-1
     parentTaskId: null
     countedForProgress: false
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-prebuilt-docs-runtime-1
     name: Define the runtime-data contract for a prebuilt viewer shell
     summary: Document what navigation, page content, headings, revisions, console state, and search data a prebuilt docs shell must consume from APCC-generated runtime artifacts.
@@ -167,6 +305,12 @@ items:
     planRef: migrate-to-prebuilt-docs-runtime-1
     parentTaskId: task-prebuilt-docs-runtime
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-prebuilt-docs-runtime-2
     name: Generate docs navigation and page payload artifacts
     summary: Export docs tree and per-page authored payloads into runtime data so the current filesystem-driven shell can be replaced incrementally later.
@@ -174,6 +318,12 @@ items:
     planRef: migrate-to-prebuilt-docs-runtime-1
     parentTaskId: task-prebuilt-docs-runtime
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-prebuilt-docs-runtime-3
     name: Keep current docs-site behavior stable during the migration
     summary: Add tests and documentation that let the new runtime-data layer land without changing the current docs-site UX yet.
@@ -181,6 +331,12 @@ items:
     planRef: migrate-to-prebuilt-docs-runtime-1
     parentTaskId: task-prebuilt-docs-runtime
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-prebuilt-docs-runtime-4
     name: Switch docs navigation and page rendering to runtime-data
     summary: Replace Fumadocs source-driven navigation and page loading with the generated viewer-data contract while preserving the current docs-site UX.
@@ -188,6 +344,12 @@ items:
     planRef: migrate-to-prebuilt-docs-runtime-1
     parentTaskId: task-prebuilt-docs-runtime
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-prebuilt-docs-runtime-5
     name: Ship a true prebuilt viewer shell
     summary: Package and start the docs site as a prebuilt shell that reads runtime data at runtime instead of building a project-specific source app.
@@ -195,6 +357,12 @@ items:
     planRef: migrate-to-prebuilt-docs-runtime-1
     parentTaskId: task-prebuilt-docs-runtime
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-prebuilt-docs-live-refresh
     name: Restore automatic docs-site refresh for the prebuilt runtime
     summary: Fix the browser refresh path so authored doc edits appear automatically again without requiring a manual page reload.
@@ -202,6 +370,12 @@ items:
     planRef: restore-prebuilt-docs-live-refresh-1
     parentTaskId: null
     countedForProgress: false
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-prebuilt-docs-live-refresh-1
     name: Reconnect the viewer shell to runtime version polling
     summary: Ensure the live refresh client is mounted in the prebuilt viewer shell and reacts to runtime version changes.
@@ -209,6 +383,12 @@ items:
     planRef: restore-prebuilt-docs-live-refresh-1
     parentTaskId: task-prebuilt-docs-live-refresh
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-prebuilt-docs-live-refresh-2
     name: Verify automatic browser refresh on authored doc edits
     summary: Prove that editing a docs page updates the rendered browser page without manual reload under the shared prebuilt shell.
@@ -216,6 +396,12 @@ items:
     planRef: restore-prebuilt-docs-live-refresh-1
     parentTaskId: task-prebuilt-docs-live-refresh
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-repeated-prebuilt-docs-live-refresh
     name: Harden repeated automatic refresh for the prebuilt runtime
     summary: Fix the post-first-change regression so the prebuilt viewer keeps reacting to every later doc edit without manual browser reloads.
@@ -223,6 +409,12 @@ items:
     planRef: harden-repeated-prebuilt-live-refresh-1
     parentTaskId: null
     countedForProgress: false
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-repeated-prebuilt-docs-live-refresh-1
     name: Keep runtime metadata in live mode during watcher restage
     summary: Prevent watcher-driven restaging from downgrading runtime metadata back to `staged` after the first automatic reload.
@@ -230,6 +422,12 @@ items:
     planRef: harden-repeated-prebuilt-live-refresh-1
     parentTaskId: task-repeated-prebuilt-docs-live-refresh
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-repeated-prebuilt-docs-live-refresh-2
     name: Run the watcher from current source during CLI development
     summary: Stop mixing a source-driven CLI entrypoint with a stale built watcher so the current live-refresh fixes are the ones actually running during local development.
@@ -237,6 +435,12 @@ items:
     planRef: harden-repeated-prebuilt-live-refresh-1
     parentTaskId: task-repeated-prebuilt-docs-live-refresh
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-repeated-prebuilt-docs-live-refresh-3
     name: Stabilize Windows watcher startup and repeated version bumps
     summary: Start the Windows watcher without the flaky PowerShell wrapper and verify that repeated authored doc edits keep advancing runtime version data.
@@ -244,6 +448,12 @@ items:
     planRef: harden-repeated-prebuilt-live-refresh-1
     parentTaskId: task-repeated-prebuilt-docs-live-refresh
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-stale-runtime-recovery
     name: Verify stale runtime recovery
     summary: Add explicit verification that `site open` can recover from stale runtime registry state after abnormal termination or host shutdown scenarios.
@@ -251,6 +461,12 @@ items:
     planRef: verify-stale-runtime-recovery-1
     parentTaskId: null
     countedForProgress: false
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-stale-runtime-recovery-1
     name: Simulate stale runtime registry state
     summary: Extend lifecycle smoke to inject stale PID and watcher metadata into a stopped runtime and prove that the next `site open` starts a fresh healthy instance.
@@ -258,6 +474,12 @@ items:
     planRef: verify-stale-runtime-recovery-1
     parentTaskId: task-stale-runtime-recovery
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-stale-runtime-recovery-2
     name: Document abnormal shutdown recovery expectations
     summary: Update maintainer or public docs so runtime recovery behavior after unclean exit is stated explicitly instead of being left as an implementation detail.
@@ -265,6 +487,12 @@ items:
     planRef: verify-stale-runtime-recovery-1
     parentTaskId: task-stale-runtime-recovery
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-site-instance-visibility
     name: Improve site instance visibility and bulk stop control
     summary: Add CLI support to inspect running docs-site instances and stop them in bulk without requiring users to jump through each project manually.
@@ -272,6 +500,12 @@ items:
     planRef: improve-site-instance-visibility-and-bulk-stop-1
     parentTaskId: null
     countedForProgress: false
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-site-instance-visibility-1
     name: Add a site list command
     summary: Surface currently running docs-site instances with project identity, docs root, URL, and runtime mode instead of forcing users to infer them from browsers or runtime folders.
@@ -279,6 +513,12 @@ items:
     planRef: improve-site-instance-visibility-and-bulk-stop-1
     parentTaskId: task-site-instance-visibility
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-site-instance-visibility-2
     name: Add a bulk site stop flow
     summary: Allow a one-shot `site stop --all` command to terminate every active APCC docs runtime instead of requiring one command per project.
@@ -286,6 +526,12 @@ items:
     planRef: improve-site-instance-visibility-and-bulk-stop-1
     parentTaskId: task-site-instance-visibility
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-site-instance-visibility-3
     name: Document site instance targeting semantics
     summary: Clarify that site commands already accept `--path` for specific projects and document the new list and bulk stop flows in the public docs.
@@ -293,6 +539,12 @@ items:
     planRef: improve-site-instance-visibility-and-bulk-stop-1
     parentTaskId: task-site-instance-visibility
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-site-instance-visibility-4
     name: Render site instance lists in default CLI output
     summary: Fix the Markdown renderer so `site list` and `site stop --all` show their instance arrays without requiring `--json`.
@@ -300,6 +552,12 @@ items:
     planRef: improve-site-instance-visibility-and-bulk-stop-1
     parentTaskId: task-site-instance-visibility
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-site-live-terminology
     name: Normalize site runtime terminology around live mode
     summary: Replace the remaining public-facing dev terminology in site runtime metadata, CLI output, and docs with live runtime language that matches the prebuilt viewer model.
@@ -307,6 +565,12 @@ items:
     planRef: normalize-site-live-terminology-1
     parentTaskId: null
     countedForProgress: false
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-site-live-terminology-1
     name: Rename the running site mode from dev to live
     summary: Use a live runtime mode label in runtime metadata, site list output, and viewer gating instead of exposing the old dev-server wording.
@@ -314,6 +578,12 @@ items:
     planRef: normalize-site-live-terminology-1
     parentTaskId: task-site-live-terminology
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-site-live-terminology-2
     name: Remove dev-server wording from docs and CLI descriptions
     summary: Update the public and internal docs plus site command descriptions so they describe the prebuilt live runtime accurately without hot-reload or dev-server language drift.
@@ -321,6 +591,12 @@ items:
     planRef: normalize-site-live-terminology-1
     parentTaskId: task-site-live-terminology
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: fix-installed-cli-binary-and-package-contents-14
     name: Fix installed CLI binary and package contents
     summary: Ensure the installed apcc command runs through the package-manager generated binary shims and the npm package contains only the intended current runtime artifact.
@@ -328,6 +604,12 @@ items:
     planRef: harden-cli-package-release-readiness-14
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: map-guide-topics-from-public-docs-files-15
     name: Map guide topics from public docs files
     summary: Load guide topics dynamically from packaged docs/public markdown files, reserve workflow for the Agent workflow guide, and verify installed CLI behavior.
@@ -335,6 +617,12 @@ items:
     planRef: make-guide-discover-public-docs-dynamically-15
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: return-concise-mutation-deltas-16
     name: Return concise mutation deltas
     summary: Reduce plan/task and similar mutation command output to changed records only, document direct .apcc editing for bulk changes, and preserve explicit inspection commands for full context.
@@ -342,6 +630,12 @@ items:
     planRef: reduce-cli-mutation-output-noise-16
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: implement-deployable-site-build
     name: Implement deployable site build
     summary: Make apcc site build output a deployable docs-site artifact while keeping shared viewer shell preparation as an internal prerequisite for site open.
@@ -349,6 +643,12 @@ items:
     planRef: site-build-deployable-docs-site
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: implement-console-plan-tree
     name: Implement console Plan tree
     summary: Render plans as the top-level Console execution tree with derived status, per-plan progress, and scoped task trees.
@@ -356,6 +656,12 @@ items:
     planRef: console-plan-tree-view
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: finalize-release-docs-and-assets
     name: Finalize release docs and Agent assets
     summary: Make agents-template.md, workflow-guide.md, and docs/public self-contained, current, and release-ready while removing stale or misleading docs content.
@@ -363,6 +669,12 @@ items:
     planRef: release-docs-final-cleanup
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: publish-apcc-release-assets
     name: Publish APCC release assets
     summary: Initialize git, create the GitHub repository, publish npm packages under the available APCC names, and verify remote npm installation of the CLI binary.
@@ -370,6 +682,12 @@ items:
     planRef: publish-apcc-public-release
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: polish-npm-package-readme
     name: Polish npm package README
     summary: Make the published package README consumer-first so npmjs shows what APCC is and how to start using it without repository maintainer instructions.
@@ -377,6 +695,12 @@ items:
     planRef: publish-apcc-public-release
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: split-github-and-npm-readmes
     name: Split GitHub and npm readmes
     summary: Keep the repository README developer-facing while publishing a separate consumer-facing README to npm packages so the two distribution surfaces serve different audiences cleanly.
@@ -384,6 +708,12 @@ items:
     planRef: publish-apcc-public-release
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: fix-non-english-docs-site-startup-failure-23
     name: Fix non-English docs-site startup failure
     summary: Find and fix the docs-site failure path when the primary docs language uses non-ASCII filenames so localized workspaces can open successfully.
@@ -391,6 +721,12 @@ items:
     planRef: harden-post-release-docs-site-ergonomics-21
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: add-explicit-port-selection-to-site-open-24
     name: Add explicit port selection to site open
     summary: Allow site open to take a specific port directly so agents and developers can reserve a stable docs-site address without extra workspace edits.
@@ -398,6 +734,12 @@ items:
     planRef: harden-post-release-docs-site-ergonomics-21
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: harden-workflow-guidance-for-site-lifecycle-25
     name: Harden workflow guidance for site lifecycle
     summary: Update the workflow guide and related docs so agents announce docs-site URLs, prefer stable unique ports, and do not stop the site unless a human explicitly asks for it.
@@ -405,6 +747,12 @@ items:
     planRef: harden-post-release-docs-site-ergonomics-21
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: make-console-the-docs-site-landing-page-26
     name: Make console the docs-site landing page
     summary: Change the docs-site default landing flow so the root docs URL opens the localized Console plan view instead of a shared overview document.
@@ -412,6 +760,12 @@ items:
     planRef: harden-post-release-docs-site-ergonomics-21
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: publish-docs-site-ergonomics-patch-release-27
     name: Publish docs-site ergonomics patch release
     summary: Publish the localized docs-site fixes, console landing change, explicit site-open port support, and tightened agent workflow guidance as the next patch release.
@@ -419,6 +773,12 @@ items:
     planRef: publish-apcc-public-release
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: record-docs-site-ergonomics-patch-version-28
     name: Record docs-site ergonomics patch version
     summary: Record the patch release boundary for the docs-site ergonomics fixes and publish artifacts after verification passes.
@@ -426,6 +786,12 @@ items:
     planRef: publish-apcc-public-release
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: fix-reinit-docs-language-drift-29
     name: Fix reinit docs-language drift
     summary: When init runs on an existing APCC workspace, detect and reuse the persisted docs language unless the user explicitly overrides it, so reinit does not scaffold English anchors into a zh-CN workspace.
@@ -433,6 +799,12 @@ items:
     planRef: harden-apcc-reinit-language-preservation-22
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: flatten-status-command-surface-30
     name: Flatten the status command surface
     summary: Make `apcc status` the canonical direct status command instead of requiring a redundant `show` subcommand, and update docs and tests accordingly.
@@ -440,6 +812,12 @@ items:
     planRef: refine-cli-status-and-site-lifecycle-23
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: add-site-runtime-status-inspection-31
     name: Add site runtime status inspection
     summary: Add `apcc site status` so agents and humans can inspect whether the current workspace runtime is absent, staged, or live before deciding whether to start or stop it.
@@ -447,6 +825,12 @@ items:
     planRef: refine-cli-status-and-site-lifecycle-23
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: rename-site-open-to-site-start-32
     name: Rename site open to site start
     summary: Replace the misleading `site open` command with `site start` as the only lifecycle start verb, and update all bundled docs, guidance, and tests to the new command shape.
@@ -454,6 +838,12 @@ items:
     planRef: refine-cli-status-and-site-lifecycle-23
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: order-scaffold-navigation-for-human-reading-33
     name: Order scaffold navigation for human reading
     summary: Use scaffold and runtime meta ordering so Console lands on Overview by default and shared docs navigation reads Overview before Goal.
@@ -461,6 +851,12 @@ items:
     planRef: refine-cli-status-and-site-lifecycle-23
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-docs-site-root-locale-selection
     name: Fix docs-site root locale selection
     summary: Reproduce the root redirect bug and ensure the bare site root respects the persisted workspace docsLanguage instead of freezing to English at build time.
@@ -468,6 +864,12 @@ items:
     planRef: fix-docs-site-root-locale-selection-24
     parentTaskId: null
     countedForProgress: false
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-docs-site-root-locale-selection-1
     name: Make the site root locale redirect runtime-aware
     summary: Remove the build-time English root redirect behavior and verify both `/` and `/docs` route to the workspace language in a zh-CN workspace.
@@ -475,6 +877,12 @@ items:
     planRef: fix-docs-site-root-locale-selection-24
     parentTaskId: task-docs-site-root-locale-selection
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-standardize-doctor-control-plane
     name: Standardize the doctor control plane
     summary: Move APCC workspace diagnostics and repair to the ACLIP-standard doctor surface and remove the legacy validate command entrypoint.
@@ -482,6 +890,12 @@ items:
     planRef: standardize-doctor-control-plane-25
     parentTaskId: null
     countedForProgress: false
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-standardize-doctor-control-plane-1
     name: Replace the validate CLI surface with doctor check and fix
     summary: Wire APCC workspace diagnostics and repair through ACLIP doctor hooks while preserving the existing validation and repair semantics.
@@ -489,6 +903,12 @@ items:
     planRef: standardize-doctor-control-plane-25
     parentTaskId: task-standardize-doctor-control-plane
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-standardize-doctor-control-plane-2
     name: Align guidance, verification, and package install checks with doctor
     summary: Remove validate from bundled guidance, docs, tests, and package verification so the public command surface is consistently doctor-first.
@@ -496,6 +916,12 @@ items:
     planRef: standardize-doctor-control-plane-25
     parentTaskId: task-standardize-doctor-control-plane
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-standardize-doctor-control-plane-3
     name: Trim doctor output semantics and payload duplication
     summary: Align APCC doctor output more closely with ACLIP by using shared doctor status constants, removing the legacy validation payload mirror, and slimming the default Markdown rendering.
@@ -503,6 +929,12 @@ items:
     planRef: standardize-doctor-control-plane-25
     parentTaskId: task-standardize-doctor-control-plane
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-release-docs-final-cleanup-2
     name: Refresh the recommended docs package example and reinit the repo scaffold
     summary: Update the public recommended docs package example to match the current scaffold and run a non-invasive init on the APCC repository itself so missing managed scaffold files are backfilled before release.
@@ -510,6 +942,12 @@ items:
     planRef: release-docs-final-cleanup
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-standardize-doctor-control-plane-4
     name: Simplify doctor status typing usage
     summary: Stop deriving local doctor status and severity values from ACLIP constant-array indexes and instead use the exported ACLIP types with explicit string literals for clearer APCC code.
@@ -517,6 +955,12 @@ items:
     planRef: standardize-doctor-control-plane-25
     parentTaskId: task-standardize-doctor-control-plane
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-release-docs-final-cleanup-3
     name: Replace placeholder docs directories with directory meta files
     summary: Use `meta.json` instead of `.gitkeep` in the scaffolded example docs package and add explicit reading-order metadata across the APCC repository docs directories.
@@ -524,6 +968,12 @@ items:
     planRef: release-docs-final-cleanup
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-standardize-workflow-skill-source
     name: Standardize the workflow skill source and ACLIP hook registration
     summary: Make the APCC workflow skill a canonical skill package source, register it through ACLIP hooks, and keep guide plus init output aligned to that source.
@@ -531,6 +981,12 @@ items:
     planRef: standardize-workflow-skill-source-26
     parentTaskId: null
     countedForProgress: false
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-standardize-workflow-skill-source-1
     name: Canonicalize the workflow guidance as a skill package source
     summary: Replace the loose workflow-guide asset with a canonical skill package directory that keeps the workflow body stable while using a standards-aligned skill package name.
@@ -538,6 +994,12 @@ items:
     planRef: standardize-workflow-skill-source-26
     parentTaskId: task-standardize-workflow-skill-source
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-standardize-workflow-skill-source-2
     name: Register the workflow skill through ACLIP and verify export parity
     summary: Attach the canonical workflow skill package to the CLI through ACLIP hooks, materialize it during init, and verify that exported skill packages preserve the workflow body while injecting ACLIP anchor metadata.
@@ -545,6 +1007,12 @@ items:
     planRef: standardize-workflow-skill-source-26
     parentTaskId: task-standardize-workflow-skill-source
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-release-docs-final-cleanup-4
     name: Standardize the workflow skill source and ACLIP hook registration
     summary: Turn the APCC workflow skill into a canonical skill package source, register it through ACLIP CLI skill hooks, and keep `init`, `guide workflow`, and exported skill content aligned without changing the substantive workflow body.
@@ -552,6 +1020,12 @@ items:
     planRef: release-docs-final-cleanup
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-assess-and-publish-next-release
     name: Assess release readiness and publish the next APCC release
     summary: Review the current repository against release quality bars, resolve any remaining code or packaging issues, and publish the next package release instead of stopping at GitHub push.
@@ -559,6 +1033,12 @@ items:
     planRef: assess-and-publish-next-release-27
     parentTaskId: null
     countedForProgress: false
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-assess-and-publish-next-release-1
     name: Run the release readiness review and verification suite
     summary: Re-check code quality, docs maturity, tests, packaging, and publish prerequisites so the release decision is based on current evidence instead of stale status.
@@ -566,6 +1046,12 @@ items:
     planRef: assess-and-publish-next-release-27
     parentTaskId: task-assess-and-publish-next-release
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-assess-and-publish-next-release-2
     name: Close remaining release blockers
     summary: Fix any defects or packaging gaps found by the release review, update release artifacts, and rerun targeted verification until the release surface is clean.
@@ -573,6 +1059,12 @@ items:
     planRef: assess-and-publish-next-release-27
     parentTaskId: task-assess-and-publish-next-release
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-assess-and-publish-next-release-3
     name: Publish the next APCC package release
     summary: Bump the package version, prepare the publishable artifact, publish the package, and verify remote installation of the released version.
@@ -580,6 +1072,12 @@ items:
     planRef: assess-and-publish-next-release-27
     parentTaskId: task-assess-and-publish-next-release
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-remove-publish-warning-and-ship-patch
     name: Remove npm publish warnings and ship a patch release
     summary: Identify the remaining npm publish warning, tighten the package surface to eliminate it, and publish the next patch release after full verification.
@@ -587,6 +1085,12 @@ items:
     planRef: remove-publish-warning-and-ship-patch-28
     parentTaskId: null
     countedForProgress: false
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-remove-publish-warning-and-ship-patch-1
     name: Diagnose and remove the npm publish warning
     summary: Reproduce the current npm publish warning locally, trace it to the package manifest or staging logic, and implement the smallest fix that removes it without changing the CLI surface.
@@ -594,6 +1098,12 @@ items:
     planRef: remove-publish-warning-and-ship-patch-28
     parentTaskId: task-remove-publish-warning-and-ship-patch
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-remove-publish-warning-and-ship-patch-2
     name: Re-verify the package release surface
     summary: Rebuild, restage, and dry-run the package release flow after the fix to prove the warning is gone and the published artifact still behaves correctly.
@@ -601,6 +1111,12 @@ items:
     planRef: remove-publish-warning-and-ship-patch-28
     parentTaskId: task-remove-publish-warning-and-ship-patch
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-remove-publish-warning-and-ship-patch-3
     name: Publish the patch release
     summary: Bump to the next patch version, push the release commit and tag, publish the GitHub release, and publish both npm package names once the warning-free release surface is confirmed.
@@ -608,6 +1124,12 @@ items:
     planRef: remove-publish-warning-and-ship-patch-28
     parentTaskId: task-remove-publish-warning-and-ship-patch
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-align-with-aclip-0-3-2
     name: Align with ACLIP 0.3.2 and assess standard packaging adoption
     summary: Upgrade the ACLIP dependency, verify APCC compatibility, and determine whether the current npm publish staging flow can be replaced by ACLIP standard packaging without adding awkward wrapper complexity.
@@ -615,6 +1137,12 @@ items:
     planRef: align-with-aclip-0-3-2-and-assess-standard-packaging-29
     parentTaskId: null
     countedForProgress: false
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-align-with-aclip-0-3-2-1
     name: Upgrade APCC to ACLIP 0.3.2
     summary: Move the dependency and lockfile to ACLIP 0.3.2, update any affected code paths, and rerun the relevant compatibility checks.
@@ -622,6 +1150,12 @@ items:
     planRef: align-with-aclip-0-3-2-and-assess-standard-packaging-29
     parentTaskId: task-align-with-aclip-0-3-2
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-align-with-aclip-0-3-2-2
     name: Assess standard CLI packaging migration
     summary: Compare APCC's current staged npm package contents and release needs with ACLIP 0.3.2 build helpers to decide whether a seamless migration is possible or whether APCC still needs a thin packaging wrapper.
@@ -629,6 +1163,12 @@ items:
     planRef: align-with-aclip-0-3-2-and-assess-standard-packaging-29
     parentTaskId: task-align-with-aclip-0-3-2
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-reassess-aclip-standard-packaging
     name: Reassess ACLIP standard packaging with corrected 0.3.2 source
     summary: Re-check the actual ACLIP 0.3.2 packaging API and runtime behavior, then decide whether APCC can migrate its npm release flow cleanly onto that standard path.
@@ -636,6 +1176,12 @@ items:
     planRef: reassess-aclip-standard-packaging-with-corrected-0-3-2-source-30
     parentTaskId: null
     countedForProgress: false
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-reassess-aclip-standard-packaging-1
     name: Inspect corrected ACLIP 0.3.2 packaging surface
     summary: Read the refreshed ACLIP 0.3.2 source and examples so the migration assessment is based on the actual current API instead of stale helper signatures.
@@ -643,6 +1189,12 @@ items:
     planRef: reassess-aclip-standard-packaging-with-corrected-0-3-2-source-30
     parentTaskId: task-reassess-aclip-standard-packaging
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-reassess-aclip-standard-packaging-2
     name: Re-run migration assessment against APCC
     summary: Exercise the corrected ACLIP build flow against APCC, compare artifact expectations, and conclude whether migration is now seamless, wrapper-based, or still blocked.
@@ -650,6 +1202,12 @@ items:
     planRef: reassess-aclip-standard-packaging-with-corrected-0-3-2-source-30
     parentTaskId: task-reassess-aclip-standard-packaging
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-upgrade-to-aclip-0-3-3-and-reassess-build-stage
     name: Upgrade to ACLIP 0.3.3 and reassess build-stage adoption
     summary: Upgrade the ACLIP dependency, verify APCC compatibility, and reassess only the AclipApp build stage migration question rather than full npm package staging equivalence.
@@ -657,6 +1215,12 @@ items:
     planRef: upgrade-to-aclip-0-3-3-and-reassess-build-stage-31
     parentTaskId: null
     countedForProgress: false
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-upgrade-to-aclip-0-3-3-and-reassess-build-stage-1
     name: Upgrade APCC to ACLIP 0.3.3
     summary: Move the dependency and lockfile to ACLIP 0.3.3 and rerun compatibility checks so the assessment is based on the latest released SDK.
@@ -664,6 +1228,12 @@ items:
     planRef: upgrade-to-aclip-0-3-3-and-reassess-build-stage-31
     parentTaskId: task-upgrade-to-aclip-0-3-3-and-reassess-build-stage
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-upgrade-to-aclip-0-3-3-and-reassess-build-stage-2
     name: Reassess ACLIP standard build-stage adoption
     summary: Decide whether APCC should adopt ACLIP's standard build helper specifically for the AclipApp artifact build stage, based on real benefits and side effects rather than full publish-stage parity.
@@ -671,6 +1241,12 @@ items:
     planRef: upgrade-to-aclip-0-3-3-and-reassess-build-stage-31
     parentTaskId: task-upgrade-to-aclip-0-3-3-and-reassess-build-stage
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-reassess-aclip-build-step-adoption
     name: Reassess ACLIP build-step adoption under clarified scope
     summary: Re-evaluate migration feasibility with the narrower question of whether APCC's AclipApp build step should move to ACLIP standard build even if APCC keeps its own publish-stage wrapper.
@@ -678,6 +1254,12 @@ items:
     planRef: reassess-aclip-build-step-adoption-31
     parentTaskId: null
     countedForProgress: false
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-reassess-aclip-build-step-adoption-1
     name: Inspect runtime assumptions that affect ACLIP build-step adoption
     summary: Check whether APCC's built CLI currently depends on tsc-style file layout or package-relative assets in ways that would make ACLIP's bundled build step unsafe or noisy.
@@ -685,6 +1267,12 @@ items:
     planRef: reassess-aclip-build-step-adoption-31
     parentTaskId: task-reassess-aclip-build-step-adoption
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-reassess-aclip-build-step-adoption-2
     name: Decide whether ACLIP build-step adoption is worthwhile
     summary: Weigh the real benefits of adopting ACLIP standard build for the AclipApp layer against any runtime, verification, or maintenance side effects in APCC.
@@ -692,6 +1280,12 @@ items:
     planRef: reassess-aclip-build-step-adoption-31
     parentTaskId: task-reassess-aclip-build-step-adoption
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-investigate-aclip-0-3-3-consumer-build-bug
     name: Investigate ACLIP 0.3.3 consumer build artifact bug
     summary: Reproduce the downstream consumer build failure in the ACLIP 0.3.3 source tree, patch it locally if possible, and capture the exact maintainer-facing proposal grounded in the verified fix.
@@ -699,6 +1293,12 @@ items:
     planRef: investigate-aclip-0-3-3-consumer-build-bug-32
     parentTaskId: null
     countedForProgress: false
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-investigate-aclip-0-3-3-consumer-build-bug-1
     name: Reproduce the consumer build artifact failure in ACLIP source
     summary: Use the ACLIP 0.3.3 source tree and a realistic downstream consumer setup to confirm the emitted build artifact still fails at runtime for package-based imports.
@@ -706,6 +1306,12 @@ items:
     planRef: investigate-aclip-0-3-3-consumer-build-bug-32
     parentTaskId: task-investigate-aclip-0-3-3-consumer-build-bug
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-investigate-aclip-0-3-3-consumer-build-bug-2
     name: Patch and validate a local ACLIP fix
     summary: Implement the smallest credible packaging fix in the ACLIP source tree and verify that the downstream consumer artifact becomes runnable without regressing the ACLIP source-repo example.
@@ -713,6 +1319,12 @@ items:
     planRef: investigate-aclip-0-3-3-consumer-build-bug-32
     parentTaskId: task-investigate-aclip-0-3-3-consumer-build-bug
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-investigate-aclip-0-3-3-consumer-build-bug-3
     name: Draft a concrete maintainer proposal
     summary: Summarize the verified reproduction, root cause, patch shape, and follow-up guidance in a maintainer-ready proposal once the local fix is proven.
@@ -720,6 +1332,12 @@ items:
     planRef: investigate-aclip-0-3-3-consumer-build-bug-32
     parentTaskId: task-investigate-aclip-0-3-3-consumer-build-bug
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-upgrade-to-aclip-0-3-4-and-reassess
     name: Upgrade to ACLIP 0.3.4 and reassess downstream build behavior
     summary: Upgrade the ACLIP dependency, verify APCC compatibility, and re-evaluate the published-package consumer build behavior against the current 0.3.4 source and release.
@@ -727,6 +1345,12 @@ items:
     planRef: upgrade-to-aclip-0-3-4-and-reassess-33
     parentTaskId: null
     countedForProgress: false
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-upgrade-to-aclip-0-3-4-and-reassess-1
     name: Upgrade APCC to ACLIP 0.3.4
     summary: Move the dependency and lockfile to ACLIP 0.3.4 and rerun the APCC compatibility checks.
@@ -734,6 +1358,12 @@ items:
     planRef: upgrade-to-aclip-0-3-4-and-reassess-33
     parentTaskId: task-upgrade-to-aclip-0-3-4-and-reassess
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-upgrade-to-aclip-0-3-4-and-reassess-2
     name: Reassess published-package consumer build behavior
     summary: Compare the ACLIP 0.3.4 source tree and published package to determine whether the downstream consumer build bug is fixed and whether APCC build-step adoption guidance should change.
@@ -741,6 +1371,12 @@ items:
     planRef: upgrade-to-aclip-0-3-4-and-reassess-33
     parentTaskId: task-upgrade-to-aclip-0-3-4-and-reassess
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-adopt-aclip-standard-cli-build-stage
     name: Adopt ACLIP standard CLI build stage
     summary: Replace APCC's custom CLI artifact build path with ACLIP's standard build helper, make the runtime path logic bundler-safe, and keep the existing package surface intact.
@@ -748,6 +1384,12 @@ items:
     planRef: adopt-aclip-standard-cli-build-stage-34
     parentTaskId: null
     countedForProgress: false
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-adopt-aclip-standard-cli-build-stage-1
     name: Remove APCC bundler hazards from the CLI runtime surface
     summary: Audit and fix version and package-root resolution so the CLI remains correct when bundled by ACLIP instead of relying on the current tsc output layout.
@@ -755,6 +1397,12 @@ items:
     planRef: adopt-aclip-standard-cli-build-stage-34
     parentTaskId: task-adopt-aclip-standard-cli-build-stage
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-adopt-aclip-standard-cli-build-stage-2
     name: Switch the build script to ACLIP standard CLI build
     summary: Use ACLIP's build helper for the CLI artifact while preserving the rest of APCC's package staging and runtime assets.
@@ -762,6 +1410,12 @@ items:
     planRef: adopt-aclip-standard-cli-build-stage-34
     parentTaskId: task-adopt-aclip-standard-cli-build-stage
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-adopt-aclip-standard-cli-build-stage-3
     name: Re-verify installed behavior and release-facing references
     summary: Update any tests or docs that still assume the old tsc-built CLI entrypoint and rerun the release-level verification suite.
@@ -769,6 +1423,12 @@ items:
     planRef: adopt-aclip-standard-cli-build-stage-34
     parentTaskId: task-adopt-aclip-standard-cli-build-stage
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-standardize-control-plane-contract
     name: Standardize the APCC control-plane contract
     summary: Close the gap between direct `.apcc` editing guidance and the actual published contract by documenting authoritative value domains and validating them in doctor.
@@ -776,6 +1436,12 @@ items:
     planRef: standardize-control-plane-contract-35
     parentTaskId: null
     countedForProgress: false
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-standardize-control-plane-contract-1
     name: Publish the normative control-plane contract
     summary: Add a public APCC contract guide that defines `.apcc` file roles, field semantics, allowed values, and CLI-to-storage mappings for direct workspace editing.
@@ -783,6 +1449,12 @@ items:
     planRef: standardize-control-plane-contract-35
     parentTaskId: task-standardize-control-plane-contract
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-standardize-control-plane-contract-2
     name: Align runtime constants and doctor validation
     summary: Replace scattered value-domain literals with shared runtime constants and make doctor reject invalid persisted enum and boolean values across the control plane.
@@ -790,6 +1462,12 @@ items:
     planRef: standardize-control-plane-contract-35
     parentTaskId: task-standardize-control-plane-contract
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-standardize-control-plane-contract-3
     name: Expose the contract through the public guide surface
     summary: Add the contract guide to the public topic set and update adjacent guidance so Agents have a single authoritative entrypoint when editing `.apcc` directly.
@@ -797,6 +1475,12 @@ items:
     planRef: standardize-control-plane-contract-35
     parentTaskId: task-standardize-control-plane-contract
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-automate-contract-doc-and-publish
     name: Automate contract doc generation and publish the next APCC release
     summary: Turn the control-plane contract page into a generated artifact backed by runtime constants, then review and publish the next release if the surface is clean.
@@ -804,6 +1488,12 @@ items:
     planRef: automate-contract-doc-and-publish-36
     parentTaskId: null
     countedForProgress: false
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-automate-contract-doc-and-publish-1
     name: Generate the control-plane contract doc from runtime constants
     summary: Move the contract page content to a runtime-backed source model, add a generation script and sync test, and regenerate the published docs page from that source.
@@ -811,6 +1501,12 @@ items:
     planRef: automate-contract-doc-and-publish-36
     parentTaskId: task-automate-contract-doc-and-publish
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-automate-contract-doc-and-publish-2
     name: Reassess release readiness after contract automation
     summary: Run the release-quality review and full verification suite after the generation pipeline lands, then close any remaining blockers.
@@ -818,6 +1514,12 @@ items:
     planRef: automate-contract-doc-and-publish-36
     parentTaskId: task-automate-contract-doc-and-publish
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-automate-contract-doc-and-publish-3
     name: Publish the next APCC release
     summary: Bump the version, record the release, publish to GitHub and npm, and verify the published artifacts once the release surface is clean.
@@ -825,6 +1527,12 @@ items:
     planRef: automate-contract-doc-and-publish-36
     parentTaskId: task-automate-contract-doc-and-publish
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: tighten-bootstrap-reading-rules-51
     name: Tighten bootstrap reading rules
     summary: Make the workflow guide reading path single-source by preferring `apcc guide workflow`, avoiding duplicate rereads when the same content is already in context, and keeping a file-based fallback only for environments that need it.
@@ -832,6 +1540,12 @@ items:
     planRef: refine-agent-bootstrap-guidance-and-apcc-availab-38
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: document-apcc-cli-availability-fallback-52
     name: Document APCC CLI availability fallback
     summary: Teach agent bootstrap assets to check whether `apcc` is available and, when it is not, direct the agent to the documented APCC installation path before expecting workflow or control-plane commands to work.
@@ -839,6 +1553,12 @@ items:
     planRef: refine-agent-bootstrap-guidance-and-apcc-availab-38
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: sync-canonical-and-materialized-agent-guidance-53
     name: Sync canonical and materialized agent guidance
     summary: Apply the bootstrap-rule cleanup consistently across the canonical assets and the generated AGENTS or skill copies so repositories do not carry divergent instructions.
@@ -846,6 +1566,12 @@ items:
     planRef: refine-agent-bootstrap-guidance-and-apcc-availab-38
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: record-the-0-3-1-patch-release-54
     name: Record the 0.3.1 patch release
     summary: Bump the package version, add the internal version record, and capture the scope of the bootstrap-guidance cleanup in APCC's release history.
@@ -853,6 +1579,12 @@ items:
     planRef: publish-the-bootstrap-guidance-patch-release-39
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: verify-the-0-3-1-release-surface-55
     name: Verify the 0.3.1 release surface
     summary: Run the targeted and release-level verification suite so the packaged workflow guidance, AGENTS template, CLI artifact, and install path are clean before publication.
@@ -860,6 +1592,12 @@ items:
     planRef: publish-the-bootstrap-guidance-patch-release-39
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: publish-the-0-3-1-release-56
     name: Publish the 0.3.1 release
     summary: Publish the 0.3.1 patch to GitHub and npm under both package names, then verify the remote release artifacts are live.
@@ -867,6 +1605,12 @@ items:
     planRef: publish-the-bootstrap-guidance-patch-release-39
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: unify-workspace-schema-and-provenance-fields-57
     name: Unify workspace schema and provenance fields
     summary: Replace the split schemaVersion/workspaceSchemaVersion semantics with one canonical workspaceSchemaVersion surface, add an explicit apccVersion provenance field, and update repair/validation plus public contract docs accordingly.
@@ -874,6 +1618,12 @@ items:
     planRef: unify-workspace-schema-provenance-and-complete-c-40
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: localize-runtime-console-labels-58
     name: Localize runtime Console labels
     summary: Make the injected docs-site runtime Console folder and its Overview/Plans pages honor docsLanguage so zh-CN workspaces do not show English runtime navigation labels.
@@ -881,6 +1631,12 @@ items:
     planRef: unify-workspace-schema-provenance-and-complete-c-40
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: localize-docs-package-directory-titles-59
     name: Localize docs-package directory titles
     summary: Keep shared/public/internal as stable structural directories, but make their displayed navigation titles come from localized meta.json metadata in zh-CN workspaces and examples.
@@ -888,6 +1644,12 @@ items:
     planRef: unify-workspace-schema-provenance-and-complete-c-40
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: reverify-localized-schema-release-surface-60
     name: Reverify localized schema release surface
     summary: Regenerate the published contract and rerun focused plus release-level verification so schema-field migration and zh-CN navigation behavior are proven clean before any future release.
@@ -895,6 +1657,12 @@ items:
     planRef: unify-workspace-schema-provenance-and-complete-c-40
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: cut-the-release-version-and-records-61
     name: Cut the release version and records
     summary: Bump the APCC package, workspace provenance, and version records for the next patch release.
@@ -902,6 +1670,12 @@ items:
     planRef: publish-the-schema-provenance-and-localization-patch-release-41
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: publish-to-github-and-npm-63
     name: Publish to GitHub and npm
     summary: Publish the validated patch release to GitHub and npm, then confirm the public artifacts and remote state.
@@ -909,6 +1683,12 @@ items:
     planRef: publish-the-schema-provenance-and-localization-patch-release-41
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: run-release-verification-and-stage-packages-62
     name: Run release verification and stage packages
     summary: Run the release-level verification suite and confirm the staged unscoped and scoped packages are publish-ready.
@@ -916,6 +1696,12 @@ items:
     planRef: publish-the-schema-provenance-and-localization-patch-release-41
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: harden-file-aware-yaml-parse-diagnostics-64
     name: Harden file-aware YAML parse diagnostics
     summary: Wrap YAML parser failures with file-path context and surface actionable doctor-first recovery guidance on runtime commands.
@@ -923,6 +1709,12 @@ items:
     planRef: harden-invalid-yaml-recovery-and-guidance-42
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: tighten-cli-vs-direct-edit-guidance-65
     name: Tighten CLI versus direct-edit guidance
     summary: Clarify that targeted task and plan mutations should prefer CLI commands, and that direct YAML edits must replace fields structurally rather than append duplicate mappings.
@@ -930,6 +1722,12 @@ items:
     planRef: harden-invalid-yaml-recovery-and-guidance-42
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: verify-and-publish-invalid-yaml-hardening-patch-66
     name: Verify and publish invalid-YAML hardening patch
     summary: Run release-grade verification on the new diagnostics and guidance, then publish the next APCC patch release.
@@ -937,6 +1735,12 @@ items:
     planRef: harden-invalid-yaml-recovery-and-guidance-42
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: verify-site-runtime-process-identity-67
     name: Verify site runtime process identity
     summary: Upgrade site runtime health, reuse, and stop semantics from plain PID existence to PID plus APCC runtime identity verification, then cover the behavior with regression tests.
@@ -944,6 +1748,12 @@ items:
     planRef: harden-docs-structure-decoupling-and-runtime-ide-43
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: document-docs-structure-decoupling-68
     name: Document docs-structure decoupling
     summary: State explicitly that runtime code, docs-site code, and doctor must work from configured docs roots and explicit control-plane references rather than requiring the default scaffold tree.
@@ -951,6 +1761,12 @@ items:
     planRef: harden-docs-structure-decoupling-and-runtime-ide-43
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: restore-rich-markdown-rendering-in-docs-site-69
     name: Restore rich markdown rendering in docs-site
     summary: Make authored markdown features such as fenced code blocks and tables render with the expected Fumadocs semantics instead of falling back to plain text or minimally styled HTML.
@@ -958,6 +1774,12 @@ items:
     planRef: polish-docs-site-markdown-rendering-fidelity-44
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: maintainer-guidance-overrides-70
     name: Add maintainer guidance overrides
     summary: Keep the APCC source repository on maintainer-first AGENTS and local skills without changing the shipped workspace guidance assets.
@@ -965,6 +1787,12 @@ items:
     planRef: separate-maintainer-guidance-from-shipped-worksp-45
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: fixed-production-smoke-root-71
     name: Define a fixed production smoke root
     summary: Require source-repo production-style verification to run under a fixed .tmp scratch root instead of mutating the APCC repository workspace, except for explicit self-migration work.
@@ -972,6 +1800,12 @@ items:
     planRef: separate-maintainer-guidance-from-shipped-worksp-45
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: rename-apcc-agents-marker-to-begin-72
     name: Rename APCC AGENTS marker to BEGIN
     summary: Standardize the managed AGENTS marker on BEGIN/END while keeping legacy START blocks readable during migration.
@@ -979,6 +1813,12 @@ items:
     planRef: separate-maintainer-guidance-from-shipped-worksp-45
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: remove-start-marker-compat-73
     name: Remove START marker compatibility
     summary: Drop the unused APCC START marker compatibility path and keep AGENTS management on the canonical BEGIN/END block only.
@@ -986,6 +1826,12 @@ items:
     planRef: separate-maintainer-guidance-from-shipped-worksp-45
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: verify-concurrent-mutation-safety-76
     name: Verify concurrent mutation safety
     summary: Add regression coverage that proves nested, stale, and concurrent workspace mutations no longer lose or corrupt .apcc state.
@@ -993,6 +1839,12 @@ items:
     planRef: harden-workspace-mutation-concurrency-46
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: make-control-plane-writes-atomic-75
     name: Make control-plane writes atomic
     summary: Write text and YAML files through same-directory temp files plus rename so interrupted writes do not leave torn control-plane files.
@@ -1000,6 +1852,12 @@ items:
     planRef: harden-workspace-mutation-concurrency-46
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: add-workspace-mutation-lock-74
     name: Add workspace mutation lock
     summary: Serialize APCC control-plane mutations across processes and nested mutation flows with a workspace-scoped lock.
@@ -1007,6 +1865,12 @@ items:
     planRef: harden-workspace-mutation-concurrency-46
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: move-workspace-lock-to-local-runtime-77
     name: Move workspace lock to local runtime state
     summary: Store workspace mutation locks under the per-user APCC runtime base instead of .apcc/state/ so Git-tracked workspaces never carry runtime coordination files.
@@ -1014,6 +1878,12 @@ items:
     planRef: rationalize-runtime-state-and-version-scoping-47
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: regenerate-contract-and-reverify-version-scoping-80
     name: Regenerate contract docs and reverify
     summary: Refresh the published control-plane contract and rerun release-grade verification for local-runtime locking, active-state removal, and version-scoped planning.
@@ -1021,6 +1891,12 @@ items:
     planRef: rationalize-runtime-state-and-version-scoping-47
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: add-plan-versionref-and-cli-filters-79
     name: Add plan versionRef and CLI filters
     summary: Let plans carry an optional version anchor, derive version-scoped task views from plan ownership, and expose version filters through CLI inspection commands.
@@ -1028,6 +1904,12 @@ items:
     planRef: rationalize-runtime-state-and-version-scoping-47
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: retire-active-workspace-state-78
     name: Retire active workspace state
     summary: Remove .apcc/state/active.yaml, its schema surface, and any docs-site or renderer dependency on stale active change metadata.
@@ -1035,6 +1917,12 @@ items:
     planRef: rationalize-runtime-state-and-version-scoping-47
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: remove-no-user-legacy-cleanup-and-audit-release--81
     name: Remove no-user legacy cleanup and audit release quality
     summary: Drop legacy state cleanup code that does not match the no-user project reality, then review the new runtime-lock and version-scoping changes for production readiness.
@@ -1042,6 +1930,12 @@ items:
     planRef: rationalize-runtime-state-and-version-scoping-47
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-document-apcc-docs-site-internals
     name: Document APCC docs-site internals
     summary: Add an internal technical guide for the APCC docs site and keep the docs package navigation aligned.
@@ -1049,6 +1943,12 @@ items:
     planRef: document-apcc-docs-site-internals-48
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-define-docs-site-functional-requirements
     name: Define docs-site functional requirements
     summary: Write an internal doc for UI designers that defines the required docs-site functions, modules, and acceptance scope without discussing implementation or visual aesthetics.
@@ -1056,6 +1956,12 @@ items:
     planRef: define-docs-site-functional-requirements-49
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: harden-maintainer-shared-shell-cache-lifecycle-84
     name: Harden maintainer shared shell cache lifecycle
     summary: Keep the source-repo-only shared shell cache bounded, documented, and migration-safe so it only optimizes maintainer build coexistence without changing installed-package runtime semantics.
@@ -1063,6 +1969,12 @@ items:
     planRef: document-apcc-docs-site-internals-48
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-require-fumadocs-preread-for-docs-site-dev
     name: Require Fumadocs preread for docs-site development
     summary: Make the docs-site maintainer workflow explicitly require reading docs/internal/fumadocs before changing the docs-site viewer or Fumadocs-based surfaces.
@@ -1070,6 +1982,12 @@ items:
     planRef: require-fumadocs-preread-for-docs-site-dev
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: task-fix-index-doc-route-access
     name: Fix index doc route access
     summary: Normalize explicit /index docs routes to the same page identity as the parent folder URL and cover the behavior with tests.
@@ -1077,6 +1995,12 @@ items:
     planRef: fix-index-doc-route-access-50
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: restore-fumadocs-index-route-rendering-85
     name: Restore explicit index route rendering
     summary: Fix pages such as docs/internal/fumadocs/(framework)/index.mdx so direct browser routes render normally in the APCC prebuilt runtime without losing live refresh.
@@ -1084,6 +2008,12 @@ items:
     planRef: restore-fumadocs-standard-docs-rendering-51
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: add-optional-status-to-task-add-88
     name: Add optional --status to task add
     summary: Extend task add so callers can set an initial task status in one mutation while preserving pending as the default.
@@ -1091,6 +2021,12 @@ items:
     planRef: refine-task-add-status-ergonomics-52
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: implement-docs-site-ui-design-refactor
     name: Implement docs-site UI design refactor
     summary: Build the homepage, console overview, and docs page chrome to match .tmp/ui, then verify with Playwright screenshots and production-style APCC site checks.
@@ -1098,6 +2034,12 @@ items:
     planRef: refactor-docs-site-ui-from-tmp-ui-design
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: complete-console-subpage-ui
     name: Complete console subpage UI
     summary: Finished the console-related subpages for plans/tasks, blockers, change history, decisions, and versions against the .tmp/ui target, with Playwright screenshots and production-style APCC site/package verification.
@@ -1105,6 +2047,12 @@ items:
     planRef: refactor-docs-site-ui-from-tmp-ui-design
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: unify-console-overview-navigation
     name: Unify console overview navigation
     summary: Console Overview now uses the shared ConsoleSectionNav tag navigation used by console subpages, so the control-console content header stays consistent across overview, plans, blockers, changes, decisions, and versions.
@@ -1112,6 +2060,12 @@ items:
     planRef: refactor-docs-site-ui-from-tmp-ui-design
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: optimize-console-overview-dashboard
     name: Optimize Console Overview dashboard
     summary: Refined Console Overview into a compact project-state dashboard with ring charts, active/recent plan focus, risk and governance tiles, and concise recent signal lists that link into dedicated console subpages.
@@ -1119,6 +2073,12 @@ items:
     planRef: refactor-docs-site-ui-from-tmp-ui-design
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: console-sidebar-tree-navigation
     name: Replace console tag nav with sidebar tree navigation
     summary: Replaced the console tag navigation with a shared shadcn-style sidebar tree across Overview and console subpages, keeping navigation scalable for future modules while preserving the docs-site runtime data contract.
@@ -1126,6 +2086,12 @@ items:
     planRef: refactor-docs-site-ui-from-tmp-ui-design
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: implement-context-and-task-inspection-updates
     name: Implement context recovery and task inspection updates
     summary: Update shipped APCC guidance and CLI behavior so Agents use docs when status is insufficient, plans list through a unified command, and tasks support plan filtering plus detailed single-task inspection.
@@ -1133,6 +2099,12 @@ items:
     planRef: refine-agent-context-and-cli-inspection
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: implement-site-clean-all-cache-reset
     name: Implement site clean --all cache reset
     summary: Implement and document site clean --all so users and agents can clear historical or orphaned APCC docs-site runtime caches without losing project context.
@@ -1140,6 +2112,12 @@ items:
     planRef: add-site-clean-all-cache-reset
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
   - id: publish-apcc-0-4-0
     name: Publish APCC 0.4.0
     summary: Bump APCC to 0.4.0, record release notes, prepare staged packages, publish both npm package names, tag GitHub, and verify the public artifacts.
@@ -1147,3 +2125,22 @@ items:
     planRef: publish-context-recovery-and-site-cleanup-release
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: null
+    statusChangedAt: null
+  - id: implement-progressive-disclosure-and-ownership
+    name: Implement progressive disclosure and ownership
+    summary: Add owner registry, plan/task owner and pin metadata, timestamps, filtered paginated list commands, stale reminders, docs, tests, and release APCC 0.5.0.
+    status: done
+    planRef: harden-progressive-disclosure-and-ownership
+    parentTaskId: null
+    countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: null
+    updatedAt: 2026-06-05T21:07:57.888Z
+    statusChangedAt: 2026-06-05T21:07:57.888Z

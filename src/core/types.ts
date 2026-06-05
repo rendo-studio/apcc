@@ -1,4 +1,6 @@
 export const TASK_STATUSES = ["pending", "in_progress", "done", "blocked"] as const;
+export const OWNER_KINDS = ["human", "agent", "service", "other"] as const;
+export const OWNER_STATUSES = ["active", "inactive"] as const;
 export const DECISION_CATEGORIES = ["goal", "scope", "change", "architecture", "version", "policy", "other"] as const;
 export const DECISION_STATUSES = ["pending", "approved", "rejected"] as const;
 export const VERSION_RECORD_STATUSES = ["draft", "recorded"] as const;
@@ -11,6 +13,8 @@ export const SITE_FRAMEWORKS = ["fumadocs"] as const;
 export const PACKAGE_MANAGERS = ["npm"] as const;
 
 export type TaskStatus = (typeof TASK_STATUSES)[number];
+export type OwnerKind = (typeof OWNER_KINDS)[number];
+export type OwnerStatus = (typeof OWNER_STATUSES)[number];
 export type DecisionCategory = (typeof DECISION_CATEGORIES)[number];
 export type DecisionStatus = (typeof DECISION_STATUSES)[number];
 export type VersionRecordStatus = (typeof VERSION_RECORD_STATUSES)[number];
@@ -43,6 +47,11 @@ export interface PlanNode {
   summary: string | null;
   parentPlanId: string | null;
   versionRef: string | null;
+  owner: string | null;
+  pinned: boolean;
+  pinnedReason: string | null;
+  createdAt: string | null;
+  updatedAt: string | null;
 }
 
 export interface PlansState {
@@ -53,6 +62,7 @@ export interface PlansState {
 export interface DerivedPlanNode extends PlanNode {
   status: TaskStatus;
   effectiveVersionRef: string | null;
+  effectiveOwner: string | null;
 }
 
 export interface DerivedPlansState {
@@ -68,6 +78,12 @@ export interface TaskNode {
   planRef: string;
   parentTaskId: string | null;
   countedForProgress: boolean;
+  owner: string | null;
+  pinned: boolean;
+  pinnedReason: string | null;
+  createdAt: string | null;
+  updatedAt: string | null;
+  statusChangedAt: string | null;
 }
 
 export interface TasksState {
@@ -83,10 +99,30 @@ export interface TaskArchiveEntry {
   closedAt: string;
   closedByChange: string | null;
   summary: string | null;
+  owner?: string | null;
+  pinned?: boolean;
+  pinnedReason?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+  statusChangedAt?: string | null;
 }
 
 export interface TaskArchiveState {
   items: TaskArchiveEntry[];
+}
+
+export interface OwnerRecord {
+  id: string;
+  name: string;
+  kind: OwnerKind;
+  status: OwnerStatus;
+  aliases: string[];
+  createdAt: string | null;
+  updatedAt: string | null;
+}
+
+export interface OwnerState {
+  items: OwnerRecord[];
 }
 
 export interface ProgressState {

@@ -131,6 +131,125 @@ describe("plan control plane", () => {
     expect(shown.stderr).toContain("unknown command path");
   });
 
+  it("filters plans by owner and status while always showing pinned plans", async () => {
+    const fixture = await createWorkspaceFixture({
+      owners: {
+        items: [
+          {
+            id: "codex-main",
+            name: "Codex Main",
+            kind: "agent",
+            status: "active",
+            aliases: [],
+            createdAt: "2026-06-01T00:00:00Z",
+            updatedAt: "2026-06-01T00:00:00Z"
+          }
+        ]
+      },
+      plans: {
+        endGoalRef: "goal-test",
+        items: [
+          {
+            id: "plan-pinned",
+            name: "Pinned plan",
+            summary: "Pinned context.",
+            parentPlanId: null,
+            versionRef: null,
+            owner: "codex-main",
+            pinned: true,
+            pinnedReason: "Important release context.",
+            createdAt: "2026-06-01T00:00:00Z",
+            updatedAt: "2026-06-01T00:00:00Z"
+          },
+          {
+            id: "plan-active",
+            name: "Active plan",
+            summary: "Active owner-scoped plan.",
+            parentPlanId: null,
+            versionRef: null,
+            owner: "codex-main",
+            pinned: false,
+            pinnedReason: null,
+            createdAt: "2026-06-01T00:00:00Z",
+            updatedAt: "2026-06-01T00:00:00Z"
+          },
+          {
+            id: "plan-hidden",
+            name: "Hidden plan",
+            summary: "Hidden by limit.",
+            parentPlanId: null,
+            versionRef: null,
+            owner: "codex-main",
+            pinned: false,
+            pinnedReason: null,
+            createdAt: "2026-06-01T00:00:00Z",
+            updatedAt: "2026-06-01T00:00:00Z"
+          }
+        ]
+      },
+      tasks: {
+        items: [
+          {
+            id: "task-pinned",
+            name: "Pinned task",
+            summary: "Makes the pinned plan in progress.",
+            status: "in_progress",
+            planRef: "plan-pinned",
+            parentTaskId: null,
+            countedForProgress: true,
+            owner: "codex-main",
+            pinned: false,
+            pinnedReason: null,
+            createdAt: "2026-06-01T00:00:00Z",
+            updatedAt: "2026-06-01T00:00:00Z",
+            statusChangedAt: "2026-06-01T00:00:00Z"
+          },
+          {
+            id: "task-active",
+            name: "Active task",
+            summary: "Makes the active plan in progress.",
+            status: "in_progress",
+            planRef: "plan-active",
+            parentTaskId: null,
+            countedForProgress: true,
+            owner: "codex-main",
+            pinned: false,
+            pinnedReason: null,
+            createdAt: "2026-06-01T00:00:00Z",
+            updatedAt: "2026-06-01T00:00:00Z",
+            statusChangedAt: "2026-06-01T00:00:00Z"
+          },
+          {
+            id: "task-hidden",
+            name: "Hidden task",
+            summary: "Makes the hidden plan in progress.",
+            status: "in_progress",
+            planRef: "plan-hidden",
+            parentTaskId: null,
+            countedForProgress: true,
+            owner: "codex-main",
+            pinned: false,
+            pinnedReason: null,
+            createdAt: "2026-06-01T00:00:00Z",
+            updatedAt: "2026-06-01T00:00:00Z",
+            statusChangedAt: "2026-06-01T00:00:00Z"
+          }
+        ]
+      }
+    });
+    restorers.push(fixture.use());
+    cleanups.push(fixture.cleanup);
+
+    const listed = runPlanCli(["plan", "list", "--owner", "codex-main", "--status", "in_progress", "--limit", "1"], fixture.root);
+
+    expect(listed.status).toBe(0);
+    expect(listed.stdout).toContain("## Pinned");
+    expect(listed.stdout).toContain("plan-pinned");
+    expect(listed.stdout).toContain("plan-active");
+    expect(listed.stdout).not.toContain("plan-hidden");
+    expect(listed.stdout).toContain("Next cursor: `1`");
+  });
+
   it("skips already-used generated plan ids after deleted sibling gaps", async () => {
     const fixture = await createWorkspaceFixture({
       plans: {

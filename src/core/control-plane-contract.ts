@@ -4,6 +4,8 @@ import {
   DECISION_STATUSES,
   DOCS_LANGUAGES,
   DOCS_MODES,
+  OWNER_KINDS,
+  OWNER_STATUSES,
   PACKAGE_MANAGERS,
   PROJECT_KINDS,
   SITE_FRAMEWORKS,
@@ -127,6 +129,7 @@ export function renderControlPlaneContractMarkdown(): string {
             "  goals/end.yaml",
             "  plans/current.yaml",
             "  tasks/current.yaml",
+            "  owners/registry.yaml",
             "  decisions/records.yaml",
             "  versions/records.yaml"
           ].join("\n")
@@ -146,6 +149,9 @@ export function renderControlPlaneContractMarkdown(): string {
           "summaries",
           "parent relationships",
           "plan version anchors",
+          "owner registry and owner refs",
+          "pinned context markers and pinned reasons",
+          "plan/task creation and update timestamps",
           "task status",
           "doc references",
           "decision records",
@@ -196,7 +202,12 @@ export function renderControlPlaneContractMarkdown(): string {
             "    name: Example plan",
             "    summary: Example summary",
             "    parentPlanId: null",
-            "    versionRef: null"
+            "    versionRef: null",
+            "    owner: null",
+            "    pinned: false",
+            "    pinnedReason: null",
+            "    createdAt: 2026-06-06T00:00:00.000Z",
+            "    updatedAt: 2026-06-06T00:00:00.000Z"
           ].join("\n")
         ),
         "",
@@ -206,11 +217,16 @@ export function renderControlPlaneContractMarkdown(): string {
           `- ${code("endGoalRef")}: string id pointing at ${code(".apcc/goals/end.yaml.goalId")}`,
           `- ${code("items")}: array`,
           "- each plan must define:",
-          nestedFieldList(["id", "name", "summary", "parentPlanId", "versionRef"]),
+          nestedFieldList(["id", "name", "summary", "parentPlanId", "versionRef", "owner", "pinned", "pinnedReason", "createdAt", "updatedAt"]),
           `- ${code("parentPlanId")} is either another plan id or ${code("null")}`,
           `- ${code("versionRef")} is either a version record id from ${code(".apcc/versions/records.yaml")} or ${code("null")}`,
+          `- ${code("owner")} is either an owner id from ${code(".apcc/owners/registry.yaml")} or ${code("null")}`,
+          `- ${code("pinned")} is a boolean context-retention marker, not priority, blocker, focus, or owner state`,
+          `- ${code("pinnedReason")} explains why a pinned item must stay visible, or ${code("null")}`,
+          `- ${code("createdAt")} and ${code("updatedAt")} are ISO timestamps or ${code("null")} for pre-upgrade entries`,
           `- ${code("plan.status")} is not stored`,
           `- ${code("effectiveVersionRef")} is derived at read time by inheriting the nearest non-null ${code("versionRef")} from the plan tree`,
+          `- ${code("effectiveOwner")} is derived at read time by inheriting the nearest non-null ${code("owner")} from the plan tree`,
           `- a child plan must not override an inherited non-null ${code("versionRef")} with a different version record id`
         ].join("\n"),
         "",
@@ -240,7 +256,13 @@ export function renderControlPlaneContractMarkdown(): string {
             `    status: ${TASK_STATUSES[0]}`,
             "    planRef: example-plan",
             "    parentTaskId: null",
-            "    countedForProgress: true"
+            "    countedForProgress: true",
+            "    owner: null",
+            "    pinned: false",
+            "    pinnedReason: null",
+            "    createdAt: 2026-06-06T00:00:00.000Z",
+            "    updatedAt: 2026-06-06T00:00:00.000Z",
+            "    statusChangedAt: 2026-06-06T00:00:00.000Z"
           ].join("\n")
         ),
         "",
@@ -253,10 +275,14 @@ export function renderControlPlaneContractMarkdown(): string {
         [
           `- ${code("items")}: array`,
           "- each task must define:",
-          nestedFieldList(["id", "name", "summary", "status", "planRef", "parentTaskId", "countedForProgress"]),
+          nestedFieldList(["id", "name", "summary", "status", "planRef", "parentTaskId", "countedForProgress", "owner", "pinned", "pinnedReason", "createdAt", "updatedAt", "statusChangedAt"]),
           `- ${code("planRef")} must reference an existing plan id`,
           `- ${code("parentTaskId")} is either another task id or ${code("null")}`,
           `- ${code("countedForProgress")} must be ${code("true")} or ${code("false")}`,
+          `- ${code("owner")} is either an owner id from ${code(".apcc/owners/registry.yaml")} or ${code("null")}; if null, the task may inherit the referenced plan's effective owner`,
+          `- ${code("pinned")} is a boolean context-retention marker, not priority, blocker, focus, or owner state`,
+          `- ${code("pinnedReason")} explains why a pinned item must stay visible, or ${code("null")}`,
+          `- ${code("createdAt")}, ${code("updatedAt")}, and ${code("statusChangedAt")} are ISO timestamps or ${code("null")} for pre-upgrade entries`,
           `- a child task must use the same ${code("planRef")} as its parent task`,
           `- tasks do not persist a separate ${code("versionRef")}; version scope is derived from the referenced plan`
         ].join("\n"),
@@ -276,6 +302,49 @@ export function renderControlPlaneContractMarkdown(): string {
           `else if any relevant task is ${code("in_progress")}, the plan is ${code("in_progress")}`,
           `else if any relevant task is ${code("done")} but not all are done, the plan is ${code("in_progress")}`,
           `else the plan is ${code("pending")}`
+        ])
+      ].join("\n")
+    ),
+    section(
+      "Owners",
+      [
+        "File:",
+        "",
+        fenced("text", ".apcc/owners/registry.yaml"),
+        "",
+        "Shape:",
+        "",
+        fenced(
+          "yaml",
+          [
+            "items:",
+            "  - id: codex-main",
+            "    name: Codex Main",
+            "    kind: agent",
+            "    status: active",
+            "    aliases: []",
+            "    createdAt: 2026-06-06T00:00:00.000Z",
+            "    updatedAt: 2026-06-06T00:00:00.000Z"
+          ].join("\n")
+        ),
+        "",
+        `Allowed ${code("kind")} values:`,
+        "",
+        renderAllowedValues(OWNER_KINDS),
+        "",
+        `Allowed ${code("status")} values:`,
+        "",
+        renderAllowedValues(OWNER_STATUSES),
+        "",
+        "Rules:",
+        "",
+        bulletList([
+          `${code("items")}: array`,
+          `${code("id")} is the stable owner id referenced by plans and tasks`,
+          `${code("name")} is the display name`,
+          `${code("aliases")} are optional collision-detection labels`,
+          `${code("status")} can be ${code("inactive")} to preserve history while warning on open assigned work`,
+          `${code("createdAt")} and ${code("updatedAt")} are ISO timestamps or ${code("null")} for pre-upgrade entries`
         ])
       ].join("\n")
     ),
@@ -395,7 +464,10 @@ export function renderControlPlaneContractMarkdown(): string {
           `${code("--parent root")} -> stored ${code("null")}`,
           `${code("--docs-language zh")} -> stored ${code("zh-CN")}`,
           `${code("--docs-language en-US")} -> stored ${code("en")}`,
-          `${code("plan add/update --version <record-id-or-version-label>")} -> stored ${code("plan.versionRef")} as the matching version record id`
+          `${code("plan add/update --version <record-id-or-version-label>")} -> stored ${code("plan.versionRef")} as the matching version record id`,
+          `${code("plan/task add/update --owner <owner-id>")} -> stored direct ${code("owner")} reference`,
+          `${code("plan/task update --clear-owner")} -> stored ${code("owner: null")}`,
+          `${code("plan/task update --pin")} and ${code("--unpin")} -> stored ${code("pinned: true")} or ${code("pinned: false")}`
         ]),
         "",
         "Prefer the normalized persisted values when editing YAML directly.",

@@ -203,6 +203,19 @@ try {
     "VerifyInstalledCli"
   ]);
 
+  const ownerAddOutput = runInstalledBin(
+    binPath,
+    ["owner", "add", "--id", "codex-main", "--name", "Codex Main", "--kind", "agent"],
+    { cwd: workspaceRoot }
+  );
+  if (!ownerAddOutput.includes("# Owner") || !ownerAddOutput.includes("`codex-main`")) {
+    throw new Error("installed apcc owner add did not register or render the expected owner.");
+  }
+  const ownerListOutput = runInstalledBin(binPath, ["owner", "list"], { cwd: workspaceRoot });
+  if (!ownerListOutput.includes("# Owners") || !ownerListOutput.includes("`codex-main` | active | agent")) {
+    throw new Error("installed apcc owner list did not render the registered owner.");
+  }
+
   const versionNewOutput = runInstalledBin(
     binPath,
     [
@@ -233,11 +246,21 @@ try {
       "--parent",
       "root",
       "--summary",
-      "ReleaseHardening"
+      "ReleaseHardening",
+      "--owner",
+      "codex-main",
+      "--pin",
+      "--pinned-reason",
+      "Release gate"
     ],
     { cwd: workspaceRoot }
   );
-  if (!planAddOutput.includes("release-hardening") || planAddOutput.includes("Top-level Plans")) {
+  if (
+    !planAddOutput.includes("release-hardening") ||
+    !planAddOutput.includes("Owner: `codex-main`") ||
+    !planAddOutput.includes("Pinned: yes") ||
+    planAddOutput.includes("Top-level Plans")
+  ) {
     throw new Error("installed apcc plan add did not render a concise changed-plan delta.");
   }
 
@@ -256,6 +279,11 @@ try {
       "release-hardening",
       "--status",
       "in_progress",
+      "--owner",
+      "codex-main",
+      "--pin",
+      "--pinned-reason",
+      "Release gate task",
       "--summary",
       "ReleaseCheck"
     ],
@@ -264,9 +292,38 @@ try {
   if (
     !taskAddOutput.includes("release-check") ||
     !taskAddOutput.includes("Status: `in progress`") ||
+    !taskAddOutput.includes("Owner: `codex-main`") ||
+    !taskAddOutput.includes("Pinned: yes") ||
     taskAddOutput.includes("Task Tree")
   ) {
     throw new Error("installed apcc task add did not render a concise changed-task delta.");
+  }
+
+  const ownerFilteredPlanListOutput = runInstalledBin(
+    binPath,
+    ["plan", "list", "--owner", "codex-main", "--status", "in_progress", "--limit", "1"],
+    { cwd: workspaceRoot }
+  );
+  if (
+    !ownerFilteredPlanListOutput.includes("## Pinned") ||
+    !ownerFilteredPlanListOutput.includes("release-hardening") ||
+    !ownerFilteredPlanListOutput.includes("## Pagination")
+  ) {
+    throw new Error("installed apcc plan list did not render owner/status filtered progressive disclosure output.");
+  }
+
+  const ownerFilteredTaskListOutput = runInstalledBin(
+    binPath,
+    ["task", "list", "--owner", "codex-main", "--status", "in_progress", "--limit", "1"],
+    { cwd: workspaceRoot }
+  );
+  if (
+    !ownerFilteredTaskListOutput.includes("## Pinned") ||
+    !ownerFilteredTaskListOutput.includes("release-check") ||
+    !ownerFilteredTaskListOutput.includes("owner: codex-main") ||
+    !ownerFilteredTaskListOutput.includes("## Pagination")
+  ) {
+    throw new Error("installed apcc task list did not render owner/status filtered progressive disclosure output.");
   }
 
   runInstalledBin(

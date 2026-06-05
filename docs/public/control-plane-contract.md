@@ -34,6 +34,7 @@ The APCC control plane is the persisted state under:
   goals/end.yaml
   plans/current.yaml
   tasks/current.yaml
+  owners/registry.yaml
   decisions/records.yaml
   versions/records.yaml
 ```
@@ -49,6 +50,9 @@ Persist these explicitly:
 - summaries
 - parent relationships
 - plan version anchors
+- owner registry and owner refs
+- pinned context markers and pinned reasons
+- plan/task creation and update timestamps
 - task status
 - doc references
 - decision records
@@ -93,6 +97,11 @@ items:
     summary: Example summary
     parentPlanId: null
     versionRef: null
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: 2026-06-06T00:00:00.000Z
+    updatedAt: 2026-06-06T00:00:00.000Z
 ```
 
 Rules:
@@ -105,10 +114,20 @@ Rules:
   - `summary`
   - `parentPlanId`
   - `versionRef`
+  - `owner`
+  - `pinned`
+  - `pinnedReason`
+  - `createdAt`
+  - `updatedAt`
 - `parentPlanId` is either another plan id or `null`
 - `versionRef` is either a version record id from `.apcc/versions/records.yaml` or `null`
+- `owner` is either an owner id from `.apcc/owners/registry.yaml` or `null`
+- `pinned` is a boolean context-retention marker, not priority, blocker, focus, or owner state
+- `pinnedReason` explains why a pinned item must stay visible, or `null`
+- `createdAt` and `updatedAt` are ISO timestamps or `null` for pre-upgrade entries
 - `plan.status` is not stored
 - `effectiveVersionRef` is derived at read time by inheriting the nearest non-null `versionRef` from the plan tree
+- `effectiveOwner` is derived at read time by inheriting the nearest non-null `owner` from the plan tree
 - a child plan must not override an inherited non-null `versionRef` with a different version record id
 
 Derived plan status values are:
@@ -139,6 +158,12 @@ items:
     planRef: example-plan
     parentTaskId: null
     countedForProgress: true
+    owner: null
+    pinned: false
+    pinnedReason: null
+    createdAt: 2026-06-06T00:00:00.000Z
+    updatedAt: 2026-06-06T00:00:00.000Z
+    statusChangedAt: 2026-06-06T00:00:00.000Z
 ```
 
 Allowed `status` values:
@@ -159,9 +184,19 @@ Rules:
   - `planRef`
   - `parentTaskId`
   - `countedForProgress`
+  - `owner`
+  - `pinned`
+  - `pinnedReason`
+  - `createdAt`
+  - `updatedAt`
+  - `statusChangedAt`
 - `planRef` must reference an existing plan id
 - `parentTaskId` is either another task id or `null`
 - `countedForProgress` must be `true` or `false`
+- `owner` is either an owner id from `.apcc/owners/registry.yaml` or `null`; if null, the task may inherit the referenced plan's effective owner
+- `pinned` is a boolean context-retention marker, not priority, blocker, focus, or owner state
+- `pinnedReason` explains why a pinned item must stay visible, or `null`
+- `createdAt`, `updatedAt`, and `statusChangedAt` are ISO timestamps or `null` for pre-upgrade entries
 - a child task must use the same `planRef` as its parent task
 - tasks do not persist a separate `versionRef`; version scope is derived from the referenced plan
 
@@ -177,6 +212,48 @@ Plan-derivation rule:
 - else if any relevant task is `in_progress`, the plan is `in_progress`
 - else if any relevant task is `done` but not all are done, the plan is `in_progress`
 - else the plan is `pending`
+
+## Owners
+
+File:
+
+```text
+.apcc/owners/registry.yaml
+```
+
+Shape:
+
+```yaml
+items:
+  - id: codex-main
+    name: Codex Main
+    kind: agent
+    status: active
+    aliases: []
+    createdAt: 2026-06-06T00:00:00.000Z
+    updatedAt: 2026-06-06T00:00:00.000Z
+```
+
+Allowed `kind` values:
+
+- `human`
+- `agent`
+- `service`
+- `other`
+
+Allowed `status` values:
+
+- `active`
+- `inactive`
+
+Rules:
+
+- `items`: array
+- `id` is the stable owner id referenced by plans and tasks
+- `name` is the display name
+- `aliases` are optional collision-detection labels
+- `status` can be `inactive` to preserve history while warning on open assigned work
+- `createdAt` and `updatedAt` are ISO timestamps or `null` for pre-upgrade entries
 
 ## Decisions
 
@@ -248,13 +325,13 @@ Allowed values:
 Current default shape:
 
 ```yaml
-workspaceSchemaVersion: 10
-apccVersion: 0.4.0
+workspaceSchemaVersion: 11
+apccVersion: 0.5.0
 workspaceName: apcc-project
 docsRoot: docs
 workspaceRoot: .apcc
 bootstrapMode: init
-templateVersion: 2026-04-30.runtime-state-and-version-scoping-1
+templateVersion: 2026-06-06.progressive-disclosure-and-ownership-1
 projectKind: general
 docsMode: standard
 docsLanguage: en
@@ -303,7 +380,7 @@ docsSite:
   enabled: true
   sourcePath: docs
   preferredPort: null
-workspaceSchemaVersion: 10
+workspaceSchemaVersion: 11
 ```
 
 ## CLI-To-Storage Mappings
@@ -314,6 +391,9 @@ The CLI accepts a few human-facing tokens that are not stored verbatim:
 - `--docs-language zh` -> stored `zh-CN`
 - `--docs-language en-US` -> stored `en`
 - `plan add/update --version <record-id-or-version-label>` -> stored `plan.versionRef` as the matching version record id
+- `plan/task add/update --owner <owner-id>` -> stored direct `owner` reference
+- `plan/task update --clear-owner` -> stored `owner: null`
+- `plan/task update --pin` and `--unpin` -> stored `pinned: true` or `pinned: false`
 
 Prefer the normalized persisted values when editing YAML directly.
 
